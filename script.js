@@ -1,10 +1,9 @@
 /**
- * GYMSTART BETA V0.3
- * Changes: New UI, Robust Timer, Archive Copy, Steppers
+ * GYMSTART BETA V0.4
+ * Changes: Picker UI, Smart Weights, SVG Rest Timer, Admin Ordering, Plank Fix
  */
 
 // --- DATA & CONFIG ---
-// Keep 02 keys to preserve user data
 const CONFIG = {
     KEYS: {
         ROUTINES: 'gymstart_beta_02_routines',
@@ -15,52 +14,52 @@ const CONFIG = {
 
 // --- EXERCISE BANK ---
 const BANK = [
-    { id: 'goblet', name: 'גובלט סקוואט', unit: 'kg', cat: 'legs', step: 1 },
-    { id: 'leg_press', name: 'לחיצת רגליים (Leg Press)', unit: 'kg', cat: 'legs', step: 5 },
-    { id: 'rdl', name: 'דדליפט רומני (RDL)', unit: 'kg', cat: 'legs', step: 1 },
-    { id: 'lunge', name: 'מכרעים (Lunges)', unit: 'kg', cat: 'legs', step: 1 },
-    { id: 'chest_press', name: 'לחיצת חזה משקולות', unit: 'kg', cat: 'chest', step: 1 },
-    { id: 'fly', name: 'פרפר (Fly)', unit: 'kg', cat: 'chest', step: 1 },
-    { id: 'pushup', name: 'שכיבות סמיכה', unit: 'bodyweight', cat: 'chest', step: 0 },
-    { id: 'lat_pull', name: 'פולי עליון', unit: 'plates', cat: 'back', step: 1 },
-    { id: 'cable_row', name: 'חתירה בכבל', unit: 'plates', cat: 'back', step: 1 },
-    { id: 'db_row', name: 'חתירה במשקולת', unit: 'kg', cat: 'back', step: 1 },
-    { id: 'shoulder_press', name: 'לחיצת כתפיים', unit: 'kg', cat: 'shoulders', step: 1 },
-    { id: 'lat_raise', name: 'הרחקה לצדדים', unit: 'kg', cat: 'shoulders', step: 1 },
-    { id: 'bicep_curl', name: 'כפיפת מרפקים (יד קדמית)', unit: 'kg', cat: 'arms', step: 1 },
-    { id: 'tricep_pull', name: 'פשיטת מרפקים (פולי)', unit: 'plates', cat: 'arms', step: 1 },
-    { id: 'plank', name: 'פלאנק (בטן סטטי)', unit: 'bodyweight', cat: 'core', step: 0 },
-    { id: 'side_plank', name: 'פלאנק צידי', unit: 'bodyweight', cat: 'core', step: 0 },
-    { id: 'bicycle', name: 'כפיפות בטן אופניים', unit: 'bodyweight', cat: 'core', step: 0 },
-    { id: 'knee_raise', name: 'הרמת ברכיים', unit: 'bodyweight', cat: 'core', step: 0 }
+    { id: 'goblet', name: 'גובלט סקוואט', unit: 'kg', cat: 'legs' },
+    { id: 'leg_press', name: 'לחיצת רגליים (Leg Press)', unit: 'kg', cat: 'legs' },
+    { id: 'rdl', name: 'דדליפט רומני (RDL)', unit: 'kg', cat: 'legs' },
+    { id: 'lunge', name: 'מכרעים (Lunges)', unit: 'kg', cat: 'legs' },
+    { id: 'chest_press', name: 'לחיצת חזה משקולות', unit: 'kg', cat: 'chest' },
+    { id: 'fly', name: 'פרפר (Fly)', unit: 'kg', cat: 'chest' },
+    { id: 'pushup', name: 'שכיבות סמיכה', unit: 'bodyweight', cat: 'chest' },
+    { id: 'lat_pull', name: 'פולי עליון', unit: 'plates', cat: 'back' },
+    { id: 'cable_row', name: 'חתירה בכבל', unit: 'plates', cat: 'back' },
+    { id: 'db_row', name: 'חתירה במשקולת', unit: 'kg', cat: 'back' },
+    { id: 'shoulder_press', name: 'לחיצת כתפיים', unit: 'kg', cat: 'shoulders' },
+    { id: 'lat_raise', name: 'הרחקה לצדדים', unit: 'kg', cat: 'shoulders' },
+    { id: 'bicep_curl', name: 'כפיפת מרפקים (יד קדמית)', unit: 'kg', cat: 'arms' },
+    { id: 'tricep_pull', name: 'פשיטת מרפקים (פולי)', unit: 'plates', cat: 'arms' },
+    { id: 'plank', name: 'פלאנק (בטן סטטי)', unit: 'bodyweight', cat: 'core' },
+    { id: 'side_plank', name: 'פלאנק צידי', unit: 'bodyweight', cat: 'core' },
+    { id: 'bicycle', name: 'כפיפות בטן אופניים', unit: 'bodyweight', cat: 'core' },
+    { id: 'knee_raise', name: 'הרמת ברכיים', unit: 'bodyweight', cat: 'core' }
 ];
 
 // --- DEFAULT ROUTINES ---
 const DEFAULT_ROUTINES = {
     'A': [
-        { id: 'goblet', name: 'גובלט סקוואט', unit: 'kg', note: 'גב זקוף', target: {w:10, r:12} },
-        { id: 'leg_press', name: 'לחיצת רגליים', unit: 'kg', note: 'לא לנעול ברכיים', target: {w:30, r:12} },
-        { id: 'rdl', name: 'דדליפט רומני', unit: 'kg', note: 'לרדת לאט', target: {w:10, r:12} },
-        { id: 'lat_pull', name: 'פולי עליון', unit: 'plates', note: 'למשוך לחזה', target: {w:6, r:12} },
-        { id: 'cable_row', name: 'חתירה בכבל', unit: 'plates', note: 'מרפקים צמודים', target: {w:6, r:12} },
-        { id: 'bicycle', name: 'בטן אופניים', unit: 'bodyweight', note: 'קצב איטי', target: {w:0, r:30} }
+        { id: 'goblet', name: 'גובלט סקוואט', unit: 'kg', note: 'גב זקוף', target: {w:10, r:12}, cat: 'legs' },
+        { id: 'leg_press', name: 'לחיצת רגליים', unit: 'kg', note: 'לא לנעול ברכיים', target: {w:30, r:12}, cat: 'legs' },
+        { id: 'rdl', name: 'דדליפט רומני', unit: 'kg', note: 'לרדת לאט', target: {w:10, r:12}, cat: 'legs' },
+        { id: 'lat_pull', name: 'פולי עליון', unit: 'plates', note: 'למשוך לחזה', target: {w:6, r:12}, cat: 'back' },
+        { id: 'cable_row', name: 'חתירה בכבל', unit: 'plates', note: 'מרפקים צמודים', target: {w:6, r:12}, cat: 'back' },
+        { id: 'bicycle', name: 'בטן אופניים', unit: 'bodyweight', note: 'קצב איטי', target: {w:0, r:30}, cat: 'core' }
     ],
     'B': [
-        { id: 'chest_press', name: 'לחיצת חזה', unit: 'kg', note: 'יציבות', target: {w:7, r:12} },
-        { id: 'fly', name: 'פרפר', unit: 'kg', note: 'תנועה רחבה', target: {w:3, r:12} },
-        { id: 'shoulder_press', name: 'לחיצת כתפיים', unit: 'kg', note: 'גב צמוד', target: {w:4, r:12} },
-        { id: 'lat_raise', name: 'הרחקה לצדדים', unit: 'kg', note: 'מרפק מוביל', target: {w:3, r:12} },
-        { id: 'bicep_curl', name: 'יד קדמית', unit: 'kg', note: 'בלי תנופה', target: {w:5, r:12} },
-        { id: 'tricep_pull', name: 'יד אחורית', unit: 'plates', note: 'מרפקים מקובעים', target: {w:4.5, r:12} },
-        { id: 'side_plank', name: 'פלאנק צידי', unit: 'bodyweight', note: 'אגן גבוה', target: {w:0, r:45} }
+        { id: 'chest_press', name: 'לחיצת חזה', unit: 'kg', note: 'יציבות', target: {w:7, r:12}, cat: 'chest' },
+        { id: 'fly', name: 'פרפר', unit: 'kg', note: 'תנועה רחבה', target: {w:3, r:12}, cat: 'chest' },
+        { id: 'shoulder_press', name: 'לחיצת כתפיים', unit: 'kg', note: 'גב צמוד', target: {w:4, r:12}, cat: 'shoulders' },
+        { id: 'lat_raise', name: 'הרחקה לצדדים', unit: 'kg', note: 'מרפק מוביל', target: {w:3, r:12}, cat: 'shoulders' },
+        { id: 'bicep_curl', name: 'יד קדמית', unit: 'kg', note: 'בלי תנופה', target: {w:5, r:12}, cat: 'arms' },
+        { id: 'tricep_pull', name: 'יד אחורית', unit: 'plates', note: 'מרפקים מקובעים', target: {w:5, r:12}, cat: 'arms' },
+        { id: 'side_plank', name: 'פלאנק צידי', unit: 'bodyweight', note: 'אגן גבוה', target: {w:0, r:45}, cat: 'core' }
     ],
     'FBW': [
-        { id: 'goblet', name: 'גובלט סקוואט', unit: 'kg', note: 'רגליים', target: {w:10, r:12} },
-        { id: 'rdl', name: 'דדליפט רומני', unit: 'kg', note: 'רגליים', target: {w:10, r:12} },
-        { id: 'chest_press', name: 'לחיצת חזה', unit: 'kg', note: 'חזה', target: {w:7, r:12} },
-        { id: 'cable_row', name: 'חתירה בכבל', unit: 'plates', note: 'גב', target: {w:6, r:12} },
-        { id: 'shoulder_press', name: 'לחיצת כתפיים', unit: 'kg', note: 'כתפיים', target: {w:4, r:12} },
-        { id: 'plank', name: 'פלאנק סטטי', unit: 'bodyweight', note: 'בטן', target: {w:0, r:45} }
+        { id: 'goblet', name: 'גובלט סקוואט', unit: 'kg', note: 'רגליים', target: {w:10, r:12}, cat: 'legs' },
+        { id: 'rdl', name: 'דדליפט רומני', unit: 'kg', note: 'רגליים', target: {w:10, r:12}, cat: 'legs' },
+        { id: 'chest_press', name: 'לחיצת חזה', unit: 'kg', note: 'חזה', target: {w:7, r:12}, cat: 'chest' },
+        { id: 'cable_row', name: 'חתירה בכבל', unit: 'plates', note: 'גב', target: {w:6, r:12}, cat: 'back' },
+        { id: 'shoulder_press', name: 'לחיצת כתפיים', unit: 'kg', note: 'כתפיים', target: {w:4, r:12}, cat: 'shoulders' },
+        { id: 'plank', name: 'פלאנק סטטי', unit: 'bodyweight', note: 'בטן', target: {w:0, r:45}, cat: 'core' }
     ]
 };
 
@@ -75,7 +74,8 @@ const app = {
             setIdx: 1,
             log: [], 
             startTime: 0,
-            timerInterval: null,
+            timerInterval: null, // For stopwatch
+            restInterval: null, // For rest
             feel: 'good',
             isStopwatch: false,
             stopwatchVal: 0,
@@ -83,11 +83,12 @@ const app = {
             inputR: 12
         },
         admin: { viewProg: 'A', bankFilter: '' },
-        historySelection: [] // For bulk copy
+        historySelection: [],
+        picker: { type: null, callback: null }
     },
 
     init: function() {
-        console.log("App V0.3 Init");
+        console.log("App V0.4 Init");
         try {
             this.loadData();
             this.renderHome();
@@ -123,8 +124,7 @@ const app = {
         const backBtn = document.getElementById('nav-back');
         if (screenId === 'screen-home') {
             backBtn.style.visibility = 'hidden';
-            // Stop timer just in case, though it shouldn't be here
-            this.stopTimer();
+            this.stopAllTimers();
         } else {
             backBtn.style.visibility = 'visible';
         }
@@ -135,7 +135,7 @@ const app = {
         const activeScreen = document.querySelector('.screen.active').id;
         if (activeScreen === 'screen-active') {
             if (confirm("לצאת באמצע אימון?")) {
-                this.stopTimer();
+                this.stopAllTimers();
                 this.state.active.on = false;
                 this.nav('screen-overview');
             }
@@ -182,7 +182,7 @@ const app = {
             log: [],
             startTime: Date.now(),
             timerInterval: null,
-            elapsed: 0,
+            restInterval: null,
             feel: 'good',
             isStopwatch: false,
             stopwatchVal: 0,
@@ -211,13 +211,11 @@ const app = {
         this.state.active.isStopwatch = isTime;
 
         if (isTime) {
-            document.getElementById('stepper-container').style.display = 'none';
+            document.getElementById('cards-container').style.display = 'none';
             document.getElementById('stopwatch-container').style.display = 'flex';
             
-            // Reset Stopwatch Logic explicitly
             this.state.active.stopwatchVal = 0;
-            if(this.state.active.timerInterval) clearInterval(this.state.active.timerInterval);
-            this.state.active.timerInterval = null;
+            this.stopStopwatch();
             
             document.getElementById('sw-display').innerText = "00:00";
             document.getElementById('btn-sw-toggle').classList.remove('running');
@@ -225,14 +223,14 @@ const app = {
             document.getElementById('rest-timer-area').style.display = 'none';
 
         } else {
-            document.getElementById('stepper-container').style.display = 'flex';
+            document.getElementById('cards-container').style.display = 'flex';
             document.getElementById('stopwatch-container').style.display = 'none';
-            document.getElementById('unit-label-step').innerText = ex.unit === 'plates' ? 'פלטות' : 'ק״ג';
+            document.getElementById('unit-label-card').innerText = ex.unit === 'plates' ? 'פלטות' : 'ק״ג';
             
             // Init Values (Target or Default)
             this.state.active.inputW = ex.target?.w || 10;
             this.state.active.inputR = ex.target?.r || 12;
-            this.updateStepperDisplay();
+            this.updateCardsDisplay();
         }
 
         // Reset UI
@@ -260,33 +258,87 @@ const app = {
         }
     },
 
-    // --- STEPPERS LOGIC ---
-    adjustWeight: function(delta) {
-        // Step size: 1.25 if below 20, else 2.5
-        let step = (this.state.active.inputW < 20) ? 1.25 : 2.5;
-        let val = this.state.active.inputW + (delta * step);
-        if (val < 0) val = 0;
-        this.state.active.inputW = val;
-        this.updateStepperDisplay();
+    // --- PICKER SYSTEM (V0.4) ---
+    openPicker: function(type) {
+        this.state.picker.type = type;
+        const prog = this.state.routines[this.state.currentProgId];
+        const ex = prog[this.state.active.exIdx];
+        const isLegs = ex.cat === 'legs';
+        const unit = ex.unit;
+
+        let options = [];
+        
+        if (type === 'reps') {
+            for(let i=1; i<=50; i++) options.push(i);
+        } else {
+            // WEIGHT LOGIC
+            if (unit === 'bodyweight') {
+                options = [0];
+            } else if (unit === 'plates') {
+                for(let i=1; i<=20; i++) options.push(i);
+            } else {
+                // KG LOGIC
+                // 1-10: step 1
+                for(let i=1; i<=10; i++) options.push(i);
+                // 10-MAX: step 2.5
+                const max = isLegs ? 50 : 25;
+                for(let i=12.5; i<=max; i+=2.5) options.push(i);
+            }
+        }
+
+        const list = document.getElementById('picker-list');
+        const currentVal = type === 'reps' ? this.state.active.inputR : this.state.active.inputW;
+        
+        document.getElementById('picker-title').innerText = type === 'reps' ? 'בחר חזרות' : 'בחר משקל';
+        
+        list.innerHTML = '';
+        let selectedEl = null;
+
+        options.forEach(val => {
+            const div = document.createElement('div');
+            div.className = 'picker-item';
+            if (val === currentVal) {
+                div.classList.add('selected');
+                selectedEl = div;
+            }
+            div.innerText = val;
+            div.onclick = () => this.selectPickerValue(val);
+            list.appendChild(div);
+        });
+
+        document.getElementById('picker-modal').style.display = 'flex';
+        
+        // Scroll to selection
+        if(selectedEl) {
+            setTimeout(() => selectedEl.scrollIntoView({ block: 'center', behavior: 'auto' }), 10);
+        }
     },
 
-    adjustReps: function(delta) {
-        let val = this.state.active.inputR + delta;
-        if (val < 1) val = 1;
-        this.state.active.inputR = val;
-        this.updateStepperDisplay();
+    selectPickerValue: function(val) {
+        if (this.state.picker.type === 'reps') {
+            this.state.active.inputR = val;
+        } else {
+            this.state.active.inputW = val;
+        }
+        this.updateCardsDisplay();
+        this.closePicker(null);
     },
 
-    updateStepperDisplay: function() {
+    closePicker: function(e) {
+        if (!e || e.target.id === 'picker-modal' || e.target.classList.contains('icon-btn')) {
+            document.getElementById('picker-modal').style.display = 'none';
+        }
+    },
+
+    updateCardsDisplay: function() {
         document.getElementById('val-weight').innerText = this.state.active.inputW;
         document.getElementById('val-reps').innerText = this.state.active.inputR;
     },
 
-    // --- STOPWATCH LOGIC ---
+    // --- STOPWATCH LOGIC (Fixed for Plank) ---
     toggleStopwatch: function() {
         const btn = document.getElementById('btn-sw-toggle');
         
-        // Check actual interval to decide action
         if (this.state.active.timerInterval) {
             // STOP
             clearInterval(this.state.active.timerInterval);
@@ -295,8 +347,8 @@ const app = {
             btn.innerText = "▶";
         } else {
             // START
-            // Ensure Rest Timer is OFF
-            document.getElementById('rest-timer-area').style.display = 'none';
+            // FIX: Immediately stop rest timer if running
+            this.stopRestTimer();
 
             const start = Date.now() - (this.state.active.stopwatchVal * 1000);
             btn.classList.add('running');
@@ -312,6 +364,11 @@ const app = {
         }
     },
 
+    stopStopwatch: function() {
+        if(this.state.active.timerInterval) clearInterval(this.state.active.timerInterval);
+        this.state.active.timerInterval = null;
+    },
+
     // --- FEELING ---
     selectFeel: function(f) {
         this.state.active.feel = f;
@@ -325,7 +382,7 @@ const app = {
         document.getElementById('feel-text').innerText = map[this.state.active.feel];
     },
 
-    // --- FINISH SET & REST TIMER ---
+    // --- FINISH SET & REST TIMER (SVG) ---
     finishSet: function() {
         let w, r;
         if (this.state.active.isStopwatch) {
@@ -348,7 +405,7 @@ const app = {
         }
         exLog.sets.push({ w, r, feel: this.state.active.feel });
 
-        // Start Rest Timer (Center Screen)
+        // Start Rest Timer
         this.startRestTimer();
 
         if (this.state.active.setIdx < 3) {
@@ -369,30 +426,45 @@ const app = {
     },
 
     startRestTimer: function() {
-        // Clear any existing timer first
-        if(this.state.active.timerInterval) clearInterval(this.state.active.timerInterval);
+        this.stopRestTimer();
         
         const area = document.getElementById('rest-timer-area');
         const disp = document.getElementById('rest-timer-val');
+        const ring = document.getElementById('rest-ring-prog');
         
-        area.style.display = 'block';
+        area.style.display = 'flex';
         let sec = 0;
         disp.innerText = "00:00";
+        // Reset ring to full empty (offset 283)
+        ring.style.strokeDashoffset = 283; 
         
-        this.state.active.timerInterval = setInterval(() => {
+        this.state.active.restInterval = setInterval(() => {
             sec++;
             let m = Math.floor(sec / 60);
             let s = sec % 60;
             disp.innerText = `${m<10?'0'+m:m}:${s<10?'0'+s:s}`;
+
+            // SVG Logic (Max 60 seconds)
+            if (sec <= 60) {
+                const offset = 283 - (283 * sec / 60);
+                ring.style.strokeDashoffset = offset;
+            } else {
+                ring.style.strokeDashoffset = 0; // Stay full
+            }
             
             if (sec === 60 && navigator.vibrate) navigator.vibrate([200,100,200]);
         }, 1000);
     },
 
-    stopTimer: function() {
-        if(this.state.active.timerInterval) clearInterval(this.state.active.timerInterval);
-        this.state.active.timerInterval = null;
+    stopRestTimer: function() {
+        if(this.state.active.restInterval) clearInterval(this.state.active.restInterval);
+        this.state.active.restInterval = null;
         document.getElementById('rest-timer-area').style.display = 'none';
+    },
+
+    stopAllTimers: function() {
+        this.stopStopwatch();
+        this.stopRestTimer();
     },
 
     addSet: function() {
@@ -400,7 +472,7 @@ const app = {
         document.getElementById('set-badge').innerText = `סט ${this.state.active.setIdx}`;
         document.getElementById('decision-buttons').style.display = 'none';
         document.getElementById('btn-finish').style.display = 'flex';
-        this.stopTimer(); // Stop rest if adding set
+        this.stopRestTimer();
         if(this.state.active.isStopwatch) {
             this.state.active.stopwatchVal = 0;
             document.getElementById('sw-display').innerText = "00:00";
@@ -428,7 +500,7 @@ const app = {
     },
 
     nextExercise: function() {
-        this.stopTimer();
+        this.stopAllTimers();
         const prog = this.state.routines[this.state.currentProgId];
         if (this.state.active.exIdx < prog.length - 1) {
             this.state.active.exIdx++;
@@ -442,10 +514,9 @@ const app = {
     // --- FINISH ---
     finishWorkout: function() {
         const endTime = Date.now();
-        const durationMin = Math.round((endTime - this.state.active.startTime) / 60000); // Minutes
+        const durationMin = Math.round((endTime - this.state.active.startTime) / 60000);
         const dateStr = new Date().toLocaleDateString('he-IL');
         
-        // Save logic later, but here prepare text
         const meta = document.getElementById('summary-meta');
         meta.innerText = `📅 ${dateStr} | ⏱ ${durationMin} דקות`;
 
@@ -523,8 +594,6 @@ const app = {
         if(this.state.historySelection.length === 0) { alert("לא נבחרו אימונים"); return; }
         
         let fullTxt = "📜 ריכוז אימונים\n\n";
-        // Sort indices logic (handled by order in loop if needed, but we used reverse display)
-        // Let's just grab by index
         this.state.historySelection.forEach(idx => {
             const h = this.state.history[idx];
             fullTxt += `--- אימון ${h.program} (${h.date}) ---\n`;
@@ -589,7 +658,6 @@ const app = {
         if (navigator.clipboard) {
             navigator.clipboard.writeText(txt).then(() => alert("הועתק ללוח! 📋"));
         } else {
-            // Fallback
             const ta = document.createElement('textarea');
             ta.value = txt;
             document.body.appendChild(ta);
@@ -627,7 +695,7 @@ const app = {
         reader.readAsText(file);
     },
 
-    // --- ADMIN (Unchanged Logic, UI only) ---
+    // --- ADMIN (Updated with Ordering) ---
     openAdmin: function() { document.getElementById('admin-modal').style.display = 'flex'; this.renderAdminList(); },
     closeAdmin: function() { document.getElementById('admin-modal').style.display = 'none'; },
     renderAdminList: function() {
@@ -637,9 +705,23 @@ const app = {
         const prog = this.state.routines[progId];
         list.innerHTML = '';
         prog.forEach((ex, i) => {
-            list.innerHTML += `<div class="admin-item"><div><b>${i+1}. ${ex.name}</b><br><small>${ex.target?.w||0} ${ex.unit}</small></div>
-            <div><button onclick="app.remEx('${progId}',${i})">🗑</button></div></div>`;
+            list.innerHTML += `<div class="admin-item">
+                <div><b>${i+1}. ${ex.name}</b><br><small>${ex.target?.w||0} ${ex.unit}</small></div>
+                <div class="admin-actions">
+                    <button class="btn-small" onclick="app.moveEx('${progId}',${i},-1)">⬆️</button>
+                    <button class="btn-small" onclick="app.moveEx('${progId}',${i},1)">⬇️</button>
+                    <button class="btn-danger-text" style="padding:5px 10px; width:auto;" onclick="app.remEx('${progId}',${i})">🗑</button>
+                </div>
+            </div>`;
         });
+    },
+    moveEx: function(pid, i, dir) {
+        const arr = this.state.routines[pid];
+        if ((i === 0 && dir === -1) || (i === arr.length - 1 && dir === 1)) return;
+        const temp = arr[i];
+        arr[i] = arr[i + dir];
+        arr[i + dir] = temp;
+        this.renderAdminList();
     },
     remEx: function(pid, i) { if(confirm('למחוק?')) { this.state.routines[pid].splice(i,1); this.renderAdminList(); } },
     saveAdmin: function() { this.saveData(); alert('נשמר'); this.closeAdmin(); },
