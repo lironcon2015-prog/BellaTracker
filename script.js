@@ -1,6 +1,6 @@
 /**
- * GYMSTART OLED V1.1
- * True Black, Neon, Performance, Expanded Features
+ * GYMSTART V1.2
+ * True Black, Comfort UX, Expanded Features
  */
 
 const CONFIG = {
@@ -17,36 +17,51 @@ const PROGRAM_NAMES = {
     'FBW': 'FBW כל הגוף'
 };
 
+const FEEL_MAP = {
+    'easy': 'קל',
+    'good': 'טוב',
+    'hard': 'קשה'
+};
+
 const BANK = [
-    // Original
+    // Legs
     { id: 'goblet', name: 'גובלט סקוואט', unit: 'kg', cat: 'legs' },
     { id: 'leg_press', name: 'לחיצת רגליים', unit: 'kg', cat: 'legs' },
     { id: 'rdl', name: 'דדליפט רומני', unit: 'kg', cat: 'legs' },
     { id: 'lunge', name: 'מכרעים (Lunges)', unit: 'kg', cat: 'legs' },
-    { id: 'chest_press', name: 'לחיצת חזה משקולות', unit: 'kg', cat: 'chest' },
-    { id: 'fly', name: 'פרפר (Fly)', unit: 'kg', cat: 'chest' },
-    { id: 'pushup', name: 'שכיבות סמיכה', unit: 'bodyweight', cat: 'chest' },
-    { id: 'lat_pull', name: 'פולי עליון', unit: 'plates', cat: 'back' },
-    { id: 'cable_row', name: 'חתירה בכבל', unit: 'plates', cat: 'back' },
-    { id: 'db_row', name: 'חתירה במשקולת', unit: 'kg', cat: 'back' },
-    { id: 'shoulder_press', name: 'לחיצת כתפיים', unit: 'kg', cat: 'shoulders' },
-    { id: 'lat_raise', name: 'הרחקה לצדדים', unit: 'kg', cat: 'shoulders' },
-    { id: 'bicep_curl', name: 'כפיפת מרפקים', unit: 'kg', cat: 'arms' },
-    { id: 'tricep_pull', name: 'פשיטת מרפקים (פולי)', unit: 'plates', cat: 'arms' },
-    { id: 'plank', name: 'פלאנק (סטטי)', unit: 'bodyweight', cat: 'core' },
-    { id: 'side_plank', name: 'פלאנק צידי', unit: 'bodyweight', cat: 'core' },
-    { id: 'bicycle', name: 'בטן אופניים', unit: 'bodyweight', cat: 'core' },
-    { id: 'knee_raise', name: 'הרמת ברכיים', unit: 'bodyweight', cat: 'core' },
-    // New Additions
     { id: 'hip_thrust', name: 'גשר עכוז (Hip Thrust)', unit: 'kg', cat: 'legs' },
     { id: 'leg_ext', name: 'פשיטת ברכיים (מכונה)', unit: 'plates', cat: 'legs' },
     { id: 'leg_curl', name: 'כפיפת ברכיים (מכונה)', unit: 'plates', cat: 'legs' },
     { id: 'calf_raise', name: 'הרמת עקבים', unit: 'kg', cat: 'legs' },
+    
+    // Chest
+    { id: 'chest_press', name: 'לחיצת חזה משקולות', unit: 'kg', cat: 'chest' },
+    { id: 'fly', name: 'פרפר (Fly)', unit: 'kg', cat: 'chest' },
+    { id: 'pushup', name: 'שכיבות סמיכה', unit: 'bodyweight', cat: 'chest' },
     { id: 'incline_bench', name: 'לחיצת חזה שיפוע עליון', unit: 'kg', cat: 'chest' },
+    
+    // Back
+    { id: 'lat_pull', name: 'פולי עליון', unit: 'plates', cat: 'back' },
+    { id: 'cable_row', name: 'חתירה בכבל', unit: 'plates', cat: 'back' },
+    { id: 'db_row', name: 'חתירה במשקולת', unit: 'kg', cat: 'back' },
     { id: 'hyperext', name: 'פשיטת גו (Hyper)', unit: 'bodyweight', cat: 'back' },
+    
+    // Shoulders
+    { id: 'shoulder_press', name: 'לחיצת כתפיים', unit: 'kg', cat: 'shoulders' },
+    { id: 'lat_raise', name: 'הרחקה לצדדים', unit: 'kg', cat: 'shoulders' },
     { id: 'face_pull', name: 'פייס-פולס (Face Pulls)', unit: 'plates', cat: 'shoulders' },
+    
+    // Arms
+    { id: 'bicep_curl', name: 'כפיפת מרפקים', unit: 'kg', cat: 'arms' },
+    { id: 'tricep_pull', name: 'פשיטת מרפקים (פולי)', unit: 'plates', cat: 'arms' },
     { id: 'tricep_rope', name: 'פשיטת מרפקים חבל', unit: 'plates', cat: 'arms' },
     { id: 'hammer_curl', name: 'כפיפת פטישים', unit: 'kg', cat: 'arms' },
+    
+    // Core
+    { id: 'plank', name: 'פלאנק (סטטי)', unit: 'bodyweight', cat: 'core' },
+    { id: 'side_plank', name: 'פלאנק צידי', unit: 'bodyweight', cat: 'core' },
+    { id: 'bicycle', name: 'בטן אופניים', unit: 'bodyweight', cat: 'core' },
+    { id: 'knee_raise', name: 'הרמת ברכיים', unit: 'bodyweight', cat: 'core' },
     { id: 'russian_twist', name: 'רושן טוויסט', unit: 'kg', cat: 'core' }
 ];
 
@@ -139,7 +154,7 @@ const app = {
         } else {
             backBtn.style.visibility = 'visible';
         }
-        window.scrollTo(0,0);
+        // No global window.scrollTo needed due to new layout
     },
 
     goBack: function() {
@@ -193,8 +208,8 @@ const app = {
             setIdx: 1,
             log: [],
             startTime: Date.now(),
-            timerInterval: null,
-            restInterval: null,
+            timerInterval: null, 
+            restInterval: null, 
             feel: 'good',
             isStopwatch: false,
             stopwatchVal: 0,
@@ -464,7 +479,7 @@ const app = {
         }
     },
 
-    // Helper: Generates full workout text in consistent format
+    // Helper: Generates full workout text in consistent format with Feelings (Text)
     generateLogText: function(historyItem) {
         const pName = PROGRAM_NAMES[historyItem.program] || historyItem.program;
         let txt = `סיכום אימון: ${pName}\n`;
@@ -476,7 +491,8 @@ const app = {
                 const isTime = (ex.id.includes('plank') || ex.id === 'wall_sit');
                 ex.sets.forEach((s, i) => {
                     let valStr = isTime ? `${s.r}שנ׳` : `${s.w>0?s.w+'ק״ג ':''}${s.r}`;
-                    txt += `   סט ${i+1}: ${valStr}\n`;
+                    let feelStr = FEEL_MAP[s.feel] || 'טוב';
+                    txt += `   סט ${i+1}: ${valStr} (${feelStr})\n`;
                 });
                 txt += "\n";
             }
@@ -591,7 +607,6 @@ const app = {
         if(this.state.historySelection.length === 0) { alert("לא נבחר אימון"); return; }
         
         let fullTxt = "";
-        // Sort selections to be chronological (optional, but good for logs)
         const sortedSel = [...this.state.historySelection].sort((a,b) => a-b);
         
         sortedSel.forEach((idx, i) => {
@@ -622,8 +637,9 @@ const app = {
             const isTime = (ex.id.includes('plank') || ex.id === 'wall_sit');
             ex.sets.forEach((s, si) => {
                 let valStr = isTime ? `${s.r} שנ׳` : `${s.w > 0 ? s.w+'ק״ג ' : ''}${s.r}`;
+                let feelStr = FEEL_MAP[s.feel] || 'טוב';
                 html += `<div style="display:flex; justify-content:space-between; font-size:0.9rem; margin-top:5px; border-bottom:1px dashed #333; padding-bottom:5px">
-                    <span>סט ${si+1}</span>
+                    <span>סט ${si+1} <small style="color:#777">(${feelStr})</small></span>
                     <span>${valStr}</span>
                 </div>`;
             });
@@ -727,8 +743,14 @@ const app = {
     },
     closeBank: function() { document.getElementById('bank-modal').style.display = 'none'; },
     filterBank: function() {
-        const txt = document.getElementById('bank-search').value.toLowerCase();
-        const cat = document.getElementById('bank-cat-select').value;
+        const txtEl = document.getElementById('bank-search');
+        const catEl = document.getElementById('bank-cat-select');
+        
+        // Safety check if elements exist
+        if(!txtEl || !catEl) return;
+
+        const txt = txtEl.value.toLowerCase();
+        const cat = catEl.value; // Default to 'all' in HTML, simple value read
         
         const list = document.getElementById('bank-list');
         list.innerHTML = '';
