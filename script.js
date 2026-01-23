@@ -1,6 +1,6 @@
 /**
- * GYMSTART BETA V0.6
- * Changes: Native Selects, Rep Limits, Stopwatch Fix, Bulk History Actions
+ * GYMSTART BETA V0.7
+ * Changes: Time-based formatting in summary, Reload on Save
  */
 
 // --- DATA & CONFIG ---
@@ -88,7 +88,7 @@ const app = {
     },
 
     init: function() {
-        console.log("App V0.6 Init");
+        console.log("App V0.7 Init");
         try {
             this.loadData();
             this.renderHome();
@@ -244,7 +244,7 @@ const app = {
         this.updateHistoryPill(ex.id);
     },
 
-    // --- NATIVE SELECT POPULATION (V0.6) ---
+    // --- NATIVE SELECT POPULATION ---
     populateSelects: function(ex) {
         const selW = document.getElementById('select-weight');
         const selR = document.getElementById('select-reps');
@@ -305,7 +305,9 @@ const app = {
         }
         const pill = document.getElementById('history-badge');
         if(lastLog) {
-            pill.innerText = `הישג קודם: ${lastLog.w} × ${lastLog.r}`;
+            const isTime = (exId.includes('plank') || exId === 'wall_sit');
+            const rStr = isTime ? `${lastLog.r}שנ׳` : lastLog.r;
+            pill.innerText = `הישג קודם: ${lastLog.w > 0 ? lastLog.w + 'ק״ג' : ''} ${rStr}`;
         } else {
             pill.innerText = "תרגיל חדש";
         }
@@ -361,13 +363,11 @@ const app = {
     finishSet: function() {
         let w, r;
         if (this.state.active.isStopwatch) {
-            // FIX: Always capture stopwatch val for R, ignore input inputs
             if(this.state.active.timerInterval) this.toggleStopwatch(); 
             w = 0; 
             r = this.state.active.stopwatchVal; // Actual seconds
             if (r === 0) { alert("לא נמדד זמן!"); return; }
         } else {
-            // Read from state which is bound to selects
             w = this.state.active.inputW;
             r = this.state.active.inputR;
         }
@@ -503,9 +503,16 @@ const app = {
         this.state.active.log.forEach(ex => {
             if(ex.sets.length > 0) {
                 txt += `✅ ${ex.name}\n`;
+                const isTime = (ex.id.includes('plank') || ex.id === 'wall_sit');
+                
                 ex.sets.forEach((s, i) => {
-                    const u = s.r > 20 ? 'שנ׳' : '';
-                    txt += `   סט ${i+1}: ${s.w > 0 ? s.w+'ק״ג' : ''} ${s.r}${u} (${s.feel})\n`;
+                    let valStr;
+                    if(isTime) {
+                        valStr = `${s.r} שנ׳`;
+                    } else {
+                        valStr = `${s.w > 0 ? s.w+'ק״ג ' : ''}${s.r}`;
+                    }
+                    txt += `   סט ${i+1}: ${valStr} (${s.feel})\n`;
                 });
                 txt += "\n";
             }
@@ -531,13 +538,14 @@ const app = {
             });
             this.saveData();
         }
-        this.nav('screen-home');
+        // Force refresh to clear state
+        window.location.reload();
     },
 
     // --- HISTORY & ACTIONS ---
     showHistory: function() {
         this.state.historySelection = [];
-        this.updateHistoryActions(); // Update Delete button state
+        this.updateHistoryActions(); 
         const list = document.getElementById('history-list');
         list.innerHTML = '';
         [...this.state.history].reverse().forEach((h, i) => {
@@ -577,7 +585,6 @@ const app = {
     },
 
     selectAllHistory: function() {
-        // Toggle: if all selected -> deselect all, else -> select all
         const inputs = document.querySelectorAll('.custom-chk');
         const allSelected = this.state.historySelection.length === this.state.history.length && this.state.history.length > 0;
         
@@ -595,7 +602,6 @@ const app = {
         if (this.state.historySelection.length === 0) return;
         if (!confirm(`למחוק ${this.state.historySelection.length} אימונים שנבחרו?`)) return;
 
-        // Filter out selected indices
         this.state.history = this.state.history.filter((_, index) => !this.state.historySelection.includes(index));
         this.saveData();
         this.showHistory();
@@ -605,15 +611,18 @@ const app = {
         if(this.state.historySelection.length === 0) { alert("לא נבחרו אימונים"); return; }
         
         let fullTxt = "📜 ריכוז אימונים\n\n";
-        // Sort selection to keep order reasonable (optional)
         const sortedSel = [...this.state.historySelection].sort((a,b) => a-b);
         
         sortedSel.forEach(idx => {
             const h = this.state.history[idx];
             fullTxt += `--- אימון ${h.program} (${h.date}) ---\n`;
             h.data.forEach(ex => {
+                const isTime = (ex.id.includes('plank') || ex.id === 'wall_sit');
                 fullTxt += `🔸 ${ex.name}: `;
-                let setTxts = ex.sets.map(s => `${s.w>0?s.w:''}${s.w>0?'/':''}${s.r}`).join(', ');
+                let setTxts = ex.sets.map(s => {
+                    if(isTime) return `${s.r}שנ׳`;
+                    return `${s.w>0?s.w:''}${s.w>0?'/':''}${s.r}`;
+                }).join(', ');
                 fullTxt += setTxts + "\n";
             });
             fullTxt += "\n";
@@ -636,10 +645,20 @@ const app = {
         item.data.forEach(ex => {
             html += `<div style="background:rgba(255,255,255,0.05); padding:10px; border-radius:8px; margin-bottom:8px;">
                 <div style="font-weight:bold; color:var(--primary)">${ex.name}</div>`;
+            
+            const isTime = (ex.id.includes('plank') || ex.id === 'wall_sit');
+
             ex.sets.forEach((s, si) => {
+                let valStr;
+                if(isTime) {
+                    valStr = `${s.r} שנ׳`;
+                } else {
+                    valStr = `${s.w > 0 ? s.w+'ק״ג ' : ''}${s.r}`;
+                }
+
                 html += `<div style="display:flex; justify-content:space-between; font-size:0.9rem; margin-top:4px; border-bottom:1px dashed #333">
                     <span>סט ${si+1}</span>
-                    <span>${s.w > 0 ? s.w+'ק״ג' : ''} ${s.r} (${s.feel})</span>
+                    <span>${valStr} (${s.feel})</span>
                 </div>`;
             });
             html += `</div>`;
@@ -653,7 +672,11 @@ const app = {
         let txt = `אימון ${item.program} (${item.date})\n\n`;
         item.data.forEach(ex => {
             txt += `✅ ${ex.name}\n`;
-            ex.sets.forEach((s, i) => txt += `   סט ${i+1}: ${s.w}x${s.r}\n`);
+            const isTime = (ex.id.includes('plank') || ex.id === 'wall_sit');
+            ex.sets.forEach((s, i) => {
+                let valStr = isTime ? `${s.r} שנ׳` : `${s.w}x${s.r}`;
+                txt += `   סט ${i+1}: ${valStr}\n`
+            });
             txt += "\n";
         });
         this.copyText(txt);
