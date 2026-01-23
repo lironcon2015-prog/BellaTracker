@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>GymStart V1.3</title>
+    <title>GymStart V1.4</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="stylesheet" href="style.css">
@@ -111,7 +111,7 @@
                     </div>
                 </div>
                 
-                <div class="version-tag">GymStart V1.3</div>
+                <div class="version-tag">GymStart V1.4</div>
             </div>
 
             <div class="fixed-footer">
@@ -167,7 +167,7 @@
             </div>
         </div>
 
-        <!-- 3. ACTIVE EXERCISE (NEW LAYOUT V1.3) -->
+        <!-- 3. ACTIVE EXERCISE -->
         <div id="screen-active" class="screen">
             <div class="active-container">
                 
@@ -203,7 +203,7 @@
 
                 <!-- Controls Cluster -->
                 <div class="active-controls-area">
-                    <!-- FEELING (Moved here) -->
+                    <!-- FEELING -->
                     <div class="feeling-section">
                         <div class="feeling-row">
                             <button class="feel-btn easy" onclick="app.selectFeel('easy')">😌</button>
@@ -218,6 +218,9 @@
                         <button id="btn-finish" class="btn-primary" onclick="app.finishSet()">
                             סיום סט
                         </button>
+                        
+                        <!-- Next Ex Preview (Hidden by default) -->
+                        <div id="next-ex-preview" class="next-preview-text" style="display: none;"></div>
 
                         <div id="decision-buttons" style="display:none; gap:10px; width:100%;">
                             <button class="btn-outline" onclick="app.addSet()" style="flex:1">עוד סט</button>
@@ -225,9 +228,8 @@
                         </div>
                     </div>
 
-                    <!-- REST TIMER (Below button) -->
+                    <!-- REST TIMER -->
                     <div id="rest-timer-area" class="rest-box" style="display: none;">
-                        <!-- SVG Increased to 150px, Radius 65 -->
                         <div class="circular-timer">
                             <svg viewBox="0 0 150 150">
                                 <circle class="bg-ring" cx="75" cy="75" r="65"></circle>
