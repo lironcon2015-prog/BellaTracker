@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>GymStart Beta V0.4</title>
+    <title>GymStart Beta V0.5</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="stylesheet" href="style.css">
@@ -16,14 +16,14 @@
     <div class="bg-orb orb-2"></div>
     <div class="glass-overlay"></div>
 
-    <!-- PICKER MODAL (New V0.4) -->
-    <div id="picker-modal" class="picker-overlay" onclick="app.closePicker(event)">
-        <div class="picker-content" onclick="event.stopPropagation()">
-            <div class="picker-header">
+    <!-- PICKER MODAL (V0.5 - Centered Style) -->
+    <div id="picker-modal" class="modal-wrapper" style="z-index: 200;">
+        <div class="glass-modal" style="max-height: 60vh;">
+            <div class="modal-header">
                 <h3 id="picker-title">בחר משקל</h3>
                 <button class="icon-btn" onclick="app.closePicker(null)">✕</button>
             </div>
-            <div id="picker-list" class="picker-list">
+            <div id="picker-list" class="admin-list-container">
                 <!-- Options injected by JS -->
             </div>
         </div>
@@ -73,10 +73,14 @@
     <div id="history-modal" class="modal-wrapper">
         <div class="glass-modal">
             <div class="modal-header">
-                <h3 id="hist-modal-title">פרטי אימון</h3>
+                <h3>פרטי אימון</h3>
                 <button class="icon-btn" onclick="app.closeHistoryModal()">✕</button>
             </div>
+            <!-- Header for Date/Duration/Name (New V0.5) -->
+            <div id="hist-meta-header" class="history-meta-box"></div>
+            
             <div id="hist-detail-content" class="admin-list-container"></div>
+            
             <div style="display: flex; gap:10px;">
                 <button class="btn-glass" onclick="app.copySingleHistory()" style="flex:1">📋 העתק סיכום</button>
                 <button class="btn-danger-text" onclick="app.deleteCurrentLog()" style="flex:1">🗑 מחק</button>
@@ -126,7 +130,7 @@
             </button>
 
             <div class="spacer"></div>
-            <div class="version-tag">Beta V0.4</div>
+            <div class="version-tag">Beta V0.5</div>
         </div>
 
         <!-- 1.5 PROGRAM SELECT -->
@@ -173,7 +177,7 @@
             <div id="history-badge" class="history-pill">--</div>
 
             <div id="input-area">
-                <!-- NEW INPUT CARDS (V0.4) -->
+                <!-- INPUT CARDS -->
                 <div id="cards-container" class="input-cards-wrapper">
                     <div class="input-card" onclick="app.openPicker('weight')">
                         <div class="card-label">משקל (<span id="unit-label-card">ק״ג</span>)</div>
@@ -202,12 +206,13 @@
                 <div class="feel-label" id="feel-text">בוינג (טוב)</div>
             </div>
 
-            <!-- REST TIMER (NEW CIRCULAR) -->
+            <!-- REST TIMER (Upgraded V0.5) -->
             <div id="rest-timer-area" class="rest-timer-box" style="display: none;">
                 <div class="circular-timer">
+                    <!-- Removed pathLength to rely on geometry (283) for accurate 60s -->
                     <svg viewBox="0 0 100 100">
                         <circle class="bg-ring" cx="50" cy="50" r="45"></circle>
-                        <circle id="rest-ring-prog" class="prog-ring" cx="50" cy="50" r="45" pathLength="100"></circle>
+                        <circle id="rest-ring-prog" class="prog-ring" cx="50" cy="50" r="45"></circle>
                     </svg>
                     <div class="timer-text" id="rest-timer-val">00:00</div>
                 </div>
