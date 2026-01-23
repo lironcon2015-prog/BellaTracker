@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>GymStart OLED V1.1</title>
+    <title>GymStart V1.2</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <link rel="stylesheet" href="style.css">
@@ -23,9 +23,9 @@
                 <div class="input-group">
                     <label>תוכנית עריכה</label>
                     <select id="admin-prog-select" class="oled-input" onchange="app.renderAdminList()">
-                        <option value="A">תוכנית A (רגליים וגב)</option>
-                        <option value="B">תוכנית B (חזה/כתף/יד)</option>
-                        <option value="FBW">תוכנית FBW</option>
+                        <option value="A">A (רגליים וגב)</option>
+                        <option value="B">B (חזה/כתף/יד)</option>
+                        <option value="FBW">FBW מלא</option>
                     </select>
                 </div>
             </div>
@@ -34,7 +34,7 @@
             
             <div class="modal-footer">
                 <button class="btn-outline" onclick="app.openBank()">+ הוסף תרגיל</button>
-                <button class="btn-primary" onclick="app.saveAdmin()">שמור שינויים</button>
+                <button class="btn-primary" onclick="app.saveAdmin()">שמור</button>
             </div>
         </div>
     </div>
@@ -97,57 +97,59 @@
 
         <!-- 1. HOME -->
         <div id="screen-home" class="screen active">
-            <div class="hero">
-                <h1 id="greeting">ברוכה הבאה</h1>
-                <p>מוכנה לאימון?</p>
-            </div>
-
-            <div class="oled-card info-card">
-                <div class="icon-box">📅</div>
-                <div>
-                    <div class="label">אימון אחרון</div>
-                    <div id="last-workout-display" class="value">טוען...</div>
+            <div class="scroll-content">
+                <div class="hero">
+                    <h1 id="greeting">ברוכה הבאה</h1>
+                    <p>מוכנה לאימון?</p>
                 </div>
+
+                <div class="oled-card info-card">
+                    <div class="icon-box">📅</div>
+                    <div>
+                        <div class="label">אימון אחרון</div>
+                        <div id="last-workout-display" class="value">טוען...</div>
+                    </div>
+                </div>
+                
+                <div class="version-tag">GymStart V1.2</div>
             </div>
 
-            <div class="spacer"></div>
-
-            <div class="home-actions">
+            <div class="fixed-footer">
                 <button class="btn-primary big-btn" onclick="app.nav('screen-program-select')">
                     התחלי אימון
                 </button>
-
+                <div style="height: 15px;"></div>
                 <button class="btn-outline" onclick="app.showHistory()">
                     היסטוריה
                 </button>
             </div>
-            
-            <div class="version-tag">OLED V1.1</div>
         </div>
 
         <!-- 1.5 PROGRAM SELECT -->
         <div id="screen-program-select" class="screen">
-            <h2 class="page-title">בחרי תוכנית</h2>
-            <div class="card-grid">
-                <div class="oled-card prog-card" onclick="app.selectProgram('A')">
-                    <div class="prog-icon">A</div>
-                    <div class="prog-content">
-                        <div class="prog-title">רגליים וגב</div>
-                        <div class="prog-desc">סקוואט, דדליפט, פולי</div>
+            <div class="scroll-content">
+                <h2 class="page-title">בחרי תוכנית</h2>
+                <div class="card-grid">
+                    <div class="oled-card prog-card" onclick="app.selectProgram('A')">
+                        <div class="prog-icon">A</div>
+                        <div class="prog-content">
+                            <div class="prog-title">רגליים וגב</div>
+                            <div class="prog-desc">סקוואט, דדליפט, פולי</div>
+                        </div>
                     </div>
-                </div>
-                <div class="oled-card prog-card" onclick="app.selectProgram('B')">
-                    <div class="prog-icon">B</div>
-                    <div class="prog-content">
-                        <div class="prog-title">חזה, כתפיים, ידיים</div>
-                        <div class="prog-desc">לחיצות, ידיים, פלאנק</div>
+                    <div class="oled-card prog-card" onclick="app.selectProgram('B')">
+                        <div class="prog-icon">B</div>
+                        <div class="prog-content">
+                            <div class="prog-title">חזה, כתפיים, ידיים</div>
+                            <div class="prog-desc">לחיצות, ידיים, פלאנק</div>
+                        </div>
                     </div>
-                </div>
-                <div class="oled-card prog-card" onclick="app.selectProgram('FBW')">
-                    <div class="prog-icon">F</div>
-                    <div class="prog-content">
-                        <div class="prog-title">FBW כל הגוף</div>
-                        <div class="prog-desc">אימון מלא וממוקד</div>
+                    <div class="oled-card prog-card" onclick="app.selectProgram('FBW')">
+                        <div class="prog-icon">F</div>
+                        <div class="prog-content">
+                            <div class="prog-title">FBW כל הגוף</div>
+                            <div class="prog-desc">אימון מלא וממוקד</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -155,10 +157,12 @@
 
         <!-- 2. OVERVIEW -->
         <div id="screen-overview" class="screen">
-            <h2 class="page-title" id="overview-title">סקירה</h2>
-            <div id="overview-list" class="simple-list"></div>
+            <div class="scroll-content">
+                <h2 class="page-title" id="overview-title">סקירה</h2>
+                <div id="overview-list" class="simple-list"></div>
+            </div>
             
-            <div class="bottom-bar">
+            <div class="fixed-footer">
                 <button class="btn-primary" onclick="app.startWorkout()">התחלי אימון ⚡</button>
             </div>
         </div>
@@ -166,113 +170,124 @@
         <!-- 3. ACTIVE EXERCISE -->
         <div id="screen-active" class="screen">
             
-            <div class="active-header">
-                <div id="set-badge" class="badge">סט 1</div>
-                <h2 id="ex-name">שם התרגיל</h2>
-                <div id="coach-note" class="note-pill"></div>
-            </div>
+            <div class="scroll-content">
+                <div class="active-header">
+                    <div id="set-badge" class="badge">סט 1</div>
+                    <h2 id="ex-name">שם התרגיל</h2>
+                    <div id="coach-note" class="note-pill"></div>
+                </div>
 
-            <div id="history-badge" class="history-pill">--</div>
+                <div id="history-badge" class="history-pill">--</div>
 
-            <div class="workspace">
-                <!-- INPUTS -->
-                <div id="cards-container" class="inputs-row">
-                    <div class="input-card">
-                        <span class="input-label">משקל (<span id="unit-label-card">ק״ג</span>)</span>
-                        <select id="select-weight" class="native-select"></select>
+                <div class="workspace">
+                    <!-- INPUTS -->
+                    <div id="cards-container" class="inputs-row">
+                        <div class="input-card">
+                            <span class="input-label">משקל (<span id="unit-label-card">ק״ג</span>)</span>
+                            <select id="select-weight" class="native-select"></select>
+                        </div>
+                        <div class="input-card">
+                            <span class="input-label">חזרות</span>
+                            <select id="select-reps" class="native-select"></select>
+                        </div>
                     </div>
-                    <div class="input-card">
-                        <span class="input-label">חזרות</span>
-                        <select id="select-reps" class="native-select"></select>
+
+                    <!-- STOPWATCH -->
+                    <div id="stopwatch-container" class="stopwatch-box" style="display: none;">
+                        <div class="sw-time" id="sw-display">00:00</div>
+                        <button id="btn-sw-toggle" class="btn-neon-play" onclick="app.toggleStopwatch()">▶</button>
+                        <div class="sw-hint">מדידת זמן לתרגיל</div>
                     </div>
                 </div>
 
-                <!-- STOPWATCH -->
-                <div id="stopwatch-container" class="stopwatch-box" style="display: none;">
-                    <div class="sw-time" id="sw-display">00:00</div>
-                    <button id="btn-sw-toggle" class="btn-neon-play" onclick="app.toggleStopwatch()">▶</button>
-                    <div class="sw-hint">מדידת זמן לתרגיל</div>
+                <!-- REST TIMER (Also in scroll area) -->
+                <div id="rest-timer-area" class="rest-box" style="display: none;">
+                    <div class="circular-timer">
+                        <svg viewBox="0 0 100 100">
+                            <circle class="bg-ring" cx="50" cy="50" r="45"></circle>
+                            <circle id="rest-ring-prog" class="prog-ring" cx="50" cy="50" r="45"></circle>
+                        </svg>
+                        <div class="timer-text" id="rest-timer-val">00:00</div>
+                    </div>
+                    <div class="rest-caption">זמן מנוחה</div>
                 </div>
             </div>
 
-            <!-- FEELING -->
-            <div class="feeling-row">
-                <button class="feel-btn easy" onclick="app.selectFeel('easy')">😌</button>
-                <button class="feel-btn good selected" onclick="app.selectFeel('good')">🙂</button>
-                <button class="feel-btn hard" onclick="app.selectFeel('hard')">🥵</button>
-            </div>
-            <div class="feel-label" id="feel-text">בינוני (טוב)</div>
-
-            <!-- REST TIMER -->
-            <div id="rest-timer-area" class="rest-box" style="display: none;">
-                <div class="circular-timer">
-                    <svg viewBox="0 0 100 100">
-                        <circle class="bg-ring" cx="50" cy="50" r="45"></circle>
-                        <circle id="rest-ring-prog" class="prog-ring" cx="50" cy="50" r="45"></circle>
-                    </svg>
-                    <div class="timer-text" id="rest-timer-val">00:00</div>
+            <!-- FIXED FOOTER (Feeling + Actions) -->
+            <div class="fixed-footer">
+                <!-- FEELING -->
+                <div class="feeling-section">
+                    <div class="feeling-row">
+                        <button class="feel-btn easy" onclick="app.selectFeel('easy')">😌</button>
+                        <button class="feel-btn good selected" onclick="app.selectFeel('good')">🙂</button>
+                        <button class="feel-btn hard" onclick="app.selectFeel('hard')">🥵</button>
+                    </div>
+                    <div class="feel-label" id="feel-text">בינוני (טוב)</div>
                 </div>
-                <div class="rest-caption">זמן מנוחה</div>
-            </div>
 
-            <div class="spacer"></div>
+                <div id="action-area">
+                    <button id="btn-finish" class="btn-primary" onclick="app.finishSet()">
+                        סיום סט
+                    </button>
 
-            <div id="action-area">
-                <button id="btn-finish" class="btn-primary" onclick="app.finishSet()">
-                    סיום סט
-                </button>
-
-                <div id="decision-buttons" style="display:none; gap:10px; width:100%;">
-                    <button class="btn-outline" onclick="app.addSet()" style="flex:1">עוד סט</button>
-                    <button class="btn-primary" onclick="app.nextExercise()" style="flex:1">תרגיל הבא</button>
+                    <div id="decision-buttons" style="display:none; gap:10px; width:100%;">
+                        <button class="btn-outline" onclick="app.addSet()" style="flex:1">עוד סט</button>
+                        <button class="btn-primary" onclick="app.nextExercise()" style="flex:1">תרגיל הבא</button>
+                    </div>
                 </div>
-            </div>
 
-            <div class="sub-actions">
-                <button class="text-link" onclick="app.deleteLastSet()">בטל סט אחרון</button>
-                <button class="text-link" onclick="app.skipExercise()">דלג תרגיל</button>
+                <div class="sub-actions">
+                    <button class="text-link" onclick="app.deleteLastSet()">בטל סט אחרון</button>
+                    <button class="text-link" onclick="app.skipExercise()">דלג תרגיל</button>
+                </div>
             </div>
         </div>
 
         <!-- 4. SUMMARY -->
         <div id="screen-summary" class="screen">
-            <div class="hero">
-                <h1>כל הכבוד!</h1>
-                <p>האימון הושלם בהצלחה</p>
-                <div id="summary-meta" class="meta-tag"></div>
+            <div class="scroll-content">
+                <div class="hero">
+                    <h1>כל הכבוד!</h1>
+                    <p>האימון הושלם בהצלחה</p>
+                    <div id="summary-meta" class="meta-tag"></div>
+                </div>
+                <div id="summary-text" class="summary-box"></div>
             </div>
-            <div id="summary-text" class="summary-box"></div>
             
-            <div class="actions-column">
+            <div class="fixed-footer">
                 <button class="btn-outline" onclick="app.copySummaryToClipboard()">העתק סיכום</button>
+                <div style="height:10px"></div>
                 <button class="btn-primary" onclick="app.saveAndHome()">שמור וסיים</button>
             </div>
         </div>
 
         <!-- 5. HISTORY -->
         <div id="screen-history" class="screen">
-            <div class="page-header">
-                <h2 class="page-title">היסטוריה</h2>
-                <div class="header-tools">
-                     <button class="btn-tool" onclick="app.exportData()">גיבוי</button>
-                     <label class="btn-tool">
-                         שחזור <input type="file" hidden onchange="app.importData(this)">
-                     </label>
+            <div class="scroll-content">
+                <div class="page-header">
+                    <h2 class="page-title">היסטוריה</h2>
+                    <div class="header-tools">
+                         <button class="btn-tool" onclick="app.exportData()">גיבוי</button>
+                         <label class="btn-tool">
+                             שחזור <input type="file" hidden onchange="app.importData(this)">
+                         </label>
+                    </div>
                 </div>
-            </div>
-            
-            <div class="bulk-tools">
-                 <button class="btn-tool-outline" onclick="app.selectAllHistory()">בחר הכל</button>
-                 <div style="display:flex; gap:10px;">
-                    <button class="btn-tool-outline" onclick="app.copySelectedHistory()">העתק</button>
-                    <button id="btn-del-selected" class="btn-tool-danger" onclick="app.deleteSelectedHistory()" disabled>מחק</button>
-                 </div>
-            </div>
+                
+                <div class="bulk-tools">
+                     <button class="btn-tool-outline" onclick="app.selectAllHistory()">בחר הכל</button>
+                     <div style="display:flex; gap:10px;">
+                        <button class="btn-tool-outline" onclick="app.copySelectedHistory()">העתק</button>
+                        <button id="btn-del-selected" class="btn-tool-danger" onclick="app.deleteSelectedHistory()" disabled>מחק</button>
+                     </div>
+                </div>
 
-            <div id="history-list" class="history-list-container"></div>
+                <div id="history-list" class="history-list-container"></div>
+            </div>
             
-            <div class="spacer"></div>
-            <button class="btn-outline" onclick="app.openAdmin()">הגדרות מאמן</button>
+            <div class="fixed-footer">
+                <button class="btn-outline" onclick="app.openAdmin()">הגדרות מאמן</button>
+            </div>
         </div>
 
     </div>
