@@ -1,6 +1,6 @@
 /**
- * GYMSTART V1.3
- * Layout Fixes, Larger Timer, Better UX
+ * GYMSTART V1.4
+ * Logic Fixes: Timers, Next Ex Preview, Routine Updates
  */
 
 const CONFIG = {
@@ -62,7 +62,8 @@ const BANK = [
     { id: 'side_plank', name: 'פלאנק צידי', unit: 'bodyweight', cat: 'core' },
     { id: 'bicycle', name: 'בטן אופניים', unit: 'bodyweight', cat: 'core' },
     { id: 'knee_raise', name: 'הרמת ברכיים', unit: 'bodyweight', cat: 'core' },
-    { id: 'russian_twist', name: 'רושן טוויסט', unit: 'kg', cat: 'core' }
+    { id: 'russian_twist', name: 'רושן טוויסט', unit: 'kg', cat: 'core' },
+    { id: 'crunches', name: 'כפיפות בטן', unit: 'bodyweight', cat: 'core' }
 ];
 
 const DEFAULT_ROUTINES = {
@@ -81,7 +82,7 @@ const DEFAULT_ROUTINES = {
         { id: 'lat_raise', name: 'הרחקה לצדדים', unit: 'kg', note: 'מרפק מוביל', target: {w:3, r:12}, cat: 'shoulders' },
         { id: 'bicep_curl', name: 'יד קדמית', unit: 'kg', note: 'ללא תנופה', target: {w:5, r:12}, cat: 'arms' },
         { id: 'tricep_pull', name: 'יד אחורית', unit: 'plates', note: 'מרפקים מקובעים', target: {w:5, r:12}, cat: 'arms' },
-        { id: 'side_plank', name: 'פלאנק צידי', unit: 'bodyweight', note: 'אגן גבוה', target: {w:0, r:45}, cat: 'core' }
+        { id: 'plank', name: 'פלאנק סטטי', unit: 'bodyweight', note: 'אגן גבוה', target: {w:0, r:45}, cat: 'core' }
     ],
     'FBW': [
         { id: 'goblet', name: 'גובלט סקוואט', unit: 'kg', note: 'רגליים', target: {w:10, r:12}, cat: 'legs' },
@@ -89,7 +90,7 @@ const DEFAULT_ROUTINES = {
         { id: 'chest_press', name: 'לחיצת חזה', unit: 'kg', note: 'חזה', target: {w:7, r:12}, cat: 'chest' },
         { id: 'cable_row', name: 'חתירה בכבל', unit: 'plates', note: 'גב', target: {w:6, r:12}, cat: 'back' },
         { id: 'shoulder_press', name: 'לחיצת כתפיים', unit: 'kg', note: 'כתפיים', target: {w:4, r:12}, cat: 'shoulders' },
-        { id: 'plank', name: 'פלאנק סטטי', unit: 'bodyweight', note: 'בטן', target: {w:0, r:45}, cat: 'core' }
+        { id: 'crunches', name: 'כפיפות בטן', unit: 'bodyweight', note: 'בטן', target: {w:0, r:20}, cat: 'core' }
     ]
 };
 
@@ -257,6 +258,7 @@ const app = {
         this.state.active.feel = 'good';
         this.updateFeelUI();
         document.getElementById('decision-buttons').style.display = 'none';
+        document.getElementById('next-ex-preview').style.display = 'none';
         document.getElementById('btn-finish').style.display = 'flex';
         document.getElementById('rest-timer-area').style.display = 'none';
         
@@ -289,7 +291,8 @@ const app = {
         selW.onchange = (e) => this.state.active.inputW = Number(e.target.value);
 
         let rOpts = [];
-        const maxReps = ex.cat === 'core' ? 30 : 20;
+        // Max reps logic increased for core
+        const maxReps = ex.cat === 'core' ? 40 : 20;
         for(let i=1; i<=maxReps; i++) rOpts.push(i);
 
         selR.innerHTML = '';
@@ -381,9 +384,11 @@ const app = {
         }
         exLog.sets.push({ w, r, feel: this.state.active.feel });
 
+        // Always start timer logic in background
         this.startRestTimer();
 
         if (this.state.active.setIdx < 3) {
+            // Normal Set
             this.state.active.setIdx++;
             document.getElementById('set-badge').innerText = `סט ${this.state.active.setIdx}`;
             this.state.active.feel = 'good';
@@ -393,8 +398,18 @@ const app = {
                 document.getElementById('sw-display').innerText = "00:00";
             }
         } else {
+            // Decision Time (Set 3 finished)
             document.getElementById('btn-finish').style.display = 'none';
             document.getElementById('decision-buttons').style.display = 'flex';
+            
+            // HIDE Timer visual
+            document.getElementById('rest-timer-area').style.display = 'none';
+
+            // SHOW Next Exercise Name
+            const nextEx = prog[this.state.active.exIdx + 1];
+            const nextEl = document.getElementById('next-ex-preview');
+            nextEl.innerText = nextEx ? `הבא בתור: ${nextEx.name}` : "הבא בתור: סיום אימון";
+            nextEl.style.display = 'block';
         }
     },
 
@@ -403,14 +418,14 @@ const app = {
         const area = document.getElementById('rest-timer-area');
         const disp = document.getElementById('rest-timer-val');
         const ring = document.getElementById('rest-ring-prog');
-        area.style.display = 'flex';
         
+        area.style.display = 'flex';
         // Scroll to timer so user sees it
         area.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
         let sec = 0;
         disp.innerText = "00:00";
-        const MAX_OFFSET = 408; // Updated for radius 65 (2 * PI * 65)
+        const MAX_OFFSET = 408; // 2 * PI * 65
         ring.style.strokeDashoffset = MAX_OFFSET; 
         
         this.state.active.restInterval = setInterval(() => {
@@ -442,9 +457,18 @@ const app = {
     addSet: function() {
         this.state.active.setIdx++;
         document.getElementById('set-badge').innerText = `סט ${this.state.active.setIdx}`;
+        
+        // Hide decisions
         document.getElementById('decision-buttons').style.display = 'none';
+        document.getElementById('next-ex-preview').style.display = 'none';
+        
+        // Show Finish
         document.getElementById('btn-finish').style.display = 'flex';
-        this.stopRestTimer();
+        
+        // Show Timer again (resume visual)
+        document.getElementById('rest-timer-area').style.display = 'flex';
+        document.getElementById('rest-timer-area').scrollIntoView({ behavior: 'smooth', block: 'center' });
+
         if(this.state.active.isStopwatch) {
             this.state.active.stopwatchVal = 0;
             document.getElementById('sw-display').innerText = "00:00";
@@ -461,6 +485,7 @@ const app = {
                 this.state.active.setIdx--;
                 document.getElementById('set-badge').innerText = `סט ${this.state.active.setIdx}`;
                 document.getElementById('decision-buttons').style.display = 'none';
+                document.getElementById('next-ex-preview').style.display = 'none';
                 document.getElementById('btn-finish').style.display = 'flex';
             }
         }
