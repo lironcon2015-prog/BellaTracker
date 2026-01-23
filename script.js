@@ -1,30 +1,35 @@
 /**
- * GYMPRO START - גרסה 2.0 (Polished Flow)
- * לוגיקה: מסך אחד, טיימר מובנה, Seed Data
+ * GYMSTART BETA V0.1
+ * Stable Architecture: Global 'app' object, try-catch safety, namespaced storage.
  */
 
-// --- DATA & CONFIG ---
+// --- CONFIG & DATA ---
+const CONFIG = {
+    STORAGE_KEY_ROUTINE: 'gymstart_beta_01_routine',
+    STORAGE_KEY_HISTORY: 'gymstart_beta_01_history',
+    STORAGE_KEY_SEED:    'gymstart_beta_01_seeded'
+};
 
-const EXERCISE_BANK = [
+const BANK = [
     { id: 'goblet', name: 'סקוואט עם משקולת (גובלט)', unit: 'kg', step: 0.5 },
     { id: 'chest_press', name: 'לחיצת חזה עם משקולות', unit: 'kg', step: 0.5 },
     { id: 'rdl', name: 'דדליפט רומני (משקולות)', unit: 'kg', step: 0.5 },
     { id: 'lat_pull', name: 'משיכה בפולי עליון', unit: 'plates', step: 1 },
     { id: 'shoulder', name: 'לחיצת כתפיים בישיבה', unit: 'kg', step: 0.5 },
     { id: 'row', name: 'חתירה בפולי תחתון', unit: 'plates', step: 1 },
-    { id: 'plank', name: 'פלאנק צידי (בטן)', unit: 'bodyweight', step: 5 },
-    { id: 'bicep', name: 'כפיפת מרפקים (יד קדמית)', unit: 'kg', step: 0.5 },
+    { id: 'side_plank', name: 'פלאנק צידי (בטן)', unit: 'bodyweight', step: 5 },
+    { id: 'bicep', name: 'כפיפת מרפקים (יד)', unit: 'kg', step: 0.5 },
     { id: 'tricep', name: 'פשיטת מרפקים (פולי)', unit: 'plates', step: 1 }
 ];
 
 const DEFAULT_ROUTINE = [
-    { id: 'goblet', name: 'סקוואט עם משקולת (גובלט)', unit: 'kg', note: 'גב זקוף, עקבים ברצפה' },
-    { id: 'chest_press', name: 'לחיצת חזה עם משקולות', unit: 'kg', note: 'להוריד לאט, לעלות מהר' },
-    { id: 'rdl', name: 'דדליפט רומני', unit: 'kg', note: 'ברכיים כפופות מעט, גב ישר' },
-    { id: 'lat_pull', name: 'משיכה בפולי עליון', unit: 'plates', note: 'למשוך לחזה העליון' },
-    { id: 'shoulder', name: 'לחיצת כתפיים', unit: 'kg', note: 'בלי להקשית את הגב' },
-    { id: 'row', name: 'חתירה בפולי תחתון', unit: 'plates', note: 'לכווץ שכמות בסוף' },
-    { id: 'plank', name: 'פלאנק צידי', unit: 'bodyweight', note: 'להחזיק חזק' }
+    { id: 'goblet', name: 'סקוואט עם משקולת (גובלט)', unit: 'kg', note: 'גב זקוף, עקבים בקרקע' },
+    { id: 'chest_press', name: 'לחיצת חזה עם משקולות', unit: 'kg', note: 'לשמור על יציבות' },
+    { id: 'rdl', name: 'דדליפט רומני', unit: 'kg', note: 'ירידה איטית עד הברך' },
+    { id: 'lat_pull', name: 'משיכה בפולי עליון', unit: 'plates', note: 'למשוך לחזה' },
+    { id: 'shoulder', name: 'לחיצת כתפיים', unit: 'kg', note: 'בלי להקשית גב' },
+    { id: 'row', name: 'חתירה בפולי תחתון', unit: 'plates', note: 'מרפקים צמודים' },
+    { id: 'side_plank', name: 'פלאנק צידי', unit: 'bodyweight', note: 'אגן גבוה' }
 ];
 
 const SEED_DATA = {
@@ -34,365 +39,434 @@ const SEED_DATA = {
     'lat_pull': { w: 6, r: 12 },
     'shoulder': { w: 4, r: 12 },
     'row': { w: 6, r: 12 },
-    'plank': { w: 0, r: 45 }
+    'side_plank': { w: 0, r: 45 }
 };
 
-// --- STATE ---
-let state = {
-    routine: [],
-    history: [],
-    active: {
-        startTime: 0,
-        exIdx: 0,
-        setIdx: 1, // 1-based for display
-        log: [], // Array of sets for current workout
-        currentSetRating: null,
-        timerInterval: null,
-        timeLeft: 0
-    }
-};
-
-// --- STORAGE MANAGER ---
-const DB = {
-    save() {
-        localStorage.setItem('gymstart_routine', JSON.stringify(state.routine));
-        localStorage.setItem('gymstart_history', JSON.stringify(state.history));
+// --- APP LOGIC CONTAINER ---
+const app = {
+    state: {
+        routine: [],
+        history: [],
+        active: {
+            on: false,
+            exIdx: 0,
+            setIdx: 1,
+            log: [], // { id, name, sets: [{w, r, feel}] }
+            timer: null,
+            timeLeft: 0,
+            currentFeel: null
+        }
     },
-    load() {
-        const r = localStorage.getItem('gymstart_routine');
-        state.routine = r ? JSON.parse(r) : JSON.parse(JSON.stringify(DEFAULT_ROUTINE));
+
+    // 1. INITIALIZATION
+    init: function() {
+        try {
+            console.log("App initializing...");
+            this.loadData();
+            this.renderHome();
+            this.nav('screen-home');
+        } catch (e) {
+            alert("שגיאת אתחול: " + e.message);
+            localStorage.clear(); // Emergency reset
+            location.reload();
+        }
+    },
+
+    loadData: function() {
+        const r = localStorage.getItem(CONFIG.STORAGE_KEY_ROUTINE);
+        const h = localStorage.getItem(CONFIG.STORAGE_KEY_HISTORY);
+        const s = localStorage.getItem(CONFIG.STORAGE_KEY_SEED);
+
+        if (r) this.state.routine = JSON.parse(r);
+        else this.state.routine = JSON.parse(JSON.stringify(DEFAULT_ROUTINE));
+
+        if (h) this.state.history = JSON.parse(h);
+        else this.state.history = [];
+
+        // Check Seed
+        if (!s) {
+            // Apply Seed
+            localStorage.setItem(CONFIG.STORAGE_KEY_SEED, 'true');
+            // We don't push seed to history array to keep chart clean, 
+            // but we use SEED_DATA object as fallback lookup.
+        }
+    },
+
+    saveData: function() {
+        localStorage.setItem(CONFIG.STORAGE_KEY_ROUTINE, JSON.stringify(this.state.routine));
+        localStorage.setItem(CONFIG.STORAGE_KEY_HISTORY, JSON.stringify(this.state.history));
+    },
+
+    // 2. NAVIGATION
+    nav: function(screenId) {
+        document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+        document.getElementById(screenId).classList.add('active');
         
-        const h = localStorage.getItem('gymstart_history');
-        state.history = h ? JSON.parse(h) : [];
+        // Navbar Logic
+        const backBtn = document.getElementById('nav-back');
+        if (screenId === 'screen-home') backBtn.style.visibility = 'hidden';
+        else backBtn.style.visibility = 'visible';
+
+        // Scroll top
+        window.scrollTo(0, 0);
     },
-    getLastLog(exId) {
-        // First check real history
-        for (let i = state.history.length - 1; i >= 0; i--) {
-            const session = state.history[i];
+
+    goBack: function() {
+        const active = document.querySelector('.screen.active').id;
+        if (active === 'screen-active') {
+            if (confirm("לצאת מהאימון?")) {
+                this.stopTimer();
+                this.nav('screen-overview');
+            }
+        } else {
+            this.nav('screen-home');
+        }
+    },
+
+    // 3. HOME & OVERVIEW
+    renderHome: function() {
+        const lastEl = document.getElementById('last-workout-display');
+        if (this.state.history.length > 0) {
+            const last = this.state.history[this.state.history.length - 1];
+            lastEl.innerText = last.date;
+        } else {
+            lastEl.innerText = "טרם בוצע";
+        }
+    },
+
+    startFlow: function() {
+        this.renderOverview();
+        this.nav('screen-overview');
+    },
+
+    renderOverview: function() {
+        const list = document.getElementById('overview-list');
+        list.innerHTML = '';
+        this.state.routine.forEach((ex, i) => {
+            const unit = ex.unit === 'plates' ? 'פלטות' : (ex.unit === 'bodyweight' ? 'משקל גוף' : 'ק״ג');
+            list.innerHTML += `
+                <div class="list-item">
+                    <span style="font-weight:600">${i+1}. ${ex.name}</span>
+                    <span style="color:#888; font-size:0.85rem">${unit}</span>
+                </div>
+            `;
+        });
+    },
+
+    // 4. ACTIVE WORKOUT
+    startWorkout: function() {
+        this.state.active = {
+            on: true,
+            exIdx: 0,
+            setIdx: 1,
+            log: [],
+            timer: null,
+            timeLeft: 0,
+            currentFeel: null
+        };
+        this.loadActiveExercise();
+        this.nav('screen-active');
+    },
+
+    loadActiveExercise: function() {
+        const ex = this.state.routine[this.state.active.exIdx];
+        
+        // UI Text
+        document.getElementById('ex-name').innerText = ex.name;
+        document.getElementById('set-badge').innerText = `סט ${this.state.active.setIdx}`;
+        
+        const noteEl = document.getElementById('coach-note');
+        if (ex.note) {
+            noteEl.style.display = 'inline-block';
+            noteEl.innerText = "💡 " + ex.note;
+        } else {
+            noteEl.style.display = 'none';
+        }
+
+        // Unit Label
+        const uLabel = ex.unit === 'plates' ? 'פלטות' : (ex.unit === 'bodyweight' ? '' : 'ק״ג');
+        document.getElementById('unit-label').innerText = uLabel || 'יחידות';
+
+        // Lookup History (Last logged OR Seed)
+        const lastLog = this.getLastLog(ex.id);
+        const histBadge = document.getElementById('history-badge');
+        
+        if (lastLog) {
+            const rTxt = ex.unit === 'bodyweight' ? 'שניות' : 'חזרות';
+            histBadge.innerText = `הישג קודם: ${lastLog.w}${uLabel} | ${lastLog.r} ${rTxt}`;
+            // Set defaults
+            document.getElementById('val-weight').innerText = lastLog.w;
+            document.getElementById('val-reps').innerText = lastLog.r;
+        } else {
+            histBadge.innerText = "תרגיל חדש! בהצלחה";
+            // Default logic
+            const defW = ex.unit === 'plates' ? 3 : 5;
+            document.getElementById('val-weight').innerText = ex.unit === 'bodyweight' ? 0 : defW;
+            document.getElementById('val-reps').innerText = ex.unit === 'bodyweight' ? 30 : 12;
+        }
+
+        this.resetSetUI();
+    },
+
+    getLastLog: function(exId) {
+        // 1. Check History (Reverse)
+        for (let i = this.state.history.length - 1; i >= 0; i--) {
+            const session = this.state.history[i];
             const exData = session.data.find(e => e.id === exId);
             if (exData && exData.sets.length > 0) {
-                return exData.sets[exData.sets.length - 1]; // Return last set
+                return exData.sets[exData.sets.length - 1];
             }
         }
-        // Fallback to seed
+        // 2. Fallback to Seed
         return SEED_DATA[exId] || null;
+    },
+
+    resetSetUI: function() {
+        this.state.active.currentFeel = null;
+        document.querySelectorAll('.feel-btn').forEach(b => b.classList.remove('selected'));
+        document.getElementById('action-area').style.display = 'block';
+        document.getElementById('btn-finish').style.display = 'flex';
+        document.getElementById('timer-ui').style.display = 'none';
+    },
+
+    // INPUTS
+    adjustWeight: function(dir) {
+        const ex = this.state.routine[this.state.active.exIdx];
+        if (ex.unit === 'bodyweight') return;
+        
+        const el = document.getElementById('val-weight');
+        let v = parseFloat(el.innerText);
+        let step = ex.unit === 'plates' ? 1 : 0.5;
+        
+        v += (dir * step);
+        if (v < 0) v = 0;
+        el.innerText = v;
+    },
+
+    adjustReps: function(dir) {
+        const el = document.getElementById('val-reps');
+        let v = parseInt(el.innerText);
+        let step = 1;
+        // Larger steps for duration (plank)
+        const ex = this.state.routine[this.state.active.exIdx];
+        if (ex.unit === 'bodyweight') step = 5;
+
+        v += (dir * step);
+        if (v < 1) v = 0;
+        el.innerText = v;
+    },
+
+    selectFeel: function(feel) {
+        this.state.active.currentFeel = feel;
+        document.querySelectorAll('.feel-btn').forEach(b => b.classList.remove('selected'));
+        document.querySelector(`.feel-btn.${feel}`).classList.add('selected');
+    },
+
+    // SET LOGIC
+    finishSet: function() {
+        if (!this.state.active.currentFeel) {
+            alert("איך הרגיש הסט?");
+            return;
+        }
+
+        const ex = this.state.routine[this.state.active.exIdx];
+        const w = parseFloat(document.getElementById('val-weight').innerText);
+        const r = parseInt(document.getElementById('val-reps').innerText);
+
+        // Find or Create Ex Log
+        let exLog = this.state.active.log.find(l => l.id === ex.id);
+        if (!exLog) {
+            exLog = { id: ex.id, name: ex.name, sets: [] };
+            this.state.active.log.push(exLog);
+        }
+
+        exLog.sets.push({ w: w, r: r, feel: this.state.active.currentFeel });
+
+        // Trigger Timer
+        this.startTimer(90); // 90s rest
+    },
+
+    deleteLastSet: function() {
+        const ex = this.state.routine[this.state.active.exIdx];
+        let exLog = this.state.active.log.find(l => l.id === ex.id);
+        
+        if (exLog && exLog.sets.length > 0) {
+            if (confirm("למחוק את הסט האחרון?")) {
+                exLog.sets.pop();
+                this.state.active.setIdx--;
+                if (this.state.active.setIdx < 1) this.state.active.setIdx = 1;
+                document.getElementById('set-badge').innerText = `סט ${this.state.active.setIdx}`;
+                this.stopTimer();
+                this.resetSetUI();
+            }
+        } else {
+            alert("אין סטים למחיקה");
+        }
+    },
+
+    nextExercise: function() {
+        const ex = this.state.routine[this.state.active.exIdx];
+        let exLog = this.state.active.log.find(l => l.id === ex.id);
+        
+        if (!exLog || exLog.sets.length === 0) {
+            if (!confirm("לא בוצעו סטים. לדלג?")) return;
+        }
+
+        this.stopTimer();
+
+        if (this.state.active.exIdx < this.state.routine.length - 1) {
+            this.state.active.exIdx++;
+            this.state.active.setIdx = 1;
+            this.loadActiveExercise();
+        } else {
+            this.finishWorkout();
+        }
+    },
+
+    // TIMER
+    startTimer: function(sec) {
+        document.getElementById('btn-finish').style.display = 'none';
+        document.getElementById('timer-ui').style.display = 'flex';
+        
+        this.state.active.timeLeft = sec;
+        const total = 90; // for circle calc
+        const circle = document.getElementById('timer-bar');
+        const text = document.getElementById('timer-text');
+        
+        this.stopTimer(); // safety
+        
+        this.state.active.timer = setInterval(() => {
+            this.state.active.timeLeft--;
+            
+            // Text
+            let m = Math.floor(this.state.active.timeLeft / 60);
+            let s = this.state.active.timeLeft % 60;
+            text.innerText = `${m}:${s < 10 ? '0'+s : s}`;
+            
+            // Circle
+            let pct = this.state.active.timeLeft / total;
+            circle.style.strokeDashoffset = 283 - (pct * 283);
+
+            if (this.state.active.timeLeft <= 0) {
+                this.skipRest();
+                if(navigator.vibrate) navigator.vibrate([200, 100, 200]);
+            }
+        }, 1000);
+    },
+
+    stopTimer: function() {
+        if (this.state.active.timer) clearInterval(this.state.active.timer);
+    },
+
+    skipRest: function() {
+        this.stopTimer();
+        this.state.active.setIdx++;
+        document.getElementById('set-badge').innerText = `סט ${this.state.active.setIdx}`;
+        this.resetSetUI();
+    },
+
+    addTime: function() {
+        this.state.active.timeLeft += 30;
+    },
+
+    // 5. SUMMARY
+    finishWorkout: function() {
+        const textBox = document.getElementById('summary-text');
+        let txt = "";
+        
+        this.state.active.log.forEach(ex => {
+            if(ex.sets.length > 0) {
+                txt += `✅ ${ex.name}\n`;
+                ex.sets.forEach((s, i) => {
+                    txt += `   סט ${i+1}: ${s.w} × ${s.r} (${s.feel})\n`;
+                });
+                txt += "\n";
+            }
+        });
+
+        if(!txt) txt = "לא תועדו תרגילים.";
+        textBox.innerText = txt;
+        this.nav('screen-summary');
+    },
+
+    saveAndHome: function() {
+        if (this.state.active.log.length > 0) {
+            const entry = {
+                date: new Date().toLocaleDateString('he-IL'),
+                timestamp: Date.now(),
+                data: this.state.active.log
+            };
+            this.state.history.push(entry);
+            this.saveData();
+        }
+        this.renderHome();
+        this.nav('screen-home');
+    },
+
+    // 6. HISTORY & ADMIN
+    showHistory: function() {
+        const list = document.getElementById('history-list');
+        list.innerHTML = '';
+        [...this.state.history].reverse().forEach(h => {
+            const count = h.data.length;
+            list.innerHTML += `
+                <div class="glass-card" style="padding:15px; margin-bottom:10px;">
+                    <div style="font-weight:700; color:var(--primary)">${h.date}</div>
+                    <div style="font-size:0.85rem; color:#aaa">${count} תרגילים בוצעו</div>
+                </div>
+            `;
+        });
+        this.nav('screen-history');
+    },
+
+    openAdmin: function() {
+        const list = document.getElementById('admin-list');
+        list.innerHTML = '';
+        this.state.routine.forEach((ex, i) => {
+            list.innerHTML += `
+                <div style="display:flex; justify-content:space-between; padding:10px; background:rgba(255,255,255,0.05); border-radius:10px;">
+                    <span>${i+1}. ${ex.name}</span>
+                    <button onclick="app.removeEx(${i})" style="color:red;background:none;border:none;">🗑</button>
+                </div>
+            `;
+        });
+        document.getElementById('admin-modal').style.display = 'flex';
+    },
+
+    closeAdmin: function() {
+        document.getElementById('admin-modal').style.display = 'none';
+    },
+
+    addExerciseFromBank: function() {
+        let promptTxt = "בחר מספר תרגיל:\n";
+        BANK.forEach((ex, i) => promptTxt += `${i+1}. ${ex.name}\n`);
+        
+        const res = prompt(promptTxt);
+        const idx = parseInt(res) - 1;
+        
+        if (BANK[idx]) {
+            const newEx = JSON.parse(JSON.stringify(BANK[idx]));
+            newEx.note = prompt("הערת מאמן (אופציונלי):");
+            this.state.routine.push(newEx);
+            this.openAdmin(); // refresh
+        }
+    },
+
+    removeEx: function(i) {
+        if(confirm("למחוק?")) {
+            this.state.routine.splice(i, 1);
+            this.openAdmin();
+        }
+    },
+
+    saveAdmin: function() {
+        this.saveData();
+        this.closeAdmin();
+        alert("התוכנית עודכנה!");
     }
 };
 
-// --- INIT ---
+// Start the engine safely
 window.addEventListener('DOMContentLoaded', () => {
-    DB.load();
-    updateHomeUI();
+    app.init();
 });
-
-// --- NAVIGATION ---
-function navigate(id) {
-    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-    document.getElementById(id).classList.add('active');
-    
-    // Header logic
-    const backBtn = document.getElementById('nav-back');
-    backBtn.style.visibility = id === 'ui-home' ? 'hidden' : 'visible';
-    
-    // Reset timer if leaving active
-    if (id !== 'ui-active') stopTimer();
-}
-
-function handleBack() {
-    const active = document.querySelector('.screen.active').id;
-    if (active === 'ui-active') {
-        if(confirm('לצאת מהאימון?')) navigate('ui-overview');
-    } else {
-        navigate('ui-home');
-    }
-}
-
-// --- WORKOUT FLOW ---
-
-function startSession() {
-    renderOverview();
-    navigate('ui-overview');
-}
-
-function renderOverview() {
-    const list = document.getElementById('overview-list');
-    list.innerHTML = '';
-    state.routine.forEach((ex, i) => {
-        list.innerHTML += `
-            <div class="workout-item">
-                <span style="font-weight:600">${i+1}. ${ex.name}</span>
-                <span style="color:var(--text-dim); font-size:0.8rem">${ex.unit === 'plates' ? 'פלטות' : (ex.unit==='bodyweight'?'גוף':'ק״ג')}</span>
-            </div>
-        `;
-    });
-}
-
-function launchWorkout() {
-    state.active = {
-        startTime: Date.now(),
-        exIdx: 0,
-        setIdx: 1,
-        log: [],
-        currentSetRating: null,
-        timerInterval: null
-    };
-    loadActiveExercise();
-    navigate('ui-active');
-}
-
-function loadActiveExercise() {
-    const ex = state.routine[state.active.exIdx];
-    
-    // UI Updates
-    document.getElementById('active-ex-name').innerText = ex.name;
-    document.getElementById('set-badge').innerText = `סט ${state.active.setIdx}`;
-    
-    // Note
-    const noteEl = document.getElementById('active-note');
-    if (ex.note) {
-        noteEl.style.display = 'inline-block';
-        noteEl.innerText = "💡 " + ex.note;
-    } else {
-        noteEl.style.display = 'none';
-    }
-
-    // History
-    const last = DB.getLastLog(ex.id);
-    const histEl = document.getElementById('history-pill');
-    if (last) {
-        const unit = ex.unit === 'plates' ? 'פלטות' : (ex.unit === 'bodyweight' ? '' : 'ק״ג');
-        histEl.innerText = `הישג קודם: ${last.w}${unit} × ${last.r}`;
-        
-        // Auto-fill inputs
-        updatePicker('weight', last.w);
-        updatePicker('reps', last.r);
-    } else {
-        histEl.innerText = "תרגיל חדש! בהצלחה";
-        updatePicker('weight', ex.unit === 'plates' ? 3 : 5);
-        updatePicker('reps', 12);
-    }
-
-    // Unit Label
-    document.getElementById('unit-label').innerText = ex.unit === 'plates' ? 'פלטות' : (ex.unit === 'bodyweight' ? 'גוף' : 'ק״ג');
-
-    // Reset State for Set
-    resetSetUI();
-}
-
-function resetSetUI() {
-    state.active.currentSetRating = null;
-    document.querySelectorAll('.feel-btn').forEach(b => b.classList.remove('selected'));
-    document.getElementById('timer-area').style.display = 'none';
-    document.getElementById('btn-finish-set').style.display = 'flex';
-}
-
-// --- INPUT LOGIC ---
-function updatePicker(type, val) {
-    document.getElementById(`val-${type}`).innerText = val;
-}
-
-function adjustWeight(delta) {
-    const ex = state.routine[state.active.exIdx];
-    const el = document.getElementById('val-weight');
-    let val = parseFloat(el.innerText);
-    let step = ex.unit === 'plates' ? 1 : 0.5;
-    if (ex.unit === 'bodyweight') return; // Locked
-
-    val += (delta * step);
-    if (val < 0) val = 0;
-    el.innerText = val;
-}
-
-function adjustReps(delta) {
-    const el = document.getElementById('val-reps');
-    let val = parseInt(el.innerText);
-    val += delta;
-    if (val < 1) val = 1;
-    el.innerText = val;
-}
-
-function selectFeeling(rating) {
-    state.active.currentSetRating = rating;
-    document.querySelectorAll('.feel-btn').forEach(b => b.classList.remove('selected'));
-    document.getElementById(`btn-${rating}`).classList.add('selected');
-}
-
-// --- SET COMPLETION & TIMER ---
-
-function finishSet() {
-    // Validation
-    if (!state.active.currentSetRating) {
-        alert("איך הרגיש הסט? (בחר רגשון)");
-        return;
-    }
-
-    // Log Logic
-    const ex = state.routine[state.active.exIdx];
-    const w = parseFloat(document.getElementById('val-weight').innerText);
-    const r = parseInt(document.getElementById('val-reps').innerText);
-    
-    // Find or create log entry for this exercise
-    let exLog = state.active.log.find(l => l.id === ex.id);
-    if (!exLog) {
-        exLog = { id: ex.id, name: ex.name, sets: [] };
-        state.active.log.push(exLog);
-    }
-    
-    exLog.sets.push({ w, r, rating: state.active.currentSetRating });
-
-    // UI Feedback
-    if (navigator.vibrate) navigator.vibrate(50);
-    
-    // Switch to Timer
-    document.getElementById('btn-finish-set').style.display = 'none';
-    startTimer(90); // 90s default rest
-}
-
-function startTimer(seconds) {
-    state.active.timeLeft = seconds;
-    const timerArea = document.getElementById('timer-area');
-    timerArea.style.display = 'flex';
-    
-    const circle = document.getElementById('timer-progress');
-    const text = document.getElementById('timer-text');
-    const fullDash = 283;
-    
-    clearInterval(state.active.timerInterval);
-    
-    state.active.timerInterval = setInterval(() => {
-        state.active.timeLeft--;
-        
-        // Update Text
-        const m = Math.floor(state.active.timeLeft / 60);
-        const s = state.active.timeLeft % 60;
-        text.innerText = `${m}:${s < 10 ? '0'+s : s}`;
-        
-        // Update Circle
-        const fraction = state.active.timeLeft / 90; // Relative to 90s base
-        circle.style.strokeDashoffset = fullDash - (fraction * fullDash);
-        
-        if (state.active.timeLeft <= 0) {
-            skipRest(); // Auto finish
-            if(navigator.vibrate) navigator.vibrate([100,50,100]);
-        }
-    }, 1000);
-}
-
-function addTime(secs) {
-    state.active.timeLeft += secs;
-}
-
-function skipRest() {
-    stopTimer();
-    // Move to next set logic
-    state.active.setIdx++;
-    document.getElementById('set-badge').innerText = `סט ${state.active.setIdx}`;
-    resetSetUI();
-    // Scroll top
-    document.getElementById('ui-active').scrollTo(0,0);
-}
-
-function stopTimer() {
-    clearInterval(state.active.timerInterval);
-}
-
-// --- NAVIGATION BETWEEN EXERCISES ---
-
-function deleteCurrentSet() {
-    const exId = state.routine[state.active.exIdx].id;
-    const exLog = state.active.log.find(l => l.id === exId);
-    if (exLog && exLog.sets.length > 0) {
-        if(confirm('למחוק את הסט האחרון שביצעת?')) {
-            exLog.sets.pop();
-            state.active.setIdx--;
-            if (state.active.setIdx < 1) state.active.setIdx = 1;
-            document.getElementById('set-badge').innerText = `סט ${state.active.setIdx}`;
-            stopTimer();
-            resetSetUI();
-        }
-    } else {
-        alert("אין סטים למחיקה בתרגיל זה");
-    }
-}
-
-function nextExerciseManual() {
-    const ex = state.routine[state.active.exIdx];
-    const log = state.active.log.find(l => l.id === ex.id);
-    
-    // Warning if no sets done
-    if (!log || log.sets.length === 0) {
-        if(!confirm("לא ביצעת אף סט. לדלג על התרגיל?")) return;
-    }
-
-    stopTimer();
-
-    // Check if next exists
-    if (state.active.exIdx < state.routine.length - 1) {
-        state.active.exIdx++;
-        state.active.setIdx = 1;
-        loadActiveExercise();
-    } else {
-        finishWorkout();
-    }
-}
-
-function finishWorkout() {
-    // Render Summary
-    const sumEl = document.getElementById('summary-content');
-    let text = "";
-    
-    state.active.log.forEach(ex => {
-        if (ex.sets.length > 0) {
-            text += `✅ ${ex.name}\n`;
-            ex.sets.forEach((s, i) => {
-                text += `   סט ${i+1}: ${s.w} × ${s.r}\n`;
-            });
-            text += "\n";
-        }
-    });
-    
-    if (!text) text = "לא בוצעו תרגילים.";
-    sumEl.innerText = text;
-    navigate('ui-summary');
-}
-
-function saveAndExit() {
-    if (state.active.log.length > 0) {
-        state.history.push({
-            date: new Date().toLocaleDateString('he-IL'),
-            timestamp: Date.now(),
-            data: state.active.log
-        });
-        DB.save();
-    }
-    updateHomeUI();
-    navigate('ui-home');
-}
-
-// --- HOME & ADMIN UTILS ---
-
-function updateHomeUI() {
-    if (state.history.length > 0) {
-        const last = state.history[state.history.length-1];
-        document.getElementById('last-workout-date').innerText = last.date;
-    }
-    renderHistory();
-}
-
-function renderHistory() {
-    const list = document.getElementById('history-list');
-    list.innerHTML = '';
-    [...state.history].reverse().forEach(h => {
-        list.innerHTML += `
-            <div class="glass-card" style="padding:15px">
-                <div style="font-weight:700; color:var(--primary)">${h.date}</div>
-                <div style="font-size:0.85rem; color:#bbb">${h.data.length} תרגילים בוצעו</div>
-            </div>
-        `;
-    });
-}
-
-// ADMIN Logic
-function openAdmin() {
-    renderAdminList();
-    document.getEle
