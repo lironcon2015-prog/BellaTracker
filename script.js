@@ -1,9 +1,8 @@
 /**
- * GYMSTART ELITE V0.9
- * Restored Usability & Visual Balance
+ * GYMSTART OLED V1.0
+ * True Black, Neon, Performance
  */
 
-// --- CONFIG ---
 const CONFIG = {
     KEYS: {
         ROUTINES: 'gymstart_beta_02_routines',
@@ -12,7 +11,6 @@ const CONFIG = {
     }
 };
 
-// --- DATA ---
 const BANK = [
     { id: 'goblet', name: 'גובלט סקוואט', unit: 'kg', cat: 'legs' },
     { id: 'leg_press', name: 'לחיצת רגליים', unit: 'kg', cat: 'legs' },
@@ -508,9 +506,9 @@ const app = {
                     <div style="flex:1" onclick="app.showHistoryDetail(${realIdx})">
                         <div style="display:flex; justify-content:space-between">
                             <span style="font-weight:700; color:var(--text)">${h.date}</span>
-                            <span class="badge" style="background:#444; color:white">${h.program || '-'}</span>
+                            <span class="badge" style="background:#333; color:white">${h.program || '-'}</span>
                         </div>
-                        <div style="font-size:0.85rem; color:var(--text-dim); margin-top:5px">
+                        <div style="font-size:0.85rem; color:var(--text-sec); margin-top:5px">
                             ${h.data.length} תרגילים • ${h.duration||'?'} דק'
                         </div>
                     </div>
@@ -590,12 +588,12 @@ const app = {
         const content = document.getElementById('hist-detail-content');
         let html = '';
         item.data.forEach(ex => {
-            html += `<div style="background:rgba(255,255,255,0.05); padding:10px; border-radius:12px; margin-bottom:10px;">
+            html += `<div style="background:var(--bg-card); padding:15px; border-radius:12px; margin-bottom:10px; border:1px solid #222;">
                 <div style="font-weight:700; color:var(--primary)">${ex.name}</div>`;
             const isTime = (ex.id.includes('plank') || ex.id === 'wall_sit');
             ex.sets.forEach((s, si) => {
                 let valStr = isTime ? `${s.r} שנ׳` : `${s.w > 0 ? s.w+'ק״ג ' : ''}${s.r}`;
-                html += `<div style="display:flex; justify-content:space-between; font-size:0.9rem; margin-top:4px; border-bottom:1px dashed #444; padding-bottom:2px">
+                html += `<div style="display:flex; justify-content:space-between; font-size:0.9rem; margin-top:5px; border-bottom:1px dashed #333; padding-bottom:5px">
                     <span>סט ${si+1}</span>
                     <span>${valStr}</span>
                 </div>`;
