@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>GymStart Beta V0.5</title>
+    <title>GymStart Beta V0.6</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="stylesheet" href="style.css">
@@ -15,19 +15,6 @@
     <div class="bg-orb orb-1"></div>
     <div class="bg-orb orb-2"></div>
     <div class="glass-overlay"></div>
-
-    <!-- PICKER MODAL (V0.5 - Centered Style) -->
-    <div id="picker-modal" class="modal-wrapper" style="z-index: 200;">
-        <div class="glass-modal" style="max-height: 60vh;">
-            <div class="modal-header">
-                <h3 id="picker-title">בחר משקל</h3>
-                <button class="icon-btn" onclick="app.closePicker(null)">✕</button>
-            </div>
-            <div id="picker-list" class="admin-list-container">
-                <!-- Options injected by JS -->
-            </div>
-        </div>
-    </div>
 
     <!-- Admin Modal -->
     <div id="admin-modal" class="modal-wrapper">
@@ -76,7 +63,7 @@
                 <h3>פרטי אימון</h3>
                 <button class="icon-btn" onclick="app.closeHistoryModal()">✕</button>
             </div>
-            <!-- Header for Date/Duration/Name (New V0.5) -->
+            <!-- Header for Date/Duration/Name -->
             <div id="hist-meta-header" class="history-meta-box"></div>
             
             <div id="hist-detail-content" class="admin-list-container"></div>
@@ -130,7 +117,7 @@
             </button>
 
             <div class="spacer"></div>
-            <div class="version-tag">Beta V0.5</div>
+            <div class="version-tag">Beta V0.6</div>
         </div>
 
         <!-- 1.5 PROGRAM SELECT -->
@@ -177,15 +164,15 @@
             <div id="history-badge" class="history-pill">--</div>
 
             <div id="input-area">
-                <!-- INPUT CARDS -->
+                <!-- INPUT CARDS (V0.6 - Native Selects) -->
                 <div id="cards-container" class="input-cards-wrapper">
-                    <div class="input-card" onclick="app.openPicker('weight')">
+                    <div class="input-card">
                         <div class="card-label">משקל (<span id="unit-label-card">ק״ג</span>)</div>
-                        <div class="card-value" id="val-weight">10</div>
+                        <select id="select-weight" class="card-select"></select>
                     </div>
-                    <div class="input-card" onclick="app.openPicker('reps')">
+                    <div class="input-card">
                         <div class="card-label">חזרות</div>
-                        <div class="card-value" id="val-reps">12</div>
+                        <select id="select-reps" class="card-select"></select>
                     </div>
                 </div>
 
@@ -206,10 +193,9 @@
                 <div class="feel-label" id="feel-text">בוינג (טוב)</div>
             </div>
 
-            <!-- REST TIMER (Upgraded V0.5) -->
+            <!-- REST TIMER -->
             <div id="rest-timer-area" class="rest-timer-box" style="display: none;">
                 <div class="circular-timer">
-                    <!-- Removed pathLength to rely on geometry (283) for accurate 60s -->
                     <svg viewBox="0 0 100 100">
                         <circle class="bg-ring" cx="50" cy="50" r="45"></circle>
                         <circle id="rest-ring-prog" class="prog-ring" cx="50" cy="50" r="45"></circle>
@@ -256,14 +242,24 @@
         <!-- 5. HISTORY -->
         <div id="screen-history" class="screen">
             <h2 class="page-title">היסטוריה</h2>
-            <div class="history-actions">
+            
+            <div class="history-actions-row">
                  <button class="btn-small" onclick="app.exportData()">⬇️ גיבוי</button>
                  <label class="btn-small">
                      ⬆️ שחזור <input type="file" hidden onchange="app.importData(this)">
                  </label>
-                 <button class="btn-small" style="color: var(--primary); border: 1px solid var(--primary);" onclick="app.copySelectedHistory()">📋 העתק נבחרים</button>
             </div>
-            <div id="history-list" class="list-stack"></div>
+            
+            <!-- New Bulk Actions -->
+            <div class="history-actions-row" style="margin-top:10px; justify-content: space-between;">
+                 <button class="btn-small-outline" onclick="app.selectAllHistory()">☑️ בחר הכל</button>
+                 <div style="display:flex; gap:10px;">
+                    <button class="btn-small-outline" onclick="app.copySelectedHistory()">📋 העתק</button>
+                    <button id="btn-del-selected" class="btn-small-danger" onclick="app.deleteSelectedHistory()" disabled>🗑 מחק נבחרים</button>
+                 </div>
+            </div>
+
+            <div id="history-list" class="list-stack" style="margin-top:15px;"></div>
             <div class="spacer"></div>
             <button class="btn-glass" onclick="app.openAdmin()">⚙️ כניסת מאמן</button>
         </div>
