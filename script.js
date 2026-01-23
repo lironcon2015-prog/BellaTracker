@@ -1,168 +1,115 @@
 /**
- * GYMPRO START - גרסה למתחילות
- * לוגיקה: פשוטה, FBW, הזרקת נתונים, אדמין נסתר
+ * GYMPRO START - גרסה 2.0 (Polished Flow)
+ * לוגיקה: מסך אחד, טיימר מובנה, Seed Data
  */
 
-// --- Constants & Database ---
+// --- DATA & CONFIG ---
 
-// בנק תרגילים (לשימוש האדמין)
 const EXERCISE_BANK = [
-    { id: 'goblet_squat', name: 'סקוואט עם משקולת (גובלט)', unit: 'kg' },
-    { id: 'chest_press', name: 'לחיצת חזה עם משקולות', unit: 'kg' },
-    { id: 'rdl', name: 'דדליפט רומני (משקולות)', unit: 'kg' },
-    { id: 'lat_pulldown', name: 'משיכה בפולי עליון', unit: 'plates' },
-    { id: 'shoulder_press', name: 'לחיצת כתפיים בישיבה', unit: 'kg' },
-    { id: 'cable_row', name: 'חתירה בפולי תחתון', unit: 'plates' },
-    { id: 'side_plank', name: 'פלאנק צידי (בטן)', unit: 'bodyweight' },
-    { id: 'bicep_curl', name: 'כפיפת מרפקים (יד קדמית)', unit: 'kg' },
-    { id: 'tricep_pushdown', name: 'פשיטת מרפקים (פולי עליון)', unit: 'plates' },
-    { id: 'leg_press', name: 'לחיצת רגליים (מכונה)', unit: 'kg' },
-    { id: 'crunches', name: 'כפיפות בטן', unit: 'bodyweight' },
-    { id: 'bicycle', name: 'בטן אופניים', unit: 'bodyweight' }
+    { id: 'goblet', name: 'סקוואט עם משקולת (גובלט)', unit: 'kg', step: 0.5 },
+    { id: 'chest_press', name: 'לחיצת חזה עם משקולות', unit: 'kg', step: 0.5 },
+    { id: 'rdl', name: 'דדליפט רומני (משקולות)', unit: 'kg', step: 0.5 },
+    { id: 'lat_pull', name: 'משיכה בפולי עליון', unit: 'plates', step: 1 },
+    { id: 'shoulder', name: 'לחיצת כתפיים בישיבה', unit: 'kg', step: 0.5 },
+    { id: 'row', name: 'חתירה בפולי תחתון', unit: 'plates', step: 1 },
+    { id: 'plank', name: 'פלאנק צידי (בטן)', unit: 'bodyweight', step: 5 },
+    { id: 'bicep', name: 'כפיפת מרפקים (יד קדמית)', unit: 'kg', step: 0.5 },
+    { id: 'tricep', name: 'פשיטת מרפקים (פולי)', unit: 'plates', step: 1 }
 ];
 
-// התוכנית ברירת מחדל (FBW)
 const DEFAULT_ROUTINE = [
-    { id: 'goblet_squat', name: 'סקוואט עם משקולת (גובלט)', unit: 'kg', note: 'לשמור גב זקוף, עקבים יציבים בקרקע' },
-    { id: 'chest_press', name: 'לחיצת חזה עם משקולות', unit: 'kg', note: 'לשמור על טכניקה יציבה' },
-    { id: 'rdl', name: 'דדליפט רומני (משקולות)', unit: 'kg', note: 'לרדת עד מתחת לברך, גב ישר' },
-    { id: 'lat_pulldown', name: 'משיכה בפולי עליון', unit: 'plates', note: 'למשוך למרכז החזה' },
-    { id: 'shoulder_press', name: 'לחיצת כתפיים בישיבה', unit: 'kg', note: 'להשלים טווח תנועה מלא' },
-    { id: 'cable_row', name: 'חתירה בפולי תחתון', unit: 'plates', note: 'מרפקים צמודים לגוף' },
-    { id: 'side_plank', name: 'פלאנק צידי (בטן)', unit: 'bodyweight', note: 'להקפיד על אגן גבוה' }
+    { id: 'goblet', name: 'סקוואט עם משקולת (גובלט)', unit: 'kg', note: 'גב זקוף, עקבים ברצפה' },
+    { id: 'chest_press', name: 'לחיצת חזה עם משקולות', unit: 'kg', note: 'להוריד לאט, לעלות מהר' },
+    { id: 'rdl', name: 'דדליפט רומני', unit: 'kg', note: 'ברכיים כפופות מעט, גב ישר' },
+    { id: 'lat_pull', name: 'משיכה בפולי עליון', unit: 'plates', note: 'למשוך לחזה העליון' },
+    { id: 'shoulder', name: 'לחיצת כתפיים', unit: 'kg', note: 'בלי להקשית את הגב' },
+    { id: 'row', name: 'חתירה בפולי תחתון', unit: 'plates', note: 'לכווץ שכמות בסוף' },
+    { id: 'plank', name: 'פלאנק צידי', unit: 'bodyweight', note: 'להחזיק חזק' }
 ];
 
-// נתונים היסטוריים להזרקה (Seeding)
-const SEED_HISTORY = [
-    {
-        date: "אימון קודם",
-        timestamp: Date.now() - 86400000,
-        summary: "אימון מיובא מהעבר",
-        data: {
-            'goblet_squat': { w: 10, r: 12 },
-            'chest_press': { w: 7, r: 12 },
-            'rdl': { w: 10, r: 12 },
-            'lat_pulldown': { w: 6, r: 12 },
-            'shoulder_press': { w: 4, r: 12 },
-            'cable_row': { w: 6, r: 12 },
-            'side_plank': { w: 0, r: 45 } // 0 weight means time based in logic
-        }
-    }
-];
+const SEED_DATA = {
+    'goblet': { w: 10, r: 12 },
+    'chest_press': { w: 7, r: 12 },
+    'rdl': { w: 10, r: 12 },
+    'lat_pull': { w: 6, r: 12 },
+    'shoulder': { w: 4, r: 12 },
+    'row': { w: 6, r: 12 },
+    'plank': { w: 0, r: 45 }
+};
 
-// --- State Management ---
+// --- STATE ---
 let state = {
     routine: [],
     history: [],
-    currentWorkout: {
-        startTime: null,
-        log: {}, // { exId: [ {w, r, feel} ] }
-    },
-    activeExIndex: 0,
-    editingExId: null // For admin
+    active: {
+        startTime: 0,
+        exIdx: 0,
+        setIdx: 1, // 1-based for display
+        log: [], // Array of sets for current workout
+        currentSetRating: null,
+        timerInterval: null,
+        timeLeft: 0
+    }
 };
 
-// --- Storage Manager ---
-const Storage = {
-    ROUTINE_KEY: 'gymstart_routine',
-    HISTORY_KEY: 'gymstart_history',
-    SEEDED_KEY: 'gymstart_seeded',
-
+// --- STORAGE MANAGER ---
+const DB = {
+    save() {
+        localStorage.setItem('gymstart_routine', JSON.stringify(state.routine));
+        localStorage.setItem('gymstart_history', JSON.stringify(state.history));
+    },
     load() {
-        // 1. Load Routine
-        const savedRoutine = localStorage.getItem(this.ROUTINE_KEY);
-        if (savedRoutine) {
-            state.routine = JSON.parse(savedRoutine);
-        } else {
-            state.routine = JSON.parse(JSON.stringify(DEFAULT_ROUTINE));
-            this.saveRoutine();
-        }
-
-        // 2. Load History & Seed if needed
-        const isSeeded = localStorage.getItem(this.SEEDED_KEY);
-        const savedHistory = localStorage.getItem(this.HISTORY_KEY);
+        const r = localStorage.getItem('gymstart_routine');
+        state.routine = r ? JSON.parse(r) : JSON.parse(JSON.stringify(DEFAULT_ROUTINE));
         
-        if (savedHistory) {
-            state.history = JSON.parse(savedHistory);
-        } else {
-            state.history = [];
-        }
-
-        if (!isSeeded) {
-            // Inject seed data
-            state.history.push(...SEED_HISTORY);
-            localStorage.setItem(this.SEEDED_KEY, 'true');
-            this.saveHistory();
-        }
+        const h = localStorage.getItem('gymstart_history');
+        state.history = h ? JSON.parse(h) : [];
     },
-
-    saveRoutine() {
-        localStorage.setItem(this.ROUTINE_KEY, JSON.stringify(state.routine));
-    },
-
-    saveHistory() {
-        localStorage.setItem(this.HISTORY_KEY, JSON.stringify(state.history));
-    },
-    
     getLastLog(exId) {
-        // Search history backwards
+        // First check real history
         for (let i = state.history.length - 1; i >= 0; i--) {
-            const workout = state.history[i];
-            if (workout.data && workout.data[exId]) {
-                return workout.data[exId];
+            const session = state.history[i];
+            const exData = session.data.find(e => e.id === exId);
+            if (exData && exData.sets.length > 0) {
+                return exData.sets[exData.sets.length - 1]; // Return last set
             }
         }
-        return null;
+        // Fallback to seed
+        return SEED_DATA[exId] || null;
     }
 };
 
-// --- App Flow ---
+// --- INIT ---
+window.addEventListener('DOMContentLoaded', () => {
+    DB.load();
+    updateHomeUI();
+});
 
-function initApp() {
-    Storage.load();
-    updateHomeStatus();
-    navigate('ui-home');
-}
-
-function updateHomeStatus() {
-    const last = state.history[state.history.length - 1];
-    if (last) {
-        const d = new Date(last.timestamp);
-        // If it's the seed data (fake timestamp), show generic text
-        if (last.summary === "אימון מיובא מהעבר") {
-            document.getElementById('last-workout-date').innerText = "לפני מספר ימים";
-        } else {
-            document.getElementById('last-workout-date').innerText = d.toLocaleDateString('he-IL');
-        }
-    }
-}
-
-function navigate(screenId) {
+// --- NAVIGATION ---
+function navigate(id) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-    document.getElementById(screenId).classList.add('active');
+    document.getElementById(id).classList.add('active');
     
+    // Header logic
     const backBtn = document.getElementById('nav-back');
-    if (screenId === 'ui-home') backBtn.style.visibility = 'hidden';
-    else backBtn.style.visibility = 'visible';
+    backBtn.style.visibility = id === 'ui-home' ? 'hidden' : 'visible';
     
-    // Smooth scroll top
-    window.scrollTo(0,0);
+    // Reset timer if leaving active
+    if (id !== 'ui-active') stopTimer();
 }
 
-function goBack() {
+function handleBack() {
     const active = document.querySelector('.screen.active').id;
     if (active === 'ui-active') {
-        if(confirm("לצאת מהאימון? הנתונים לא יישמרו.")) navigate('ui-overview');
-    } else if (active === 'ui-overview') {
-        navigate('ui-home');
-    } else if (active === 'ui-history' || active === 'ui-summary') {
+        if(confirm('לצאת מהאימון?')) navigate('ui-overview');
+    } else {
         navigate('ui-home');
     }
 }
 
-// --- Workout Logic ---
+// --- WORKOUT FLOW ---
 
-function startFlow() {
+function startSession() {
     renderOverview();
     navigate('ui-overview');
 }
@@ -170,325 +117,282 @@ function startFlow() {
 function renderOverview() {
     const list = document.getElementById('overview-list');
     list.innerHTML = '';
-    
-    state.routine.forEach((ex, idx) => {
-        const div = document.createElement('div');
-        div.className = 'action-card';
-        div.style.background = 'var(--card-bg)';
-        div.style.border = '1px solid var(--border)';
-        div.innerHTML = `
-            <div style="font-weight:700; font-size:1.1em; color:white;">${idx + 1}. ${ex.name}</div>
+    state.routine.forEach((ex, i) => {
+        list.innerHTML += `
+            <div class="workout-item">
+                <span style="font-weight:600">${i+1}. ${ex.name}</span>
+                <span style="color:var(--text-dim); font-size:0.8rem">${ex.unit === 'plates' ? 'פלטות' : (ex.unit==='bodyweight'?'גוף':'ק״ג')}</span>
+            </div>
         `;
-        list.appendChild(div);
     });
-
-    // Check for general note (Optional - currently using first ex note as placeholder if needed, or separate logic)
-    // For this version, we hide general note unless added later via Admin
 }
 
-function startActualWorkout() {
-    state.currentWorkout = {
+function launchWorkout() {
+    state.active = {
         startTime: Date.now(),
-        log: {}
+        exIdx: 0,
+        setIdx: 1,
+        log: [],
+        currentSetRating: null,
+        timerInterval: null
     };
-    state.activeExIndex = 0;
-    loadExerciseUI();
+    loadActiveExercise();
     navigate('ui-active');
 }
 
-function loadExerciseUI() {
-    const ex = state.routine[state.activeExIndex];
-    document.getElementById('active-ex-name').innerText = ex.name;
+function loadActiveExercise() {
+    const ex = state.routine[state.active.exIdx];
     
-    // Coach Note
-    const noteEl = document.getElementById('active-coach-note');
+    // UI Updates
+    document.getElementById('active-ex-name').innerText = ex.name;
+    document.getElementById('set-badge').innerText = `סט ${state.active.setIdx}`;
+    
+    // Note
+    const noteEl = document.getElementById('active-note');
     if (ex.note) {
         noteEl.style.display = 'inline-block';
-        noteEl.innerText = "💡 טיפ מהמאמן: " + ex.note;
+        noteEl.innerText = "💡 " + ex.note;
     } else {
         noteEl.style.display = 'none';
     }
 
     // History
-    const lastLog = Storage.getLastLog(ex.id);
-    const badge = document.getElementById('history-badge');
-    if (lastLog) {
-        const unitLabel = ex.unit === 'plates' ? 'פלטות' : (ex.unit === 'bodyweight' ? '' : 'ק״ג');
-        const weightText = ex.unit === 'bodyweight' ? '' : `${lastLog.w} ${unitLabel} | `;
-        const repsLabel = ex.unit === 'bodyweight' ? 'שניות/חזרות' : 'חזרות';
-        badge.innerText = `אימון שעבר: ${weightText}${lastLog.r} ${repsLabel}`;
+    const last = DB.getLastLog(ex.id);
+    const histEl = document.getElementById('history-pill');
+    if (last) {
+        const unit = ex.unit === 'plates' ? 'פלטות' : (ex.unit === 'bodyweight' ? '' : 'ק״ג');
+        histEl.innerText = `הישג קודם: ${last.w}${unit} × ${last.r}`;
+        
+        // Auto-fill inputs
+        updatePicker('weight', last.w);
+        updatePicker('reps', last.r);
     } else {
-        badge.innerText = "תרגיל חדש! בהצלחה";
+        histEl.innerText = "תרגיל חדש! בהצלחה";
+        updatePicker('weight', ex.unit === 'plates' ? 3 : 5);
+        updatePicker('reps', 12);
     }
 
-    // Sets
-    const container = document.getElementById('sets-container');
-    container.innerHTML = '';
-    // Pre-create 3 sets
-    for(let i=0; i<3; i++) {
-        addSetDOM(ex, lastLog);
-    }
+    // Unit Label
+    document.getElementById('unit-label').innerText = ex.unit === 'plates' ? 'פלטות' : (ex.unit === 'bodyweight' ? 'גוף' : 'ק״ג');
+
+    // Reset State for Set
+    resetSetUI();
 }
 
-function addSetDOM(ex, lastLog) {
-    const container = document.getElementById('sets-container');
-    const template = document.getElementById('set-row-template');
-    const clone = template.content.cloneNode(true);
-    const row = clone.querySelector('.set-row');
-    const setNum = container.children.length + 1;
+function resetSetUI() {
+    state.active.currentSetRating = null;
+    document.querySelectorAll('.feel-btn').forEach(b => b.classList.remove('selected'));
+    document.getElementById('timer-area').style.display = 'none';
+    document.getElementById('btn-finish-set').style.display = 'flex';
+}
+
+// --- INPUT LOGIC ---
+function updatePicker(type, val) {
+    document.getElementById(`val-${type}`).innerText = val;
+}
+
+function adjustWeight(delta) {
+    const ex = state.routine[state.active.exIdx];
+    const el = document.getElementById('val-weight');
+    let val = parseFloat(el.innerText);
+    let step = ex.unit === 'plates' ? 1 : 0.5;
+    if (ex.unit === 'bodyweight') return; // Locked
+
+    val += (delta * step);
+    if (val < 0) val = 0;
+    el.innerText = val;
+}
+
+function adjustReps(delta) {
+    const el = document.getElementById('val-reps');
+    let val = parseInt(el.innerText);
+    val += delta;
+    if (val < 1) val = 1;
+    el.innerText = val;
+}
+
+function selectFeeling(rating) {
+    state.active.currentSetRating = rating;
+    document.querySelectorAll('.feel-btn').forEach(b => b.classList.remove('selected'));
+    document.getElementById(`btn-${rating}`).classList.add('selected');
+}
+
+// --- SET COMPLETION & TIMER ---
+
+function finishSet() {
+    // Validation
+    if (!state.active.currentSetRating) {
+        alert("איך הרגיש הסט? (בחר רגשון)");
+        return;
+    }
+
+    // Log Logic
+    const ex = state.routine[state.active.exIdx];
+    const w = parseFloat(document.getElementById('val-weight').innerText);
+    const r = parseInt(document.getElementById('val-reps').innerText);
     
-    row.querySelector('.set-num').innerText = setNum;
+    // Find or create log entry for this exercise
+    let exLog = state.active.log.find(l => l.id === ex.id);
+    if (!exLog) {
+        exLog = { id: ex.id, name: ex.name, sets: [] };
+        state.active.log.push(exLog);
+    }
     
-    // Weight Setup
-    const wSelect = row.querySelector('.weight-select');
-    const wLabel = row.querySelector('.unit-label');
+    exLog.sets.push({ w, r, rating: state.active.currentSetRating });
+
+    // UI Feedback
+    if (navigator.vibrate) navigator.vibrate(50);
     
-    if (ex.unit === 'bodyweight') {
-        row.querySelector('.weight-wrap').style.visibility = 'hidden';
+    // Switch to Timer
+    document.getElementById('btn-finish-set').style.display = 'none';
+    startTimer(90); // 90s default rest
+}
+
+function startTimer(seconds) {
+    state.active.timeLeft = seconds;
+    const timerArea = document.getElementById('timer-area');
+    timerArea.style.display = 'flex';
+    
+    const circle = document.getElementById('timer-progress');
+    const text = document.getElementById('timer-text');
+    const fullDash = 283;
+    
+    clearInterval(state.active.timerInterval);
+    
+    state.active.timerInterval = setInterval(() => {
+        state.active.timeLeft--;
+        
+        // Update Text
+        const m = Math.floor(state.active.timeLeft / 60);
+        const s = state.active.timeLeft % 60;
+        text.innerText = `${m}:${s < 10 ? '0'+s : s}`;
+        
+        // Update Circle
+        const fraction = state.active.timeLeft / 90; // Relative to 90s base
+        circle.style.strokeDashoffset = fullDash - (fraction * fullDash);
+        
+        if (state.active.timeLeft <= 0) {
+            skipRest(); // Auto finish
+            if(navigator.vibrate) navigator.vibrate([100,50,100]);
+        }
+    }, 1000);
+}
+
+function addTime(secs) {
+    state.active.timeLeft += secs;
+}
+
+function skipRest() {
+    stopTimer();
+    // Move to next set logic
+    state.active.setIdx++;
+    document.getElementById('set-badge').innerText = `סט ${state.active.setIdx}`;
+    resetSetUI();
+    // Scroll top
+    document.getElementById('ui-active').scrollTo(0,0);
+}
+
+function stopTimer() {
+    clearInterval(state.active.timerInterval);
+}
+
+// --- NAVIGATION BETWEEN EXERCISES ---
+
+function deleteCurrentSet() {
+    const exId = state.routine[state.active.exIdx].id;
+    const exLog = state.active.log.find(l => l.id === exId);
+    if (exLog && exLog.sets.length > 0) {
+        if(confirm('למחוק את הסט האחרון שביצעת?')) {
+            exLog.sets.pop();
+            state.active.setIdx--;
+            if (state.active.setIdx < 1) state.active.setIdx = 1;
+            document.getElementById('set-badge').innerText = `סט ${state.active.setIdx}`;
+            stopTimer();
+            resetSetUI();
+        }
     } else {
-        wLabel.innerText = ex.unit === 'plates' ? 'פלטות' : 'ק״ג';
-        populateWeightSelect(wSelect, ex.unit, lastLog ? lastLog.w : null);
-    }
-
-    // Reps Setup
-    const rSelect = row.querySelector('.reps-select');
-    populateRepsSelect(rSelect, lastLog ? lastLog.r : 12); // Default to 12
-
-    container.appendChild(clone);
-}
-
-function populateWeightSelect(select, unit, defaultVal) {
-    const isPlates = unit === 'plates';
-    const step = isPlates ? 1 : 0.5;
-    const start = isPlates ? 1 : 1;
-    const end = isPlates ? 20 : 40;
-    
-    if (!defaultVal) defaultVal = isPlates ? 3 : 5;
-
-    for (let i = start; i <= end; i += step) {
-        const opt = document.createElement('option');
-        opt.value = i;
-        opt.text = i;
-        if (i === parseFloat(defaultVal)) opt.selected = true;
-        select.appendChild(opt);
+        alert("אין סטים למחיקה בתרגיל זה");
     }
 }
 
-function populateRepsSelect(select, defaultVal) {
-    // 1 to 60 (covering seconds for planks)
-    for (let i = 1; i <= 60; i++) {
-        const opt = document.createElement('option');
-        opt.value = i;
-        opt.text = i;
-        if (i === parseInt(defaultVal)) opt.selected = true;
-        select.appendChild(opt);
+function nextExerciseManual() {
+    const ex = state.routine[state.active.exIdx];
+    const log = state.active.log.find(l => l.id === ex.id);
+    
+    // Warning if no sets done
+    if (!log || log.sets.length === 0) {
+        if(!confirm("לא ביצעת אף סט. לדלג על התרגיל?")) return;
+    }
+
+    stopTimer();
+
+    // Check if next exists
+    if (state.active.exIdx < state.routine.length - 1) {
+        state.active.exIdx++;
+        state.active.setIdx = 1;
+        loadActiveExercise();
+    } else {
+        finishWorkout();
     }
 }
 
-function addSet() {
-    const ex = state.routine[state.activeExIndex];
-    const lastLog = Storage.getLastLog(ex.id);
-    addSetDOM(ex, lastLog);
-}
-
-function removeSet(btn) {
-    btn.closest('.set-row').remove();
-    // Renumber sets
-    const rows = document.querySelectorAll('.set-row');
-    rows.forEach((row, idx) => {
-        row.querySelector('.set-num').innerText = idx + 1;
-    });
-}
-
-function rateSet(btn, rating) {
-    const row = btn.closest('.set-row');
-    // Visual selection
-    row.querySelectorAll('.feel-btn').forEach(b => b.classList.remove('selected'));
-    btn.classList.add('selected');
-    row.classList.add('done');
-    row.dataset.rating = rating;
+function finishWorkout() {
+    // Render Summary
+    const sumEl = document.getElementById('summary-content');
+    let text = "";
     
-    // Haptic feedback
-    if(navigator.vibrate) navigator.vibrate(50);
-}
-
-function nextExercise() {
-    // Save current exercise data to log
-    const ex = state.routine[state.activeExIndex];
-    const rows = document.querySelectorAll('.set-row');
-    const setLogs = [];
-    
-    rows.forEach(row => {
-        if (row.classList.contains('done')) {
-            const w = parseFloat(row.querySelector('.weight-select').value) || 0;
-            const r = parseInt(row.querySelector('.reps-select').value);
-            const feel = row.dataset.rating;
-            setLogs.push({ w, r, feel });
+    state.active.log.forEach(ex => {
+        if (ex.sets.length > 0) {
+            text += `✅ ${ex.name}\n`;
+            ex.sets.forEach((s, i) => {
+                text += `   סט ${i+1}: ${s.w} × ${s.r}\n`;
+            });
+            text += "\n";
         }
     });
-
-    if (setLogs.length > 0) {
-        state.currentWorkout.log[ex.id] = setLogs[setLogs.length - 1]; // Store best/last set for history seeding
-    }
-
-    if (state.activeExIndex < state.routine.length - 1) {
-        state.activeExIndex++;
-        loadExerciseUI();
-    } else {
-        finishAndSave();
-    }
-}
-
-function finishAndSave() {
-    const d = new Date();
-    const summaryText = `סיכום אימון - ${d.toLocaleDateString('he-IL')}\n\n`;
-    let details = "";
     
-    state.routine.forEach(ex => {
-        const log = state.currentWorkout.log[ex.id];
-        if (log) {
-            const unit = ex.unit === 'plates' ? 'פלטות' : (ex.unit === 'bodyweight' ? '' : 'ק״ג');
-            details += `✅ ${ex.name}: ${log.w}${unit} x ${log.r}\n`;
-        }
-    });
-
-    if (!details) details = "לא תועדו תרגילים.";
-
-    // Save to history
-    state.history.push({
-        date: d.toLocaleDateString('he-IL'),
-        timestamp: Date.now(),
-        summary: details,
-        data: state.currentWorkout.log
-    });
-    Storage.saveHistory();
-
-    // Show summary
-    document.getElementById('summary-content').innerText = summaryText + details;
+    if (!text) text = "לא בוצעו תרגילים.";
+    sumEl.innerText = text;
     navigate('ui-summary');
-    updateHomeStatus();
 }
 
-// --- History & Admin ---
+function saveAndExit() {
+    if (state.active.log.length > 0) {
+        state.history.push({
+            date: new Date().toLocaleDateString('he-IL'),
+            timestamp: Date.now(),
+            data: state.active.log
+        });
+        DB.save();
+    }
+    updateHomeUI();
+    navigate('ui-home');
+}
+
+// --- HOME & ADMIN UTILS ---
+
+function updateHomeUI() {
+    if (state.history.length > 0) {
+        const last = state.history[state.history.length-1];
+        document.getElementById('last-workout-date').innerText = last.date;
+    }
+    renderHistory();
+}
 
 function renderHistory() {
     const list = document.getElementById('history-list');
     list.innerHTML = '';
-    const reversed = [...state.history].reverse();
-    
-    reversed.forEach(item => {
-        const card = document.createElement('div');
-        card.className = 'summary-card';
-        card.style.marginBottom = '10px';
-        card.innerText = `${item.date}\n${item.summary}`;
-        list.appendChild(card);
-    });
-}
-
-// Ensure history renders when entering screen
-document.querySelector('.action-card.secondary').addEventListener('click', renderHistory);
-
-// Admin Logic
-function openAdmin() {
-    renderAdminList();
-    document.getElementById('admin-modal').style.display = 'flex';
-}
-
-function closeAdmin() {
-    document.getElementById('admin-modal').style.display = 'none';
-}
-
-function renderAdminList() {
-    const list = document.getElementById('admin-routine-list');
-    list.innerHTML = '';
-    
-    state.routine.forEach((ex, idx) => {
-        const div = document.createElement('div');
-        div.className = 'admin-card';
-        div.innerHTML = `
-            <div style="flex-grow:1;">
-                <strong>${idx+1}. ${ex.name}</strong><br>
-                <span style="font-size:0.8em; color:var(--text-dim)">${ex.unit}, ${ex.note || 'אין הערה'}</span>
-            </div>
-            <div style="display:flex; gap:10px;">
-                <button onclick="editExercise('${ex.id}')">✏️</button>
-                <button onclick="moveExercise(${idx}, -1)">⬆️</button>
-                <button onclick="moveExercise(${idx}, 1)">⬇️</button>
-                <button onclick="deleteExercise(${idx})" style="color:#ff3b30">🗑️</button>
+    [...state.history].reverse().forEach(h => {
+        list.innerHTML += `
+            <div class="glass-card" style="padding:15px">
+                <div style="font-weight:700; color:var(--primary)">${h.date}</div>
+                <div style="font-size:0.85rem; color:#bbb">${h.data.length} תרגילים בוצעו</div>
             </div>
         `;
-        list.appendChild(div);
     });
 }
 
-function moveExercise(idx, dir) {
-    if (idx + dir < 0 || idx + dir >= state.routine.length) return;
-    const temp = state.routine[idx];
-    state.routine[idx] = state.routine[idx + dir];
-    state.routine[idx + dir] = temp;
+// ADMIN Logic
+function openAdmin() {
     renderAdminList();
-}
-
-function deleteExercise(idx) {
-    if(confirm('למחוק תרגיל זה?')) {
-        state.routine.splice(idx, 1);
-        renderAdminList();
-    }
-}
-
-function addNewExerciseToRoutine() {
-    // Simple prompt implementation for MVP
-    let listStr = "בחר מספר להוספה:\n";
-    EXERCISE_BANK.forEach((ex, i) => listStr += `${i+1}. ${ex.name}\n`);
-    const selection = prompt(listStr);
-    const index = parseInt(selection) - 1;
-    
-    if (EXERCISE_BANK[index]) {
-        // Deep copy to allow independent editing
-        const newEx = JSON.parse(JSON.stringify(EXERCISE_BANK[index]));
-        newEx.id = newEx.id + '_' + Date.now(); // Unique ID just in case
-        state.routine.push(newEx);
-        renderAdminList();
-    }
-}
-
-// Edit Modal Logic
-function editExercise(exId) {
-    state.editingExId = exId;
-    const ex = state.routine.find(e => e.id === exId);
-    if (!ex) return;
-    
-    document.getElementById('admin-edit-name').value = ex.name;
-    document.getElementById('admin-edit-unit').value = ex.unit;
-    document.getElementById('admin-edit-note').value = ex.note || '';
-    
-    document.getElementById('edit-ex-modal').style.display = 'flex';
-}
-
-function applyExerciseEdit() {
-    const ex = state.routine.find(e => e.id === state.editingExId);
-    if (ex) {
-        ex.name = document.getElementById('admin-edit-name').value;
-        ex.unit = document.getElementById('admin-edit-unit').value;
-        ex.note = document.getElementById('admin-edit-note').value;
-    }
-    closeEditExModal();
-    renderAdminList();
-}
-
-function closeEditExModal() {
-    document.getElementById('edit-ex-modal').style.display = 'none';
-}
-
-function saveAdminChanges() {
-    Storage.saveRoutine();
-    alert('השינויים נשמרו בהצלחה!');
-    closeAdmin();
-    // Refresh if in overview
-    if(document.getElementById('ui-overview').classList.contains('active')) {
-        renderOverview();
-    }
-}
-
-// Init
-window.addEventListener('DOMContentLoaded', initApp);
+    document.getEle
