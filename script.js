@@ -1,6 +1,6 @@
 /**
- * GYMSTART BETA V0.5
- * Changes: Centered Picker, Big & Fixed Timer, History Headers
+ * GYMSTART BETA V0.6
+ * Changes: Native Selects, Rep Limits, Stopwatch Fix, Bulk History Actions
  */
 
 // --- DATA & CONFIG ---
@@ -84,11 +84,11 @@ const app = {
         },
         admin: { viewProg: 'A', bankFilter: '' },
         historySelection: [],
-        picker: { type: null }
+        viewHistoryIdx: null
     },
 
     init: function() {
-        console.log("App V0.5 Init");
+        console.log("App V0.6 Init");
         try {
             this.loadData();
             this.renderHome();
@@ -206,7 +206,7 @@ const app = {
             noteEl.style.display = 'inline-block';
         } else noteEl.style.display = 'none';
 
-        // Check Unit
+        // Check Unit & Type
         const isTime = (ex.unit === 'bodyweight' && (ex.id.includes('plank') || ex.id === 'wall_sit'));
         this.state.active.isStopwatch = isTime;
 
@@ -227,10 +227,11 @@ const app = {
             document.getElementById('stopwatch-container').style.display = 'none';
             document.getElementById('unit-label-card').innerText = ex.unit === 'plates' ? 'פלטות' : 'ק״ג';
             
-            // Init Values (Target or Default)
+            // Populate Selects & Init Values
             this.state.active.inputW = ex.target?.w || 10;
             this.state.active.inputR = ex.target?.r || 12;
-            this.updateCardsDisplay();
+            
+            this.populateSelects(ex);
         }
 
         // Reset UI
@@ -241,6 +242,58 @@ const app = {
         document.getElementById('rest-timer-area').style.display = 'none';
         
         this.updateHistoryPill(ex.id);
+    },
+
+    // --- NATIVE SELECT POPULATION (V0.6) ---
+    populateSelects: function(ex) {
+        const selW = document.getElementById('select-weight');
+        const selR = document.getElementById('select-reps');
+        const isLegs = ex.cat === 'legs';
+
+        // 1. Populate Weight
+        let wOpts = [];
+        if (ex.unit === 'bodyweight') {
+            wOpts = [0];
+        } else if (ex.unit === 'plates') {
+            for(let i=1; i<=20; i++) wOpts.push(i);
+        } else {
+            // KG: 1-10 step 1, 12.5-max step 2.5
+            for(let i=1; i<=10; i++) wOpts.push(i);
+            const max = isLegs ? 50 : 30;
+            for(let i=12.5; i<=max; i+=2.5) wOpts.push(i);
+        }
+
+        selW.innerHTML = '';
+        wOpts.forEach(val => {
+            const opt = document.createElement('option');
+            opt.value = val;
+            opt.text = val;
+            selW.appendChild(opt);
+        });
+        // Set value
+        selW.value = this.state.active.inputW;
+        if(!selW.value && wOpts.length > 0) selW.value = wOpts[0]; // fallback
+        
+        // Listener
+        selW.onchange = (e) => this.state.active.inputW = Number(e.target.value);
+
+
+        // 2. Populate Reps
+        let rOpts = [];
+        // Core limit 30, others 20
+        const maxReps = ex.cat === 'core' ? 30 : 20;
+        for(let i=1; i<=maxReps; i++) rOpts.push(i);
+
+        selR.innerHTML = '';
+        rOpts.forEach(val => {
+            const opt = document.createElement('option');
+            opt.value = val;
+            opt.text = val;
+            selR.appendChild(opt);
+        });
+        selR.value = this.state.active.inputR;
+        // Listener
+        selR.onchange = (e) => this.state.active.inputR = Number(e.target.value);
     },
 
     updateHistoryPill: function(exId) {
@@ -258,83 +311,6 @@ const app = {
         }
     },
 
-    // --- PICKER SYSTEM (V0.5 - Modal Style) ---
-    openPicker: function(type) {
-        this.state.picker.type = type;
-        const prog = this.state.routines[this.state.currentProgId];
-        const ex = prog[this.state.active.exIdx];
-        const isLegs = ex.cat === 'legs';
-        const unit = ex.unit;
-
-        let options = [];
-        
-        if (type === 'reps') {
-            for(let i=1; i<=50; i++) options.push(i);
-        } else {
-            // WEIGHT LOGIC
-            if (unit === 'bodyweight') {
-                options = [0];
-            } else if (unit === 'plates') {
-                for(let i=1; i<=20; i++) options.push(i);
-            } else {
-                // KG LOGIC
-                // 1-10: step 1
-                for(let i=1; i<=10; i++) options.push(i);
-                // 10-MAX: step 2.5
-                const max = isLegs ? 50 : 25;
-                for(let i=12.5; i<=max; i+=2.5) options.push(i);
-            }
-        }
-
-        const list = document.getElementById('picker-list');
-        const currentVal = type === 'reps' ? this.state.active.inputR : this.state.active.inputW;
-        
-        document.getElementById('picker-title').innerText = type === 'reps' ? 'בחר חזרות' : 'בחר משקל';
-        
-        list.innerHTML = '';
-        let selectedEl = null;
-
-        options.forEach(val => {
-            const div = document.createElement('div');
-            div.className = 'picker-item';
-            if (val === currentVal) {
-                div.classList.add('selected');
-                selectedEl = div;
-            }
-            div.innerText = val;
-            div.onclick = () => this.selectPickerValue(val);
-            list.appendChild(div);
-        });
-
-        document.getElementById('picker-modal').style.display = 'flex';
-        
-        // Scroll to selection
-        if(selectedEl) {
-            setTimeout(() => selectedEl.scrollIntoView({ block: 'center', behavior: 'auto' }), 10);
-        }
-    },
-
-    selectPickerValue: function(val) {
-        if (this.state.picker.type === 'reps') {
-            this.state.active.inputR = val;
-        } else {
-            this.state.active.inputW = val;
-        }
-        this.updateCardsDisplay();
-        this.closePicker(null);
-    },
-
-    closePicker: function(e) {
-        if (!e || e.target.id === 'picker-modal' || e.target.classList.contains('icon-btn')) {
-            document.getElementById('picker-modal').style.display = 'none';
-        }
-    },
-
-    updateCardsDisplay: function() {
-        document.getElementById('val-weight').innerText = this.state.active.inputW;
-        document.getElementById('val-reps').innerText = this.state.active.inputR;
-    },
-
     // --- STOPWATCH LOGIC ---
     toggleStopwatch: function() {
         const btn = document.getElementById('btn-sw-toggle');
@@ -347,7 +323,7 @@ const app = {
             btn.innerText = "▶";
         } else {
             // START
-            this.stopRestTimer(); // Important fix from V0.4
+            this.stopRestTimer();
 
             const start = Date.now() - (this.state.active.stopwatchVal * 1000);
             btn.classList.add('running');
@@ -385,11 +361,13 @@ const app = {
     finishSet: function() {
         let w, r;
         if (this.state.active.isStopwatch) {
+            // FIX: Always capture stopwatch val for R, ignore input inputs
             if(this.state.active.timerInterval) this.toggleStopwatch(); 
             w = 0; 
-            r = this.state.active.stopwatchVal;
+            r = this.state.active.stopwatchVal; // Actual seconds
             if (r === 0) { alert("לא נמדד זמן!"); return; }
         } else {
+            // Read from state which is bound to selects
             w = this.state.active.inputW;
             r = this.state.active.inputR;
         }
@@ -443,7 +421,6 @@ const app = {
             let s = sec % 60;
             disp.innerText = `${m<10?'0'+m:m}:${s<10?'0'+s:s}`;
 
-            // Math: Offset goes from 283 (empty) to 0 (full) over 60s
             if (sec <= 60) {
                 const offset = MAX_OFFSET - (MAX_OFFSET * sec / 60);
                 ring.style.strokeDashoffset = offset;
@@ -557,9 +534,10 @@ const app = {
         this.nav('screen-home');
     },
 
-    // --- HISTORY & COPY ---
+    // --- HISTORY & ACTIONS ---
     showHistory: function() {
         this.state.historySelection = [];
+        this.updateHistoryActions(); // Update Delete button state
         const list = document.getElementById('history-list');
         list.innerHTML = '';
         [...this.state.history].reverse().forEach((h, i) => {
@@ -587,13 +565,50 @@ const app = {
     toggleHistorySelection: function(idx, el) {
         if(el.checked) this.state.historySelection.push(idx);
         else this.state.historySelection = this.state.historySelection.filter(i => i !== idx);
+        this.updateHistoryActions();
+    },
+
+    updateHistoryActions: function() {
+        const btn = document.getElementById('btn-del-selected');
+        btn.disabled = this.state.historySelection.length === 0;
+        btn.innerHTML = this.state.historySelection.length > 0 
+            ? `🗑 מחק (${this.state.historySelection.length})` 
+            : `🗑 מחק נבחרים`;
+    },
+
+    selectAllHistory: function() {
+        // Toggle: if all selected -> deselect all, else -> select all
+        const inputs = document.querySelectorAll('.custom-chk');
+        const allSelected = this.state.historySelection.length === this.state.history.length && this.state.history.length > 0;
+        
+        if (allSelected) {
+            this.state.historySelection = [];
+            inputs.forEach(i => i.checked = false);
+        } else {
+            this.state.historySelection = this.state.history.map((_, i) => i);
+            inputs.forEach(i => i.checked = true);
+        }
+        this.updateHistoryActions();
+    },
+
+    deleteSelectedHistory: function() {
+        if (this.state.historySelection.length === 0) return;
+        if (!confirm(`למחוק ${this.state.historySelection.length} אימונים שנבחרו?`)) return;
+
+        // Filter out selected indices
+        this.state.history = this.state.history.filter((_, index) => !this.state.historySelection.includes(index));
+        this.saveData();
+        this.showHistory();
     },
 
     copySelectedHistory: function() {
         if(this.state.historySelection.length === 0) { alert("לא נבחרו אימונים"); return; }
         
         let fullTxt = "📜 ריכוז אימונים\n\n";
-        this.state.historySelection.forEach(idx => {
+        // Sort selection to keep order reasonable (optional)
+        const sortedSel = [...this.state.historySelection].sort((a,b) => a-b);
+        
+        sortedSel.forEach(idx => {
             const h = this.state.history[idx];
             fullTxt += `--- אימון ${h.program} (${h.date}) ---\n`;
             h.data.forEach(ex => {
@@ -610,7 +625,6 @@ const app = {
         const item = this.state.history[idx];
         this.state.viewHistoryIdx = idx;
         
-        // Header Injection (V0.5)
         const header = document.getElementById('hist-meta-header');
         header.innerHTML = `
             <h3>${item.program}</h3>
@@ -700,7 +714,7 @@ const app = {
         reader.readAsText(file);
     },
 
-    // --- ADMIN (Unchanged Logic, UI only) ---
+    // --- ADMIN ---
     openAdmin: function() { document.getElementById('admin-modal').style.display = 'flex'; this.renderAdminList(); },
     closeAdmin: function() { document.getElementById('admin-modal').style.display = 'none'; },
     renderAdminList: function() {
