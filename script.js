@@ -1,6 +1,6 @@
 /**
- * GYMSTART BETA V0.4
- * Changes: Picker UI, Smart Weights, SVG Rest Timer, Admin Ordering, Plank Fix
+ * GYMSTART BETA V0.5
+ * Changes: Centered Picker, Big & Fixed Timer, History Headers
  */
 
 // --- DATA & CONFIG ---
@@ -74,8 +74,8 @@ const app = {
             setIdx: 1,
             log: [], 
             startTime: 0,
-            timerInterval: null, // For stopwatch
-            restInterval: null, // For rest
+            timerInterval: null, 
+            restInterval: null, 
             feel: 'good',
             isStopwatch: false,
             stopwatchVal: 0,
@@ -84,11 +84,11 @@ const app = {
         },
         admin: { viewProg: 'A', bankFilter: '' },
         historySelection: [],
-        picker: { type: null, callback: null }
+        picker: { type: null }
     },
 
     init: function() {
-        console.log("App V0.4 Init");
+        console.log("App V0.5 Init");
         try {
             this.loadData();
             this.renderHome();
@@ -258,7 +258,7 @@ const app = {
         }
     },
 
-    // --- PICKER SYSTEM (V0.4) ---
+    // --- PICKER SYSTEM (V0.5 - Modal Style) ---
     openPicker: function(type) {
         this.state.picker.type = type;
         const prog = this.state.routines[this.state.currentProgId];
@@ -335,7 +335,7 @@ const app = {
         document.getElementById('val-reps').innerText = this.state.active.inputR;
     },
 
-    // --- STOPWATCH LOGIC (Fixed for Plank) ---
+    // --- STOPWATCH LOGIC ---
     toggleStopwatch: function() {
         const btn = document.getElementById('btn-sw-toggle');
         
@@ -347,8 +347,7 @@ const app = {
             btn.innerText = "▶";
         } else {
             // START
-            // FIX: Immediately stop rest timer if running
-            this.stopRestTimer();
+            this.stopRestTimer(); // Important fix from V0.4
 
             const start = Date.now() - (this.state.active.stopwatchVal * 1000);
             btn.classList.add('running');
@@ -382,11 +381,11 @@ const app = {
         document.getElementById('feel-text').innerText = map[this.state.active.feel];
     },
 
-    // --- FINISH SET & REST TIMER (SVG) ---
+    // --- FINISH SET & REST TIMER ---
     finishSet: function() {
         let w, r;
         if (this.state.active.isStopwatch) {
-            if(this.state.active.timerInterval) this.toggleStopwatch(); // Auto stop
+            if(this.state.active.timerInterval) this.toggleStopwatch(); 
             w = 0; 
             r = this.state.active.stopwatchVal;
             if (r === 0) { alert("לא נמדד זמן!"); return; }
@@ -405,7 +404,6 @@ const app = {
         }
         exLog.sets.push({ w, r, feel: this.state.active.feel });
 
-        // Start Rest Timer
         this.startRestTimer();
 
         if (this.state.active.setIdx < 3) {
@@ -435,8 +433,9 @@ const app = {
         area.style.display = 'flex';
         let sec = 0;
         disp.innerText = "00:00";
-        // Reset ring to full empty (offset 283)
-        ring.style.strokeDashoffset = 283; 
+        // Geomtery: 2*PI*45 approx 283
+        const MAX_OFFSET = 283; 
+        ring.style.strokeDashoffset = MAX_OFFSET; 
         
         this.state.active.restInterval = setInterval(() => {
             sec++;
@@ -444,12 +443,12 @@ const app = {
             let s = sec % 60;
             disp.innerText = `${m<10?'0'+m:m}:${s<10?'0'+s:s}`;
 
-            // SVG Logic (Max 60 seconds)
+            // Math: Offset goes from 283 (empty) to 0 (full) over 60s
             if (sec <= 60) {
-                const offset = 283 - (283 * sec / 60);
+                const offset = MAX_OFFSET - (MAX_OFFSET * sec / 60);
                 ring.style.strokeDashoffset = offset;
             } else {
-                ring.style.strokeDashoffset = 0; // Stay full
+                ring.style.strokeDashoffset = 0; 
             }
             
             if (sec === 60 && navigator.vibrate) navigator.vibrate([200,100,200]);
@@ -611,7 +610,13 @@ const app = {
         const item = this.state.history[idx];
         this.state.viewHistoryIdx = idx;
         
-        document.getElementById('hist-modal-title').innerText = `${item.date} - ${item.program}`;
+        // Header Injection (V0.5)
+        const header = document.getElementById('hist-meta-header');
+        header.innerHTML = `
+            <h3>${item.program}</h3>
+            <p>📅 ${item.date} | ⏱ ${item.duration} דק'</p>
+        `;
+
         const content = document.getElementById('hist-detail-content');
         let html = '';
         item.data.forEach(ex => {
@@ -695,7 +700,7 @@ const app = {
         reader.readAsText(file);
     },
 
-    // --- ADMIN (Updated with Ordering) ---
+    // --- ADMIN (Unchanged Logic, UI only) ---
     openAdmin: function() { document.getElementById('admin-modal').style.display = 'flex'; this.renderAdminList(); },
     closeAdmin: function() { document.getElementById('admin-modal').style.display = 'none'; },
     renderAdminList: function() {
