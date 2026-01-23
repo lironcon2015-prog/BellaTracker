@@ -36,7 +36,6 @@ body, html {
     display: flex; 
     flex-direction: column;
     padding-top: calc(env(safe-area-inset-top) + 10px);
-    /* Note: padding-bottom removed from here, handled by screen footer */
 }
 
 /* Navbar */
@@ -67,22 +66,61 @@ body, html {
     -webkit-overflow-scrolling: touch;
 }
 
-/* Fixed Footer (Sticky Bottom) - THE UX FIX */
+/* Fixed Footer (Default) */
 .fixed-footer {
     flex-shrink: 0;
     background: linear-gradient(to top, #000 80%, rgba(0,0,0,0)); /* Fade effect */
     padding: 10px 20px;
-    padding-bottom: calc(env(safe-area-inset-bottom) + 30px); /* Generous padding */
+    padding-bottom: calc(env(safe-area-inset-bottom) + 30px);
     display: flex;
     flex-direction: column;
     z-index: 10;
 }
 
+/* Active Screen Custom Layout (V1.3) */
+.active-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow-y: auto;
+    padding: 10px 20px;
+    padding-bottom: calc(env(safe-area-inset-bottom) + 20px);
+}
+
+.active-header-section {
+    flex-shrink: 0;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.workspace {
+    flex-shrink: 0;
+    margin-bottom: 20px;
+}
+
+.active-controls-area {
+    /* Pushes controls to be near the thumb but not strictly bottom */
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.main-action-box {
+    width: 100%;
+}
+
+.sub-actions-footer {
+    margin-top: auto; /* Push to very bottom if space exists */
+    display: flex; 
+    justify-content: space-between; 
+    padding: 15px 5px 5px 5px;
+}
+
+
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
 /* Components */
-.spacer { flex: 1; } /* Still useful inside flex containers */
-
 .oled-card {
     background: var(--bg-card);
     border: 1px solid var(--border-dim);
@@ -129,14 +167,11 @@ body, html {
 .prog-title { font-weight: 700; font-size: 1.1rem; margin-bottom: 4px; }
 .prog-desc { font-size: 0.9rem; color: var(--text-sec); }
 
-/* Active Workout */
-.active-header { text-align: center; margin-bottom: 15px; }
+/* Active Workout Elements */
 .badge { background: var(--primary); color: black; font-weight: 800; padding: 4px 12px; border-radius: 4px; font-size: 0.85rem; display: inline-block; margin-bottom: 5px; }
 #ex-name { font-size: 1.8rem; font-weight: 700; margin: 0; line-height: 1.1; }
 .note-pill { color: #ffe600; font-size: 0.9rem; margin-top: 5px; display: block; font-weight: 500; }
-.history-pill { text-align: center; color: var(--text-sec); font-size: 0.85rem; margin-bottom: 15px; }
-
-.workspace { margin-bottom: 10px; }
+.history-pill { text-align: center; color: var(--text-sec); font-size: 0.85rem; margin-top: 10px; }
 
 /* Inputs */
 .inputs-row { display: flex; gap: 15px; margin-bottom: 10px; }
@@ -150,7 +185,7 @@ body, html {
 }
 .native-select option { background: #000; color: white; }
 
-/* Stopwatch - Compact & Fit */
+/* Stopwatch */
 .stopwatch-box { background: #000; border: 1px solid var(--border-dim); border-radius: 20px; padding: 10px; text-align: center; margin-bottom: 10px; display: flex; flex-direction: column; align-items: center; }
 .sw-time { font-size: 3rem; font-family: monospace; font-weight: 700; margin-bottom: 5px; color: white; letter-spacing: -2px; line-height: 1; }
 .btn-neon-play { width: 60px; height: 60px; border-radius: 50%; background: transparent; border: 2px solid var(--success); color: var(--success); font-size: 1.8rem; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; }
@@ -158,25 +193,37 @@ body, html {
 .btn-neon-play.running { border-color: var(--danger); color: var(--danger); }
 .sw-hint { margin-top: 8px; color: var(--text-sec); font-size: 0.8rem; }
 
-/* Feeling (Inside Fixed Footer) */
-.feeling-section { margin-bottom: 15px; }
+/* Feeling (Inside Active Controls) */
+.feeling-section { margin-bottom: 5px; }
 .feeling-row { display: flex; justify-content: center; gap: 20px; margin-bottom: 5px; }
 .feel-btn { width: 45px; height: 45px; border-radius: 50%; background: #111; border: 1px solid #333; font-size: 1.4rem; cursor: pointer; transition: 0.2s; color: #555; }
 .feel-btn.selected { transform: scale(1.1); border-color: var(--primary); color: white; background: rgba(0, 255, 238, 0.1); box-shadow: 0 0 15px rgba(0, 255, 238, 0.2); }
 .feel-label { text-align: center; color: var(--primary); font-size: 0.9rem; margin-bottom: 0; height: 1.2em; font-weight: 500; }
 
-/* Rest Timer */
-.rest-box { display: flex; flex-direction: column; align-items: center; margin-bottom: 10px; }
-.circular-timer { width: 100px; height: 100px; position: relative; }
+/* Rest Timer - UPDATED V1.3 */
+.rest-box { display: flex; flex-direction: column; align-items: center; margin-top: 15px; animation: fadeIn 0.3s ease; }
+.circular-timer { width: 150px; height: 150px; position: relative; } /* INCREASED */
 .circular-timer svg { width: 100%; height: 100%; transform: rotate(-90deg); }
-.bg-ring { stroke: #222; stroke-width: 6; fill: none; }
-.prog-ring { stroke: var(--primary); stroke-width: 6; fill: none; stroke-dasharray: 283; stroke-linecap: round; transition: stroke-dashoffset 1s linear; filter: drop-shadow(0 0 4px var(--primary)); }
-.timer-text { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; font-family: monospace; font-weight: 700; }
-.rest-caption { margin-top: 5px; color: var(--text-sec); font-size: 0.8rem; }
+.bg-ring { stroke: #222; stroke-width: 8; fill: none; } /* Thicker stroke */
+.prog-ring { 
+    stroke: var(--primary); 
+    stroke-width: 8; 
+    fill: none; 
+    stroke-dasharray: 408; /* 2 * PI * 65 */
+    stroke-linecap: round; 
+    transition: stroke-dashoffset 1s linear; 
+    filter: drop-shadow(0 0 4px var(--primary)); 
+}
+.timer-text { 
+    position: absolute; inset: 0; 
+    display: flex; align-items: center; justify-content: center; 
+    font-size: 2.8rem; /* INCREASED */
+    font-family: monospace; font-weight: 700; 
+}
+.rest-caption { margin-top: 8px; color: var(--text-sec); font-size: 0.9rem; }
 
-/* Sub Actions */
-.sub-actions { display: flex; justify-content: space-between; margin-top: 15px; padding: 0 5px; }
-.text-link { background: none; border: none; color: var(--text-sec); text-decoration: underline; cursor: pointer; font-size: 0.85rem; }
+/* Sub Actions Link */
+.text-link { background: none; border: none; color: var(--text-sec); text-decoration: underline; cursor: pointer; font-size: 0.9rem; padding: 10px; }
 
 /* Lists & History */
 .simple-list, .scroll-list, .history-list-container { display: flex; flex-direction: column; gap: 10px; }
@@ -184,14 +231,25 @@ body, html {
 .list-item { background: var(--bg-card); padding: 18px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #222; }
 .hist-item-row { background: var(--bg-card); border: 1px solid #222; padding: 16px; border-radius: 12px; display: flex; align-items: center; gap: 15px; margin-bottom: 10px; }
 
-/* Modals */
+/* Modals - SCROLL FIX V1.3 */
 .modal-wrapper { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 100; display: none; justify-content: center; align-items: center; padding: 20px; }
-.oled-modal { background: #0a0a0a; width: 100%; max-width: 500px; border-radius: 20px; padding: 24px; display: flex; flex-direction: column; max-height: 85vh; border: 1px solid #333; }
-.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #222; }
+.oled-modal { 
+    background: #0a0a0a; width: 100%; max-width: 500px; border-radius: 20px; padding: 24px; 
+    display: flex; flex-direction: column; 
+    max-height: 85vh; border: 1px solid #333; 
+}
+.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #222; flex-shrink: 0; }
 .modal-footer { display: flex; gap: 10px; margin-top: 20px; flex-shrink: 0; }
 .oled-input { background: #1a1a1a; border: 1px solid #333; padding: 14px; border-radius: 10px; color: white; width: 100%; font-size: 1rem; }
-.admin-item { display: flex; justify-content: space-between; align-items: center; background: #151515; padding: 14px; border-radius: 10px; border: 1px solid #222; margin-bottom: 5px; }
+.admin-item { display: flex; justify-content: space-between; align-items: center; background: #151515; padding: 14px; border-radius: 10px; border: 1px solid #222; margin-bottom: 5px; flex-shrink: 0;}
 .input-group label { display: block; margin-bottom: 8px; color: #888; font-size: 0.9rem; }
+
+/* Scroll Fix specific */
+.scroll-list {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0; /* Important for flex child scroll */
+}
 
 /* Buttons Small */
 .btn-danger-outline { background: transparent; border: 1px solid var(--danger); color: var(--danger); padding: 14px; border-radius: 12px; width: 100%; cursor: pointer; font-weight: 600; }
@@ -208,4 +266,3 @@ body, html {
 .custom-chk:checked { background: var(--primary); border-color: var(--primary); }
 .summary-box { font-family: monospace; white-space: pre-wrap; background: #111; padding: 20px; border-radius: 12px; margin-bottom: 20px; line-height: 1.6; font-size: 0.95rem; border: 1px solid #333; }
 .meta-tag { color: var(--text-sec); margin-top: 5px; }
-.actions-column { display: flex; flex-direction: column; gap: 12px; }
