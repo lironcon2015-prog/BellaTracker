@@ -1,6 +1,6 @@
 /**
- * GYMSTART V1.2
- * True Black, Comfort UX, Expanded Features
+ * GYMSTART V1.3
+ * Layout Fixes, Larger Timer, Better UX
  */
 
 const CONFIG = {
@@ -154,7 +154,6 @@ const app = {
         } else {
             backBtn.style.visibility = 'visible';
         }
-        // No global window.scrollTo needed due to new layout
     },
 
     goBack: function() {
@@ -405,9 +404,13 @@ const app = {
         const disp = document.getElementById('rest-timer-val');
         const ring = document.getElementById('rest-ring-prog');
         area.style.display = 'flex';
+        
+        // Scroll to timer so user sees it
+        area.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
         let sec = 0;
         disp.innerText = "00:00";
-        const MAX_OFFSET = 283; 
+        const MAX_OFFSET = 408; // Updated for radius 65 (2 * PI * 65)
         ring.style.strokeDashoffset = MAX_OFFSET; 
         
         this.state.active.restInterval = setInterval(() => {
