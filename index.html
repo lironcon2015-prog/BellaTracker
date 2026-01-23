@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>GymStart Pro</title>
+    <title>GymStart Elite V0.9</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="stylesheet" href="style.css">
@@ -11,21 +11,22 @@
 </head>
 <body>
 
-    <!-- Professional Background: Deep Atmosphere instead of Orbs -->
-    <div class="bg-atmosphere"></div>
+    <!-- Background: Back to Subtle Energy (Not dead black) -->
+    <div class="bg-gradient"></div>
+    <div class="glass-overlay"></div>
 
     <!-- Admin Modal -->
     <div id="admin-modal" class="modal-wrapper">
         <div class="glass-modal">
             <div class="modal-header">
                 <h3>ניהול תוכנית</h3>
-                <button class="icon-btn-plain" onclick="app.closeAdmin()">סגור</button>
+                <button class="icon-btn" onclick="app.closeAdmin()">✕</button>
             </div>
             
             <div class="admin-controls">
                 <div class="input-group">
                     <label>תוכנית עריכה</label>
-                    <select id="admin-prog-select" class="native-select" onchange="app.renderAdminList()">
+                    <select id="admin-prog-select" class="glass-input" onchange="app.renderAdminList()">
                         <option value="A">תוכנית A</option>
                         <option value="B">תוכנית B</option>
                         <option value="FBW">תוכנית FBW</option>
@@ -33,14 +34,11 @@
                 </div>
             </div>
 
-            <div id="admin-list" class="ios-list"></div>
+            <div id="admin-list" class="scroll-list"></div>
             
             <div class="modal-footer">
-                <button class="btn-action-row" onclick="app.openBank()">
-                    <span>הוסף תרגיל</span>
-                    <span class="plus-icon">+</span>
-                </button>
-                <button class="btn-primary" onclick="app.saveAdmin()">שמור שינויים</button>
+                <button class="btn-glass-small" onclick="app.openBank()">+ הוסף תרגיל</button>
+                <button class="btn-primary" onclick="app.saveAdmin()">שמור</button>
             </div>
         </div>
     </div>
@@ -50,13 +48,12 @@
         <div class="glass-modal">
             <div class="modal-header">
                 <h3>בנק תרגילים</h3>
-                <button class="icon-btn-plain" onclick="app.closeBank()">סגור</button>
+                <button class="icon-btn" onclick="app.closeBank()">✕</button>
             </div>
             <div class="bank-filters">
-                <input type="text" id="bank-search" class="search-input" placeholder="חפש..." onkeyup="app.filterBank()">
-                <div class="category-tags" id="bank-cats"></div>
+                <input type="text" id="bank-search" class="glass-input" placeholder="חפש..." onkeyup="app.filterBank()">
             </div>
-            <div id="bank-list" class="ios-list"></div>
+            <div id="bank-list" class="scroll-list"></div>
         </div>
     </div>
 
@@ -65,15 +62,15 @@
         <div class="glass-modal">
             <div class="modal-header">
                 <h3>פרטי אימון</h3>
-                <button class="icon-btn-plain" onclick="app.closeHistoryModal()">סגור</button>
+                <button class="icon-btn" onclick="app.closeHistoryModal()">✕</button>
             </div>
-            <div id="hist-meta-header" class="history-meta-box"></div>
+            <div id="hist-meta-header" class="meta-box"></div>
             
-            <div id="hist-detail-content" class="ios-list" style="margin-bottom: 20px;"></div>
+            <div id="hist-detail-content" class="scroll-list" style="margin-bottom: 20px;"></div>
             
-            <div class="actions-grid">
-                <button class="btn-secondary" onclick="app.copySingleHistory()">העתק סיכום</button>
-                <button class="btn-destructive" onclick="app.deleteCurrentLog()">מחק רישום</button>
+            <div class="actions-row">
+                <button class="btn-glass" onclick="app.copySingleHistory()">העתק</button>
+                <button class="btn-danger-outline" onclick="app.deleteCurrentLog()">מחק</button>
             </div>
         </div>
     </div>
@@ -84,10 +81,10 @@
         <!-- Navbar -->
         <header class="navbar">
             <div class="nav-left">
-                <div class="logo-text">GymStart</div>
+                <div class="logo">GYM<span>START</span></div>
             </div>
-            <button id="nav-back" class="icon-btn-plain" onclick="app.goBack()" style="visibility: hidden;">
-                חזור
+            <button id="nav-back" class="icon-btn" onclick="app.goBack()" style="visibility: hidden;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
             </button>
         </header>
 
@@ -95,57 +92,58 @@
 
         <!-- 1. HOME -->
         <div id="screen-home" class="screen active">
-            <div class="home-header">
-                <h1 id="greeting">דף הבית</h1>
-                <p>סקירת פעילות</p>
+            <div class="hero">
+                <h1 id="greeting">ברוכה הבאה</h1>
+                <p>האימון הבא שלך מחכה</p>
             </div>
 
-            <div class="glass-card compact-card">
-                <div class="row-spread">
-                    <span class="label-dim">אימון אחרון</span>
-                    <span id="last-workout-display" class="value-highlight">--</span>
+            <div class="glass-card info-card">
+                <div class="icon-box">📅</div>
+                <div>
+                    <div class="label">אימון אחרון</div>
+                    <div id="last-workout-display" class="value">טוען...</div>
                 </div>
             </div>
 
             <div class="spacer"></div>
 
-            <div class="main-actions">
+            <div class="home-actions">
                 <button class="btn-primary big-btn" onclick="app.nav('screen-program-select')">
-                    התחל אימון חדש
+                    התחלי אימון
                 </button>
 
-                <button class="btn-secondary" onclick="app.showHistory()">
-                    היסטוריה וגיבוי
+                <button class="btn-glass" onclick="app.showHistory()">
+                    היסטוריה
                 </button>
             </div>
             
-            <div class="version-tag">Pro V0.8</div>
+            <div class="version-tag">Elite V0.9</div>
         </div>
 
         <!-- 1.5 PROGRAM SELECT -->
         <div id="screen-program-select" class="screen">
-            <h2 class="page-title">בחירת תוכנית</h2>
-            <div class="ios-list menu-list">
-                <div class="list-row-clickable" onclick="app.selectProgram('A')">
-                    <div class="row-content">
-                        <span class="row-title">תוכנית A</span>
-                        <span class="row-subtitle">רגליים, גב</span>
+            <h2 class="page-title">בחרי תוכנית</h2>
+            <div class="card-grid">
+                <div class="glass-card prog-card" onclick="app.selectProgram('A')">
+                    <div class="prog-icon">A</div>
+                    <div class="prog-content">
+                        <div class="prog-title">רגליים וגב</div>
+                        <div class="prog-desc">סקוואט, דדליפט, פולי</div>
                     </div>
-                    <div class="row-arrow">›</div>
                 </div>
-                <div class="list-row-clickable" onclick="app.selectProgram('B')">
-                    <div class="row-content">
-                        <span class="row-title">תוכנית B</span>
-                        <span class="row-subtitle">חזה, כתפיים, ידיים</span>
+                <div class="glass-card prog-card" onclick="app.selectProgram('B')">
+                    <div class="prog-icon">B</div>
+                    <div class="prog-content">
+                        <div class="prog-title">חזה, כתפיים, ידיים</div>
+                        <div class="prog-desc">לחיצות, ידיים, פלאנק</div>
                     </div>
-                    <div class="row-arrow">›</div>
                 </div>
-                <div class="list-row-clickable" onclick="app.selectProgram('FBW')">
-                    <div class="row-content">
-                        <span class="row-title">תוכנית FBW</span>
-                        <span class="row-subtitle">אימון כל הגוף</span>
+                <div class="glass-card prog-card" onclick="app.selectProgram('FBW')">
+                    <div class="prog-icon">F</div>
+                    <div class="prog-content">
+                        <div class="prog-title">FBW כל הגוף</div>
+                        <div class="prog-desc">אימון מלא וממוקד</div>
                     </div>
-                    <div class="row-arrow">›</div>
                 </div>
             </div>
         </div>
@@ -153,10 +151,10 @@
         <!-- 2. OVERVIEW -->
         <div id="screen-overview" class="screen">
             <h2 class="page-title" id="overview-title">סקירה</h2>
-            <div id="overview-list" class="ios-list"></div>
+            <div id="overview-list" class="simple-list"></div>
             
             <div class="bottom-bar">
-                <button class="btn-primary" onclick="app.startWorkout()">התחל אימון</button>
+                <button class="btn-primary" onclick="app.startWorkout()">התחלי אימון 🚀</button>
             </div>
         </div>
 
@@ -164,117 +162,112 @@
         <div id="screen-active" class="screen">
             
             <div class="active-header">
-                <div id="set-badge" class="capsule-badge">סט 1</div>
+                <div id="set-badge" class="badge">סט 1</div>
                 <h2 id="ex-name">שם התרגיל</h2>
-                <div id="coach-note" class="note-text"></div>
+                <div id="coach-note" class="note-pill"></div>
             </div>
 
-            <div id="history-badge" class="history-text">--</div>
+            <div id="history-badge" class="history-pill">--</div>
 
             <div class="workspace">
-                <!-- INPUTS -->
+                <!-- INPUTS: CLEAR CARDS -->
                 <div id="cards-container" class="inputs-row">
-                    <div class="data-input-wrapper">
-                        <select id="select-weight" class="minimal-select"></select>
-                        <span class="input-label" id="unit-label-card">ק״ג</span>
+                    <div class="input-card">
+                        <span class="input-label">משקל (<span id="unit-label-card">ק״ג</span>)</span>
+                        <select id="select-weight" class="native-select"></select>
                     </div>
-                    <div class="divider-vertical"></div>
-                    <div class="data-input-wrapper">
-                        <select id="select-reps" class="minimal-select"></select>
+                    <div class="input-card">
                         <span class="input-label">חזרות</span>
+                        <select id="select-reps" class="native-select"></select>
                     </div>
                 </div>
 
-                <!-- STOPWATCH (Professional) -->
-                <div id="stopwatch-container" class="stopwatch-wrapper" style="display: none;">
-                    <div class="stopwatch-digits" id="sw-display">00:00</div>
-                    <button id="btn-sw-toggle" class="btn-play-pause" onclick="app.toggleStopwatch()">
-                        <svg class="play-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>
-                        <svg class="stop-icon" viewBox="0 0 24 24" style="display:none"><path fill="currentColor" d="M6 6h12v12H6z"/></svg>
-                    </button>
-                    <div class="sw-hint">מדידת זמן</div>
+                <!-- STOPWATCH: CLEAR UI -->
+                <div id="stopwatch-container" class="stopwatch-box" style="display: none;">
+                    <div class="sw-time" id="sw-display">00:00</div>
+                    <button id="btn-sw-toggle" class="btn-circle-play" onclick="app.toggleStopwatch()">▶</button>
+                    <div class="sw-hint">מדידת זמן לתרגיל</div>
                 </div>
             </div>
 
             <!-- FEELING -->
-            <div class="feeling-container">
-                <div class="segment-control">
-                    <button class="segment-btn easy" onclick="app.selectFeel('easy')">קל</button>
-                    <button class="segment-btn good selected" onclick="app.selectFeel('good')">בינוני</button>
-                    <button class="segment-btn hard" onclick="app.selectFeel('hard')">קשה</button>
-                </div>
+            <div class="feeling-row">
+                <button class="feel-btn easy" onclick="app.selectFeel('easy')">😌</button>
+                <button class="feel-btn good selected" onclick="app.selectFeel('good')">🙂</button>
+                <button class="feel-btn hard" onclick="app.selectFeel('hard')">🥵</button>
             </div>
+            <div class="feel-label" id="feel-text">בינוני (טוב)</div>
 
             <!-- REST TIMER -->
-            <div id="rest-timer-area" class="rest-overlay" style="display: none;">
-                <div class="circular-timer-minimal">
+            <div id="rest-timer-area" class="rest-box" style="display: none;">
+                <div class="circular-timer">
                     <svg viewBox="0 0 100 100">
                         <circle class="bg-ring" cx="50" cy="50" r="45"></circle>
                         <circle id="rest-ring-prog" class="prog-ring" cx="50" cy="50" r="45"></circle>
                     </svg>
-                    <div class="timer-text-minimal" id="rest-timer-val">00:00</div>
+                    <div class="timer-text" id="rest-timer-val">00:00</div>
                 </div>
-                <div class="rest-label">מנוחה</div>
+                <div class="rest-caption">זמן מנוחה</div>
             </div>
 
             <div class="spacer"></div>
 
-            <div id="action-area" class="action-dock">
+            <div id="action-area">
                 <button id="btn-finish" class="btn-primary" onclick="app.finishSet()">
                     סיום סט
                 </button>
 
-                <div id="decision-buttons" style="display:none; width:100%; gap:12px;">
-                    <button class="btn-secondary" onclick="app.addSet()" style="flex:1">הוסף סט</button>
-                    <button class="btn-primary" onclick="app.nextExercise()" style="flex:1">הבא</button>
+                <div id="decision-buttons" style="display:none; gap:10px; width:100%;">
+                    <button class="btn-glass" onclick="app.addSet()" style="flex:1">עוד סט</button>
+                    <button class="btn-primary" onclick="app.nextExercise()" style="flex:1">תרגיל הבא</button>
                 </div>
             </div>
 
-            <div class="sub-actions-row">
-                <button class="text-link" onclick="app.deleteLastSet()">ביטול סט</button>
-                <button class="text-link" onclick="app.skipExercise()">דילוג</button>
+            <div class="sub-actions">
+                <button class="text-link" onclick="app.deleteLastSet()">בטל סט אחרון</button>
+                <button class="text-link" onclick="app.skipExercise()">דלג תרגיל</button>
             </div>
         </div>
 
         <!-- 4. SUMMARY -->
         <div id="screen-summary" class="screen">
-            <div class="summary-hero">
-                <h1>אימון הושלם</h1>
-                <div id="summary-meta" class="summary-meta-tag"></div>
+            <div class="hero">
+                <h1>כל הכבוד!</h1>
+                <p>האימון הושלם בהצלחה</p>
+                <div id="summary-meta" class="meta-tag"></div>
             </div>
-            <div id="summary-text" class="summary-content"></div>
+            <div id="summary-text" class="summary-box"></div>
             
-            <div class="actions-grid">
-                <button class="btn-secondary" onclick="app.copySummaryToClipboard()">העתק</button>
-                <button class="btn-primary" onclick="app.saveAndHome()">סיום</button>
+            <div class="actions-column">
+                <button class="btn-glass" onclick="app.copySummaryToClipboard()">העתק סיכום</button>
+                <button class="btn-primary" onclick="app.saveAndHome()">שמור וסיים</button>
             </div>
         </div>
 
         <!-- 5. HISTORY -->
         <div id="screen-history" class="screen">
-            <div class="header-row">
+            <div class="page-header">
                 <h2 class="page-title">היסטוריה</h2>
-                <div class="header-actions">
-                     <button class="btn-small-text" onclick="app.exportData()">גיבוי</button>
-                     <label class="btn-small-text">
+                <div class="header-tools">
+                     <button class="btn-tool" onclick="app.exportData()">גיבוי</button>
+                     <label class="btn-tool">
                          שחזור <input type="file" hidden onchange="app.importData(this)">
                      </label>
                 </div>
             </div>
             
-            <!-- Bulk Actions Toolbar -->
-            <div class="toolbar">
-                 <button class="btn-toolbar" onclick="app.selectAllHistory()">בחר הכל</button>
-                 <div style="display:flex; gap:15px;">
-                    <button class="btn-toolbar" onclick="app.copySelectedHistory()">העתק</button>
-                    <button id="btn-del-selected" class="btn-toolbar danger" onclick="app.deleteSelectedHistory()" disabled>מחק</button>
+            <div class="bulk-tools">
+                 <button class="btn-tool-outline" onclick="app.selectAllHistory()">בחר הכל</button>
+                 <div style="display:flex; gap:10px;">
+                    <button class="btn-tool-outline" onclick="app.copySelectedHistory()">העתק</button>
+                    <button id="btn-del-selected" class="btn-tool-danger" onclick="app.deleteSelectedHistory()" disabled>מחק</button>
                  </div>
             </div>
 
-            <div id="history-list" class="ios-list history-stream"></div>
+            <div id="history-list" class="history-list-container"></div>
             
             <div class="spacer"></div>
-            <button class="btn-secondary" onclick="app.openAdmin()">ממשק מאמן</button>
+            <button class="btn-glass" onclick="app.openAdmin()">הגדרות מאמן</button>
         </div>
 
     </div>
