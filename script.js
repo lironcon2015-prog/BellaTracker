@@ -1,6 +1,6 @@
 /**
- * GYMSTART OLED V1.0
- * True Black, Neon, Performance
+ * GYMSTART OLED V1.1
+ * True Black, Neon, Performance, Expanded Features
  */
 
 const CONFIG = {
@@ -11,7 +11,14 @@ const CONFIG = {
     }
 };
 
+const PROGRAM_NAMES = {
+    'A': 'רגליים וגב',
+    'B': 'חזה, כתפיים, ידיים',
+    'FBW': 'FBW כל הגוף'
+};
+
 const BANK = [
+    // Original
     { id: 'goblet', name: 'גובלט סקוואט', unit: 'kg', cat: 'legs' },
     { id: 'leg_press', name: 'לחיצת רגליים', unit: 'kg', cat: 'legs' },
     { id: 'rdl', name: 'דדליפט רומני', unit: 'kg', cat: 'legs' },
@@ -29,7 +36,18 @@ const BANK = [
     { id: 'plank', name: 'פלאנק (סטטי)', unit: 'bodyweight', cat: 'core' },
     { id: 'side_plank', name: 'פלאנק צידי', unit: 'bodyweight', cat: 'core' },
     { id: 'bicycle', name: 'בטן אופניים', unit: 'bodyweight', cat: 'core' },
-    { id: 'knee_raise', name: 'הרמת ברכיים', unit: 'bodyweight', cat: 'core' }
+    { id: 'knee_raise', name: 'הרמת ברכיים', unit: 'bodyweight', cat: 'core' },
+    // New Additions
+    { id: 'hip_thrust', name: 'גשר עכוז (Hip Thrust)', unit: 'kg', cat: 'legs' },
+    { id: 'leg_ext', name: 'פשיטת ברכיים (מכונה)', unit: 'plates', cat: 'legs' },
+    { id: 'leg_curl', name: 'כפיפת ברכיים (מכונה)', unit: 'plates', cat: 'legs' },
+    { id: 'calf_raise', name: 'הרמת עקבים', unit: 'kg', cat: 'legs' },
+    { id: 'incline_bench', name: 'לחיצת חזה שיפוע עליון', unit: 'kg', cat: 'chest' },
+    { id: 'hyperext', name: 'פשיטת גו (Hyper)', unit: 'bodyweight', cat: 'back' },
+    { id: 'face_pull', name: 'פייס-פולס (Face Pulls)', unit: 'plates', cat: 'shoulders' },
+    { id: 'tricep_rope', name: 'פשיטת מרפקים חבל', unit: 'plates', cat: 'arms' },
+    { id: 'hammer_curl', name: 'כפיפת פטישים', unit: 'kg', cat: 'arms' },
+    { id: 'russian_twist', name: 'רושן טוויסט', unit: 'kg', cat: 'core' }
 ];
 
 const DEFAULT_ROUTINES = {
@@ -147,9 +165,10 @@ const app = {
 
     renderOverview: function() {
         const prog = this.state.routines[this.state.currentProgId];
+        const progName = PROGRAM_NAMES[this.state.currentProgId] || this.state.currentProgId;
         const list = document.getElementById('overview-list');
         const title = document.getElementById('overview-title');
-        title.innerText = `סקירה: תוכנית ${this.state.currentProgId}`;
+        title.innerText = `סקירה: ${progName}`;
         list.innerHTML = '';
         prog.forEach((ex, i) => {
             list.innerHTML += `<div class="list-item"><span>${i+1}. ${ex.name}</span><span style="color:var(--primary)">${ex.target?.w || '-'} ${ex.unit}</span></div>`;
@@ -160,7 +179,8 @@ const app = {
         const lastEl = document.getElementById('last-workout-display');
         if (this.state.history.length > 0) {
             const last = this.state.history[this.state.history.length - 1];
-            lastEl.innerText = `${last.date} (${last.program})`;
+            const pName = PROGRAM_NAMES[last.program] || last.program;
+            lastEl.innerText = `${last.date} (${pName})`;
         } else {
             lastEl.innerText = "טרם בוצע";
         }
@@ -444,19 +464,13 @@ const app = {
         }
     },
 
-    finishWorkout: function() {
-        const endTime = Date.now();
-        const durationMin = Math.round((endTime - this.state.active.startTime) / 60000);
-        const dateStr = new Date().toLocaleDateString('he-IL');
-        
-        const meta = document.getElementById('summary-meta');
-        meta.innerText = `${dateStr} | ${durationMin} דקות`;
+    // Helper: Generates full workout text in consistent format
+    generateLogText: function(historyItem) {
+        const pName = PROGRAM_NAMES[historyItem.program] || historyItem.program;
+        let txt = `סיכום אימון: ${pName}\n`;
+        txt += `תאריך: ${historyItem.date} | משך: ${historyItem.duration} דק'\n\n`;
 
-        const textBox = document.getElementById('summary-text');
-        let txt = `סיכום אימון: ${this.state.currentProgId}\n`;
-        txt += `תאריך: ${dateStr} | משך: ${durationMin} דק'\n\n`;
-
-        this.state.active.log.forEach(ex => {
+        historyItem.data.forEach(ex => {
             if(ex.sets.length > 0) {
                 txt += `✅ ${ex.name}\n`;
                 const isTime = (ex.id.includes('plank') || ex.id === 'wall_sit');
@@ -467,8 +481,28 @@ const app = {
                 txt += "\n";
             }
         });
+        return txt;
+    },
+
+    finishWorkout: function() {
+        const endTime = Date.now();
+        const durationMin = Math.round((endTime - this.state.active.startTime) / 60000);
+        const dateStr = new Date().toLocaleDateString('he-IL');
         
-        textBox.innerText = txt;
+        // Prepare temporary object for generation
+        const tempItem = {
+            program: this.state.currentProgId,
+            date: dateStr,
+            duration: durationMin,
+            data: this.state.active.log
+        };
+
+        const meta = document.getElementById('summary-meta');
+        meta.innerText = `${dateStr} | ${durationMin} דקות`;
+
+        const textBox = document.getElementById('summary-text');
+        textBox.innerText = this.generateLogText(tempItem);
+        
         this.nav('screen-summary');
     },
 
@@ -498,6 +532,7 @@ const app = {
         list.innerHTML = '';
         [...this.state.history].reverse().forEach((h, i) => {
             const realIdx = this.state.history.length - 1 - i;
+            const pName = PROGRAM_NAMES[h.program] || h.program;
             list.innerHTML += `
                 <div class="hist-item-row">
                     <div style="display:flex; align-items:center">
@@ -506,7 +541,7 @@ const app = {
                     <div style="flex:1" onclick="app.showHistoryDetail(${realIdx})">
                         <div style="display:flex; justify-content:space-between">
                             <span style="font-weight:700; color:var(--text)">${h.date}</span>
-                            <span class="badge" style="background:#333; color:white">${h.program || '-'}</span>
+                            <span class="badge" style="background:#333; color:white; font-weight:400; font-size:0.75rem">${pName}</span>
                         </div>
                         <div style="font-size:0.85rem; color:var(--text-sec); margin-top:5px">
                             ${h.data.length} תרגילים • ${h.duration||'?'} דק'
@@ -555,33 +590,27 @@ const app = {
     copySelectedHistory: function() {
         if(this.state.historySelection.length === 0) { alert("לא נבחר אימון"); return; }
         
-        let fullTxt = "תיעוד אימונים:\n\n";
+        let fullTxt = "";
+        // Sort selections to be chronological (optional, but good for logs)
         const sortedSel = [...this.state.historySelection].sort((a,b) => a-b);
         
-        sortedSel.forEach(idx => {
+        sortedSel.forEach((idx, i) => {
             const h = this.state.history[idx];
-            fullTxt += `--- אימון ${h.program} (${h.date}) ---\n`;
-            h.data.forEach(ex => {
-                const isTime = (ex.id.includes('plank') || ex.id === 'wall_sit');
-                fullTxt += `• ${ex.name}: `;
-                let setTxts = ex.sets.map(s => {
-                    if(isTime) return `${s.r}שנ׳`;
-                    return `${s.w>0?s.w:''}${s.w>0?'/':''}${s.r}`;
-                }).join(', ');
-                fullTxt += setTxts + "\n";
-            });
-            fullTxt += "\n";
+            fullTxt += this.generateLogText(h);
+            if(i < sortedSel.length - 1) fullTxt += "----------------\n\n";
         });
+        
         this.copyText(fullTxt);
     },
 
     showHistoryDetail: function(idx) {
         const item = this.state.history[idx];
         this.state.viewHistoryIdx = idx;
+        const pName = PROGRAM_NAMES[item.program] || item.program;
         
         const header = document.getElementById('hist-meta-header');
         header.innerHTML = `
-            <h3>${item.program}</h3>
+            <h3>${pName}</h3>
             <p>${item.date} | ${item.duration} דק'</p>
         `;
 
@@ -606,17 +635,7 @@ const app = {
 
     copySingleHistory: function() {
         const item = this.state.history[this.state.viewHistoryIdx];
-        let txt = `אימון ${item.program} (${item.date})\n\n`;
-        item.data.forEach(ex => {
-            txt += `${ex.name}\n`;
-            const isTime = (ex.id.includes('plank') || ex.id === 'wall_sit');
-            ex.sets.forEach((s, i) => {
-                let valStr = isTime ? `${s.r} שנ׳` : `${s.w}x${s.r}`;
-                txt += `סט ${i+1}: ${valStr}\n`
-            });
-            txt += "\n";
-        });
-        this.copyText(txt);
+        this.copyText(this.generateLogText(item));
     },
 
     closeHistoryModal: function() {
@@ -704,14 +723,21 @@ const app = {
     saveAdmin: function() { this.saveData(); alert('נשמר'); this.closeAdmin(); },
     openBank: function() { 
         document.getElementById('bank-modal').style.display = 'flex';
-        this.filterBank('');
+        this.filterBank();
     },
     closeBank: function() { document.getElementById('bank-modal').style.display = 'none'; },
     filterBank: function() {
         const txt = document.getElementById('bank-search').value.toLowerCase();
+        const cat = document.getElementById('bank-cat-select').value;
+        
         const list = document.getElementById('bank-list');
         list.innerHTML = '';
-        BANK.filter(e => e.name.toLowerCase().includes(txt))
+        
+        BANK.filter(e => {
+            const matchesName = e.name.toLowerCase().includes(txt);
+            const matchesCat = cat === 'all' || e.cat === cat;
+            return matchesName && matchesCat;
+        })
         .forEach(e => {
             list.innerHTML += `<div class="admin-item" onclick="app.addFromBank('${e.id}')">
                 <span>${e.name}</span><span style="color:var(--primary); font-size:1.5rem">+</span>
