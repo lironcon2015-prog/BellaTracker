@@ -36,23 +36,10 @@ body {
 }
 
 /* Navbar */
-.navbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; min-height: 44px; }
-.logo-area { text-align: center; width: 100%; margin-bottom: 20px; }
-.logo { font-weight: 700; font-size: 1.8rem; letter-spacing: -1px; }
-.logo span { color: var(--primary); }
+.navbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; min-height: 44px; }
+.logo-small { font-weight: 700; font-size: 1.2rem; letter-spacing: -1px; }
+.logo-small span { color: var(--primary); }
 .icon-btn { background: none; border: none; color: white; padding: 8px; cursor: pointer; }
-
-/* Timer Pill (Floating) */
-.timer-pill {
-    display: flex; align-items: center; gap: 8px;
-    background: rgba(0,0,0,0.6); padding: 5px 12px;
-    border-radius: 20px; border: 1px solid var(--glass-border);
-    animation: slideDown 0.3s;
-}
-.timer-svg { width: 24px; height: 24px; transform: rotate(-90deg); }
-.timer-bg { fill: none; stroke: rgba(255,255,255,0.1); stroke-width: 3; }
-.timer-path { fill: none; stroke: var(--primary); stroke-width: 3; stroke-dasharray: 100, 100; transition: stroke-dasharray 1s linear; }
-#timer-val { font-family: monospace; font-weight: 700; font-size: 1rem; }
 
 /* Screens */
 .screen { display: none; flex-direction: column; flex: 1; overflow-y: auto; padding-bottom: 20px; animation: fadein 0.3s ease; }
@@ -63,8 +50,8 @@ body {
 .glass-card { background: var(--glass); border: 1px solid var(--glass-border); border-radius: 20px; padding: 20px; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
 .btn-primary { background: var(--primary); color: #000; font-weight: 700; font-size: 1.1rem; padding: 18px; border-radius: 18px; border: none; width: 100%; cursor: pointer; box-shadow: 0 5px 15px var(--primary-dim); display: flex; align-items: center; justify-content: center; gap: 10px; transition: 0.1s; }
 .btn-primary:active { transform: scale(0.98); opacity: 0.9; }
-.btn-glass { background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); color: white; padding: 15px; width: 100%; border-radius: 16px; font-weight: 500; cursor: pointer; }
-.btn-small { background: rgba(255,255,255,0.1); border: none; padding: 6px 12px; border-radius: 8px; color: #ccc; font-size: 0.8rem; }
+.btn-glass { background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); color: white; padding: 15px; width: 100%; border-radius: 16px; font-weight: 500; cursor: pointer; margin-top: 10px; }
+.btn-small { background: rgba(255,255,255,0.1); border: none; padding: 6px 12px; border-radius: 8px; color: #ccc; font-size: 0.8rem; cursor:pointer;}
 .spacer { flex: 1; }
 
 /* Program Select */
@@ -76,13 +63,12 @@ body {
 .prog-desc { font-size: 0.9rem; color: var(--text-dim); }
 
 /* Home & Overview */
-.hero { text-align: center; margin-bottom: 20px; }
-.hero h1 { margin: 0; font-size: 2rem; }
+.hero { text-align: center; margin-bottom: 10px; }
+.hero h1 { margin: 0; font-size: 1.8rem; }
 .hero p { color: var(--text-dim); margin: 5px 0 0; }
-.status-card { display: flex; align-items: center; gap: 15px; margin-bottom: 10px; padding: 15px; }
+.status-card { display: flex; align-items: center; gap: 15px; margin-bottom: 0px; padding: 15px; }
 .icon-circle { background: var(--primary-dim); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
 .list-item { display: flex; justify-content: space-between; align-items: center; padding: 14px; background: rgba(255,255,255,0.03); border-radius: 12px; margin-bottom: 8px; border-right: 3px solid transparent; }
-.list-item.done { border-right-color: var(--success); opacity: 0.6; }
 
 /* Active Workout */
 .ex-header { text-align: center; margin-bottom: 10px; }
@@ -91,23 +77,27 @@ body {
 .note-pill { background: rgba(255,204,0,0.1); color: #ffcc00; padding: 6px 10px; border-radius: 8px; font-size: 0.85rem; margin-top: 8px; display: inline-block; max-width: 90%; }
 .history-pill { text-align: center; color: var(--text-dim); font-size: 0.85rem; margin-bottom: 15px; }
 
-/* SCROLL PICKER (WHEEL) */
-.scroller-wrapper { display: flex; gap: 15px; height: 200px; margin-bottom: 20px; position: relative; }
-.scroller-col { flex: 1; position: relative; background: rgba(0,0,0,0.2); border-radius: 16px; overflow: hidden; }
-.scroller-col label { position: absolute; top: 10px; left: 0; right: 0; text-align: center; font-size: 0.8rem; color: var(--text-dim); z-index: 2; pointer-events: none; }
-.wheel-mask { position: absolute; top: 50%; left: 0; right: 0; height: 50px; transform: translateY(-50%); border-top: 1px solid rgba(255,255,255,0.1); border-bottom: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.03); pointer-events: none; z-index: 1; }
-.wheel-scroll { height: 100%; overflow-y: scroll; scroll-snap-type: y mandatory; padding-top: 75px; padding-bottom: 75px; scrollbar-width: none; }
-.wheel-scroll::-webkit-scrollbar { display: none; }
-.wheel-item { height: 50px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; color: #555; scroll-snap-align: center; transition: 0.2s; }
-.wheel-item.active { color: white; font-weight: 700; font-size: 1.8rem; transform: scale(1.1); }
+/* STEPPER UI (New) */
+.stepper-wrapper { display: flex; flex-direction: column; gap: 15px; margin-bottom: 20px; }
+.stepper-row { background: rgba(255,255,255,0.05); border-radius: 16px; padding: 10px 15px; display: flex; align-items: center; justify-content: space-between; }
+.stepper-row label { color: var(--text-dim); font-size: 0.9rem; }
+.stepper-ctrl { display: flex; align-items: center; gap: 15px; }
+.step-btn { width: 44px; height: 44px; border-radius: 12px; background: rgba(255,255,255,0.1); border: none; color: white; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.step-btn:active { background: var(--primary); color: black; }
+.step-val { font-size: 1.6rem; font-weight: 700; min-width: 60px; text-align: center; font-variant-numeric: tabular-nums; }
 
 /* STOPWATCH UI */
-.stopwatch-ui { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 200px; background: rgba(0,0,0,0.2); border-radius: 20px; margin-bottom: 20px; }
+.stopwatch-ui { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 180px; background: rgba(0,0,0,0.2); border-radius: 20px; margin-bottom: 20px; }
 .time-display { font-size: 3.5rem; font-family: monospace; font-weight: 700; margin-bottom: 15px; }
 .btn-circle-play { width: 70px; height: 70px; border-radius: 50%; background: var(--success); border: none; font-size: 2rem; display: flex; align-items: center; justify-content: center; color: black; cursor: pointer; box-shadow: 0 0 20px rgba(76, 217, 100, 0.3); }
 .btn-circle-play.running { background: var(--danger); animation: pulse 1s infinite; }
 @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
 .sw-hint { margin-top: 10px; font-size: 0.85rem; color: var(--text-dim); }
+
+/* Rest Timer (New) */
+.rest-timer-box { text-align: center; margin: 20px 0; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 15px; border: 1px solid var(--glass-border); animation: slideDown 0.3s; }
+.rest-label { color: var(--text-dim); font-size: 0.9rem; margin-bottom: 5px; }
+#rest-timer-val { font-size: 2.5rem; font-weight: 700; font-family: monospace; color: var(--primary); text-shadow: 0 0 10px var(--primary-dim); }
 
 /* Feeling */
 .feeling-section { text-align: center; margin-bottom: 10px; }
@@ -118,6 +108,10 @@ body {
 
 .sub-actions { display: flex; justify-content: space-between; margin-top: 10px; padding: 0 10px; }
 .link-btn { background: none; border: none; color: #666; font-size: 0.8rem; text-decoration: underline; padding: 10px; }
+
+/* Summary Meta */
+.summary-meta { font-size: 0.9rem; color: var(--text-dim); margin-top: 10px; font-family: monospace; }
+.summary-box { white-space: pre-wrap; font-family: monospace; font-size: 0.9rem; line-height: 1.5; text-align: right; margin-bottom: 10px; max-height: 40vh; overflow-y: auto; }
 
 /* Admin & Modals */
 .modal-wrapper { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 100; display: none; justify-content: center; align-items: center; padding: 20px; }
@@ -131,7 +125,13 @@ body {
 .cat-tag { background: #333; padding: 4px 10px; border-radius: 15px; font-size: 0.8rem; white-space: nowrap; border: 1px solid #444; }
 .cat-tag.active { background: var(--primary); color: black; border-color: var(--primary); }
 
-.history-actions { display: flex; gap: 10px; margin-bottom: 15px; }
+.history-actions { display: flex; gap: 10px; margin-bottom: 15px; align-items: center; }
 .modal-footer { display: flex; flex-direction: column; gap: 8px; }
 .btn-text { background: none; border: 1px dashed #555; color: #aaa; padding: 10px; border-radius: 10px; }
-.btn-danger-text { background: none; border: 1px solid #500; color: #ff5555; padding: 10px; border-radius: 10px; margin-top: 10px; width: 100%; }
+.btn-danger-text { background: none; border: 1px solid #500; color: #ff5555; padding: 10px; border-radius: 10px; cursor: pointer; }
+
+/* History Checkbox */
+.hist-item-row { display: flex; align-items: center; gap: 10px; background: var(--glass); border: 1px solid var(--glass-border); border-radius: 15px; margin-bottom: 10px; padding: 15px; }
+.chk-container { display: flex; align-items: center; }
+.custom-chk { appearance: none; width: 20px; height: 20px; border: 2px solid var(--text-dim); border-radius: 4px; background: transparent; cursor: pointer; }
+.custom-chk:checked { background: var(--primary); border-color: var(--primary); }
