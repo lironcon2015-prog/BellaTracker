@@ -1,6 +1,6 @@
 /**
- * GYMSTART BETA V0.7
- * Changes: Time-based formatting in summary, Reload on Save
+ * GYMSTART PRO V0.8
+ * Elite UI, Clean Tone, Professional Logic
  */
 
 // --- DATA & CONFIG ---
@@ -15,8 +15,8 @@ const CONFIG = {
 // --- EXERCISE BANK ---
 const BANK = [
     { id: 'goblet', name: 'גובלט סקוואט', unit: 'kg', cat: 'legs' },
-    { id: 'leg_press', name: 'לחיצת רגליים (Leg Press)', unit: 'kg', cat: 'legs' },
-    { id: 'rdl', name: 'דדליפט רומני (RDL)', unit: 'kg', cat: 'legs' },
+    { id: 'leg_press', name: 'לחיצת רגליים', unit: 'kg', cat: 'legs' },
+    { id: 'rdl', name: 'דדליפט רומני', unit: 'kg', cat: 'legs' },
     { id: 'lunge', name: 'מכרעים (Lunges)', unit: 'kg', cat: 'legs' },
     { id: 'chest_press', name: 'לחיצת חזה משקולות', unit: 'kg', cat: 'chest' },
     { id: 'fly', name: 'פרפר (Fly)', unit: 'kg', cat: 'chest' },
@@ -26,11 +26,11 @@ const BANK = [
     { id: 'db_row', name: 'חתירה במשקולת', unit: 'kg', cat: 'back' },
     { id: 'shoulder_press', name: 'לחיצת כתפיים', unit: 'kg', cat: 'shoulders' },
     { id: 'lat_raise', name: 'הרחקה לצדדים', unit: 'kg', cat: 'shoulders' },
-    { id: 'bicep_curl', name: 'כפיפת מרפקים (יד קדמית)', unit: 'kg', cat: 'arms' },
+    { id: 'bicep_curl', name: 'כפיפת מרפקים', unit: 'kg', cat: 'arms' },
     { id: 'tricep_pull', name: 'פשיטת מרפקים (פולי)', unit: 'plates', cat: 'arms' },
-    { id: 'plank', name: 'פלאנק (בטן סטטי)', unit: 'bodyweight', cat: 'core' },
+    { id: 'plank', name: 'פלאנק (סטטי)', unit: 'bodyweight', cat: 'core' },
     { id: 'side_plank', name: 'פלאנק צידי', unit: 'bodyweight', cat: 'core' },
-    { id: 'bicycle', name: 'כפיפות בטן אופניים', unit: 'bodyweight', cat: 'core' },
+    { id: 'bicycle', name: 'בטן אופניים', unit: 'bodyweight', cat: 'core' },
     { id: 'knee_raise', name: 'הרמת ברכיים', unit: 'bodyweight', cat: 'core' }
 ];
 
@@ -38,18 +38,18 @@ const BANK = [
 const DEFAULT_ROUTINES = {
     'A': [
         { id: 'goblet', name: 'גובלט סקוואט', unit: 'kg', note: 'גב זקוף', target: {w:10, r:12}, cat: 'legs' },
-        { id: 'leg_press', name: 'לחיצת רגליים', unit: 'kg', note: 'לא לנעול ברכיים', target: {w:30, r:12}, cat: 'legs' },
-        { id: 'rdl', name: 'דדליפט רומני', unit: 'kg', note: 'לרדת לאט', target: {w:10, r:12}, cat: 'legs' },
-        { id: 'lat_pull', name: 'פולי עליון', unit: 'plates', note: 'למשוך לחזה', target: {w:6, r:12}, cat: 'back' },
+        { id: 'leg_press', name: 'לחיצת רגליים', unit: 'kg', note: 'ללא נעילת ברכיים', target: {w:30, r:12}, cat: 'legs' },
+        { id: 'rdl', name: 'דדליפט רומני', unit: 'kg', note: 'תנועה איטית', target: {w:10, r:12}, cat: 'legs' },
+        { id: 'lat_pull', name: 'פולי עליון', unit: 'plates', note: 'משיכה לחזה', target: {w:6, r:12}, cat: 'back' },
         { id: 'cable_row', name: 'חתירה בכבל', unit: 'plates', note: 'מרפקים צמודים', target: {w:6, r:12}, cat: 'back' },
-        { id: 'bicycle', name: 'בטן אופניים', unit: 'bodyweight', note: 'קצב איטי', target: {w:0, r:30}, cat: 'core' }
+        { id: 'bicycle', name: 'בטן אופניים', unit: 'bodyweight', note: 'שליטה בקצב', target: {w:0, r:30}, cat: 'core' }
     ],
     'B': [
         { id: 'chest_press', name: 'לחיצת חזה', unit: 'kg', note: 'יציבות', target: {w:7, r:12}, cat: 'chest' },
         { id: 'fly', name: 'פרפר', unit: 'kg', note: 'תנועה רחבה', target: {w:3, r:12}, cat: 'chest' },
         { id: 'shoulder_press', name: 'לחיצת כתפיים', unit: 'kg', note: 'גב צמוד', target: {w:4, r:12}, cat: 'shoulders' },
         { id: 'lat_raise', name: 'הרחקה לצדדים', unit: 'kg', note: 'מרפק מוביל', target: {w:3, r:12}, cat: 'shoulders' },
-        { id: 'bicep_curl', name: 'יד קדמית', unit: 'kg', note: 'בלי תנופה', target: {w:5, r:12}, cat: 'arms' },
+        { id: 'bicep_curl', name: 'יד קדמית', unit: 'kg', note: 'ללא תנופה', target: {w:5, r:12}, cat: 'arms' },
         { id: 'tricep_pull', name: 'יד אחורית', unit: 'plates', note: 'מרפקים מקובעים', target: {w:5, r:12}, cat: 'arms' },
         { id: 'side_plank', name: 'פלאנק צידי', unit: 'bodyweight', note: 'אגן גבוה', target: {w:0, r:45}, cat: 'core' }
     ],
@@ -88,7 +88,6 @@ const app = {
     },
 
     init: function() {
-        console.log("App V0.7 Init");
         try {
             this.loadData();
             this.renderHome();
@@ -134,7 +133,7 @@ const app = {
     goBack: function() {
         const activeScreen = document.querySelector('.screen.active').id;
         if (activeScreen === 'screen-active') {
-            if (confirm("לצאת באמצע אימון?")) {
+            if (confirm("לצאת מהאימון הנוכחי?")) {
                 this.stopAllTimers();
                 this.state.active.on = false;
                 this.nav('screen-overview');
@@ -159,7 +158,13 @@ const app = {
         title.innerText = `סקירה: תוכנית ${this.state.currentProgId}`;
         list.innerHTML = '';
         prog.forEach((ex, i) => {
-            list.innerHTML += `<div class="list-item"><span>${i+1}. ${ex.name}</span><span style="color:#888">${ex.target?.w || '-'} ${ex.unit}</span></div>`;
+            list.innerHTML += `
+            <div class="list-row-clickable" style="cursor:default">
+                <div class="row-content">
+                    <span class="row-title">${i+1}. ${ex.name}</span>
+                    <span class="row-subtitle">יעד: ${ex.target?.w || '-'} ${ex.unit}</span>
+                </div>
+            </div>`;
         });
     },
 
@@ -202,8 +207,8 @@ const app = {
         
         const noteEl = document.getElementById('coach-note');
         if (ex.note) {
-            noteEl.innerText = "💡 " + ex.note;
-            noteEl.style.display = 'inline-block';
+            noteEl.innerText = ex.note;
+            noteEl.style.display = 'block';
         } else noteEl.style.display = 'none';
 
         // Check Unit & Type
@@ -219,7 +224,9 @@ const app = {
             
             document.getElementById('sw-display').innerText = "00:00";
             document.getElementById('btn-sw-toggle').classList.remove('running');
-            document.getElementById('btn-sw-toggle').innerText = "▶";
+            // Reset icons
+            document.querySelector('.play-icon').style.display = 'block';
+            document.querySelector('.stop-icon').style.display = 'none';
             document.getElementById('rest-timer-area').style.display = 'none';
 
         } else {
@@ -257,9 +264,9 @@ const app = {
         } else if (ex.unit === 'plates') {
             for(let i=1; i<=20; i++) wOpts.push(i);
         } else {
-            // KG: 1-10 step 1, 12.5-max step 2.5
+            // KG
             for(let i=1; i<=10; i++) wOpts.push(i);
-            const max = isLegs ? 50 : 30;
+            const max = isLegs ? 60 : 35;
             for(let i=12.5; i<=max; i+=2.5) wOpts.push(i);
         }
 
@@ -270,17 +277,13 @@ const app = {
             opt.text = val;
             selW.appendChild(opt);
         });
-        // Set value
         selW.value = this.state.active.inputW;
-        if(!selW.value && wOpts.length > 0) selW.value = wOpts[0]; // fallback
+        if(!selW.value && wOpts.length > 0) selW.value = wOpts[0]; 
         
-        // Listener
         selW.onchange = (e) => this.state.active.inputW = Number(e.target.value);
-
 
         // 2. Populate Reps
         let rOpts = [];
-        // Core limit 30, others 20
         const maxReps = ex.cat === 'core' ? 30 : 20;
         for(let i=1; i<=maxReps; i++) rOpts.push(i);
 
@@ -292,7 +295,6 @@ const app = {
             selR.appendChild(opt);
         });
         selR.value = this.state.active.inputR;
-        // Listener
         selR.onchange = (e) => this.state.active.inputR = Number(e.target.value);
     },
 
@@ -307,7 +309,7 @@ const app = {
         if(lastLog) {
             const isTime = (exId.includes('plank') || exId === 'wall_sit');
             const rStr = isTime ? `${lastLog.r}שנ׳` : lastLog.r;
-            pill.innerText = `הישג קודם: ${lastLog.w > 0 ? lastLog.w + 'ק״ג' : ''} ${rStr}`;
+            pill.innerText = `ביצוע אחרון: ${lastLog.w > 0 ? lastLog.w + ' ' : ''}${rStr}`;
         } else {
             pill.innerText = "תרגיל חדש";
         }
@@ -316,20 +318,24 @@ const app = {
     // --- STOPWATCH LOGIC ---
     toggleStopwatch: function() {
         const btn = document.getElementById('btn-sw-toggle');
+        const iconPlay = document.querySelector('.play-icon');
+        const iconStop = document.querySelector('.stop-icon');
         
         if (this.state.active.timerInterval) {
             // STOP
             clearInterval(this.state.active.timerInterval);
             this.state.active.timerInterval = null;
             btn.classList.remove('running');
-            btn.innerText = "▶";
+            iconPlay.style.display = 'block';
+            iconStop.style.display = 'none';
         } else {
             // START
             this.stopRestTimer();
 
             const start = Date.now() - (this.state.active.stopwatchVal * 1000);
             btn.classList.add('running');
-            btn.innerText = "⏹";
+            iconPlay.style.display = 'none';
+            iconStop.style.display = 'block';
             
             this.state.active.timerInterval = setInterval(() => {
                 const diff = Math.floor((Date.now() - start) / 1000);
@@ -353,10 +359,9 @@ const app = {
     },
 
     updateFeelUI: function() {
-        const map = { 'easy': 'קליל', 'good': 'בוינג (טוב)', 'hard': 'קשה רצח' };
-        document.querySelectorAll('.feel-btn').forEach(b => b.classList.remove('selected'));
-        document.querySelector(`.feel-btn.${this.state.active.feel}`).classList.add('selected');
-        document.getElementById('feel-text').innerText = map[this.state.active.feel];
+        // Updated to cleaner terms
+        document.querySelectorAll('.segment-btn').forEach(b => b.classList.remove('selected'));
+        document.querySelector(`.segment-btn.${this.state.active.feel}`).classList.add('selected');
     },
 
     // --- FINISH SET & REST TIMER ---
@@ -365,8 +370,8 @@ const app = {
         if (this.state.active.isStopwatch) {
             if(this.state.active.timerInterval) this.toggleStopwatch(); 
             w = 0; 
-            r = this.state.active.stopwatchVal; // Actual seconds
-            if (r === 0) { alert("לא נמדד זמן!"); return; }
+            r = this.state.active.stopwatchVal; 
+            if (r === 0) { alert("יש להפעיל את הטיימר"); return; }
         } else {
             w = this.state.active.inputW;
             r = this.state.active.inputR;
@@ -387,7 +392,6 @@ const app = {
         if (this.state.active.setIdx < 3) {
             this.state.active.setIdx++;
             document.getElementById('set-badge').innerText = `סט ${this.state.active.setIdx}`;
-            
             this.state.active.feel = 'good';
             this.updateFeelUI();
             
@@ -411,7 +415,6 @@ const app = {
         area.style.display = 'flex';
         let sec = 0;
         disp.innerText = "00:00";
-        // Geomtery: 2*PI*45 approx 283
         const MAX_OFFSET = 283; 
         ring.style.strokeDashoffset = MAX_OFFSET; 
         
@@ -494,25 +497,25 @@ const app = {
         const dateStr = new Date().toLocaleDateString('he-IL');
         
         const meta = document.getElementById('summary-meta');
-        meta.innerText = `📅 ${dateStr} | ⏱ ${durationMin} דקות`;
+        meta.innerText = `${dateStr} | ${durationMin} דקות`;
 
         const textBox = document.getElementById('summary-text');
-        let txt = `סיכום אימון ${this.state.currentProgId}\n`;
-        txt += `תאריך: ${dateStr} | זמן: ${durationMin} דק'\n\n`;
+        let txt = `סיכום אימון: ${this.state.currentProgId}\n`;
+        txt += `תאריך: ${dateStr} | משך: ${durationMin} דק'\n\n`;
 
         this.state.active.log.forEach(ex => {
             if(ex.sets.length > 0) {
-                txt += `✅ ${ex.name}\n`;
+                txt += `${ex.name}\n`;
                 const isTime = (ex.id.includes('plank') || ex.id === 'wall_sit');
                 
                 ex.sets.forEach((s, i) => {
                     let valStr;
                     if(isTime) {
-                        valStr = `${s.r} שנ׳`;
+                        valStr = `${s.r}שנ׳`;
                     } else {
                         valStr = `${s.w > 0 ? s.w+'ק״ג ' : ''}${s.r}`;
                     }
-                    txt += `   סט ${i+1}: ${valStr} (${s.feel})\n`;
+                    txt += `• סט ${i+1}: ${valStr}\n`;
                 });
                 txt += "\n";
             }
@@ -538,7 +541,6 @@ const app = {
             });
             this.saveData();
         }
-        // Force refresh to clear state
         window.location.reload();
     },
 
@@ -552,15 +554,15 @@ const app = {
             const realIdx = this.state.history.length - 1 - i;
             list.innerHTML += `
                 <div class="hist-item-row">
-                    <div class="chk-container">
+                    <div style="display:flex; align-items:center">
                         <input type="checkbox" class="custom-chk" onchange="app.toggleHistorySelection(${realIdx}, this)">
                     </div>
-                    <div style="flex:1" onclick="app.showHistoryDetail(${realIdx})">
+                    <div style="flex:1; margin-right:15px;" onclick="app.showHistoryDetail(${realIdx})">
                         <div style="display:flex; justify-content:space-between">
-                            <span style="font-weight:700; color:var(--primary)">${h.date}</span>
-                            <span class="badge" style="background:#333; color:white">${h.program || '?'}</span>
+                            <span style="font-weight:600; color:white">${h.date}</span>
+                            <span style="font-size:0.9rem; color:#8E8E93">${h.program || '-'}</span>
                         </div>
-                        <div style="font-size:0.85rem; color:#aaa; margin-top:5px">
+                        <div style="font-size:0.85rem; color:#8E8E93; margin-top:2px">
                             ${h.data.length} תרגילים • ${h.duration||'?'} דק'
                         </div>
                     </div>
@@ -579,9 +581,6 @@ const app = {
     updateHistoryActions: function() {
         const btn = document.getElementById('btn-del-selected');
         btn.disabled = this.state.historySelection.length === 0;
-        btn.innerHTML = this.state.historySelection.length > 0 
-            ? `🗑 מחק (${this.state.historySelection.length})` 
-            : `🗑 מחק נבחרים`;
     },
 
     selectAllHistory: function() {
@@ -600,7 +599,7 @@ const app = {
 
     deleteSelectedHistory: function() {
         if (this.state.historySelection.length === 0) return;
-        if (!confirm(`למחוק ${this.state.historySelection.length} אימונים שנבחרו?`)) return;
+        if (!confirm(`למחוק ${this.state.historySelection.length} רשומות?`)) return;
 
         this.state.history = this.state.history.filter((_, index) => !this.state.historySelection.includes(index));
         this.saveData();
@@ -608,9 +607,9 @@ const app = {
     },
 
     copySelectedHistory: function() {
-        if(this.state.historySelection.length === 0) { alert("לא נבחרו אימונים"); return; }
+        if(this.state.historySelection.length === 0) { alert("יש לבחור אימון"); return; }
         
-        let fullTxt = "📜 ריכוז אימונים\n\n";
+        let fullTxt = "תיעוד אימונים:\n\n";
         const sortedSel = [...this.state.historySelection].sort((a,b) => a-b);
         
         sortedSel.forEach(idx => {
@@ -618,7 +617,7 @@ const app = {
             fullTxt += `--- אימון ${h.program} (${h.date}) ---\n`;
             h.data.forEach(ex => {
                 const isTime = (ex.id.includes('plank') || ex.id === 'wall_sit');
-                fullTxt += `🔸 ${ex.name}: `;
+                fullTxt += `• ${ex.name}: `;
                 let setTxts = ex.sets.map(s => {
                     if(isTime) return `${s.r}שנ׳`;
                     return `${s.w>0?s.w:''}${s.w>0?'/':''}${s.r}`;
@@ -637,14 +636,14 @@ const app = {
         const header = document.getElementById('hist-meta-header');
         header.innerHTML = `
             <h3>${item.program}</h3>
-            <p>📅 ${item.date} | ⏱ ${item.duration} דק'</p>
+            <p>${item.date} | ${item.duration} דק'</p>
         `;
 
         const content = document.getElementById('hist-detail-content');
         let html = '';
         item.data.forEach(ex => {
-            html += `<div style="background:rgba(255,255,255,0.05); padding:10px; border-radius:8px; margin-bottom:8px;">
-                <div style="font-weight:bold; color:var(--primary)">${ex.name}</div>`;
+            html += `<div style="padding:15px; border-bottom:0.5px solid #2c2c2e">
+                <div style="font-weight:500; margin-bottom:6px">${ex.name}</div>`;
             
             const isTime = (ex.id.includes('plank') || ex.id === 'wall_sit');
 
@@ -656,9 +655,9 @@ const app = {
                     valStr = `${s.w > 0 ? s.w+'ק״ג ' : ''}${s.r}`;
                 }
 
-                html += `<div style="display:flex; justify-content:space-between; font-size:0.9rem; margin-top:4px; border-bottom:1px dashed #333">
+                html += `<div style="display:flex; justify-content:space-between; font-size:0.9rem; color:#8E8E93; margin-top:4px;">
                     <span>סט ${si+1}</span>
-                    <span>${valStr} (${s.feel})</span>
+                    <span>${valStr}</span>
                 </div>`;
             });
             html += `</div>`;
@@ -671,11 +670,11 @@ const app = {
         const item = this.state.history[this.state.viewHistoryIdx];
         let txt = `אימון ${item.program} (${item.date})\n\n`;
         item.data.forEach(ex => {
-            txt += `✅ ${ex.name}\n`;
+            txt += `${ex.name}\n`;
             const isTime = (ex.id.includes('plank') || ex.id === 'wall_sit');
             ex.sets.forEach((s, i) => {
                 let valStr = isTime ? `${s.r} שנ׳` : `${s.w}x${s.r}`;
-                txt += `   סט ${i+1}: ${valStr}\n`
+                txt += `סט ${i+1}: ${valStr}\n`
             });
             txt += "\n";
         });
@@ -687,7 +686,7 @@ const app = {
     },
 
     deleteCurrentLog: function() {
-        if(confirm("למחוק?")) {
+        if(confirm("למחוק את הרישום לצמיתות?")) {
             this.state.history.splice(this.state.viewHistoryIdx, 1);
             this.saveData();
             this.closeHistoryModal();
@@ -698,7 +697,7 @@ const app = {
     // --- HELPERS ---
     copyText: function(txt) {
         if (navigator.clipboard) {
-            navigator.clipboard.writeText(txt).then(() => alert("הועתק ללוח! 📋"));
+            navigator.clipboard.writeText(txt).then(() => alert("הועתק ללוח"));
         } else {
             const ta = document.createElement('textarea');
             ta.value = txt;
@@ -706,7 +705,7 @@ const app = {
             ta.select();
             document.execCommand('copy');
             document.body.removeChild(ta);
-            alert("הועתק ללוח! 📋");
+            alert("הועתק ללוח");
         }
     },
 
@@ -726,13 +725,13 @@ const app = {
             try {
                 const data = JSON.parse(e.target.result);
                 if (Array.isArray(data)) {
-                    if(confirm(`נמצאו ${data.length} אימונים. למזג?`)) {
+                    if(confirm(`נמצאו ${data.length} רשומות. למזג עם הנתונים הקיימים?`)) {
                         app.state.history = [...app.state.history, ...data];
                         app.saveData();
                         app.showHistory();
                     }
                 }
-            } catch(err) { alert("שגיאה בקובץ"); }
+            } catch(err) { alert("שגיאה בקריאת הקובץ"); }
         };
         reader.readAsText(file);
     },
@@ -748,11 +747,14 @@ const app = {
         list.innerHTML = '';
         prog.forEach((ex, i) => {
             list.innerHTML += `<div class="admin-item">
-                <div><b>${i+1}. ${ex.name}</b><br><small>${ex.target?.w||0} ${ex.unit}</small></div>
-                <div class="admin-actions">
-                    <button class="btn-small" onclick="app.moveEx('${progId}',${i},-1)">⬆️</button>
-                    <button class="btn-small" onclick="app.moveEx('${progId}',${i},1)">⬇️</button>
-                    <button class="btn-danger-text" style="padding:5px 10px; width:auto;" onclick="app.remEx('${progId}',${i})">🗑</button>
+                <div>
+                    <span class="row-title">${i+1}. ${ex.name}</span>
+                    <span class="row-subtitle">יעד: ${ex.target?.w||0} ${ex.unit}</span>
+                </div>
+                <div style="display:flex; gap:8px">
+                    <button class="icon-btn-plain" onclick="app.moveEx('${progId}',${i},-1)">▲</button>
+                    <button class="icon-btn-plain" onclick="app.moveEx('${progId}',${i},1)">▼</button>
+                    <button class="icon-btn-plain" style="color:var(--danger)" onclick="app.remEx('${progId}',${i})">✕</button>
                 </div>
             </div>`;
         });
@@ -765,25 +767,23 @@ const app = {
         arr[i + dir] = temp;
         this.renderAdminList();
     },
-    remEx: function(pid, i) { if(confirm('למחוק?')) { this.state.routines[pid].splice(i,1); this.renderAdminList(); } },
-    saveAdmin: function() { this.saveData(); alert('נשמר'); this.closeAdmin(); },
+    remEx: function(pid, i) { if(confirm('להסיר את התרגיל מהתוכנית?')) { this.state.routines[pid].splice(i,1); this.renderAdminList(); } },
+    saveAdmin: function() { this.saveData(); alert('השינויים נשמרו'); this.closeAdmin(); },
     openBank: function() { 
         document.getElementById('bank-modal').style.display = 'flex';
-        const cats = [...new Set(BANK.map(b => b.cat))];
-        const c = document.getElementById('bank-cats');
-        c.innerHTML = `<button class="cat-tag active" onclick="app.filterBank('')">הכל</button>`;
-        cats.forEach(x => c.innerHTML += `<button class="cat-tag" onclick="app.filterBank('${x}')">${x}</button>`);
         this.filterBank('');
     },
     closeBank: function() { document.getElementById('bank-modal').style.display = 'none'; },
-    filterBank: function(cat) {
-        if(cat!==undefined) this.state.admin.bankFilter = cat;
+    filterBank: function() {
         const txt = document.getElementById('bank-search').value.toLowerCase();
         const list = document.getElementById('bank-list');
         list.innerHTML = '';
-        BANK.filter(e => (this.state.admin.bankFilter?e.cat===this.state.admin.bankFilter:true) && e.name.toLowerCase().includes(txt))
+        BANK.filter(e => e.name.toLowerCase().includes(txt))
         .forEach(e => {
-            list.innerHTML += `<div class="admin-item" onclick="app.addFromBank('${e.id}')"><span>${e.name}</span><span>+</span></div>`;
+            list.innerHTML += `<div class="admin-item" onclick="app.addFromBank('${e.id}')">
+                <span class="row-title">${e.name}</span>
+                <span class="plus-icon">+</span>
+            </div>`;
         });
     },
     addFromBank: function(id) {
