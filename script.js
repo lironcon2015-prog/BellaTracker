@@ -1,9 +1,9 @@
 /**
- * GYMSTART PRO V0.8
- * Elite UI, Clean Tone, Professional Logic
+ * GYMSTART ELITE V0.9
+ * Restored Usability & Visual Balance
  */
 
-// --- DATA & CONFIG ---
+// --- CONFIG ---
 const CONFIG = {
     KEYS: {
         ROUTINES: 'gymstart_beta_02_routines',
@@ -12,7 +12,7 @@ const CONFIG = {
     }
 };
 
-// --- EXERCISE BANK ---
+// --- DATA ---
 const BANK = [
     { id: 'goblet', name: 'גובלט סקוואט', unit: 'kg', cat: 'legs' },
     { id: 'leg_press', name: 'לחיצת רגליים', unit: 'kg', cat: 'legs' },
@@ -34,7 +34,6 @@ const BANK = [
     { id: 'knee_raise', name: 'הרמת ברכיים', unit: 'bodyweight', cat: 'core' }
 ];
 
-// --- DEFAULT ROUTINES ---
 const DEFAULT_ROUTINES = {
     'A': [
         { id: 'goblet', name: 'גובלט סקוואט', unit: 'kg', note: 'גב זקוף', target: {w:10, r:12}, cat: 'legs' },
@@ -101,12 +100,10 @@ const app = {
         const h = localStorage.getItem(CONFIG.KEYS.HISTORY);
         this.state.history = h ? JSON.parse(h) : [];
         const r = localStorage.getItem(CONFIG.KEYS.ROUTINES);
-        const v = localStorage.getItem(CONFIG.KEYS.VER);
-        if (r && v === '0.2') {
+        if (r) {
             this.state.routines = JSON.parse(r);
         } else {
             this.state.routines = JSON.parse(JSON.stringify(DEFAULT_ROUTINES));
-            localStorage.setItem(CONFIG.KEYS.VER, '0.2'); 
         }
     },
 
@@ -115,7 +112,6 @@ const app = {
         localStorage.setItem(CONFIG.KEYS.HISTORY, JSON.stringify(this.state.history));
     },
 
-    // --- NAVIGATION ---
     nav: function(screenId) {
         document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
         document.getElementById(screenId).classList.add('active');
@@ -133,7 +129,7 @@ const app = {
     goBack: function() {
         const activeScreen = document.querySelector('.screen.active').id;
         if (activeScreen === 'screen-active') {
-            if (confirm("לצאת מהאימון הנוכחי?")) {
+            if (confirm("לצאת מהאימון?")) {
                 this.stopAllTimers();
                 this.state.active.on = false;
                 this.nav('screen-overview');
@@ -158,13 +154,7 @@ const app = {
         title.innerText = `סקירה: תוכנית ${this.state.currentProgId}`;
         list.innerHTML = '';
         prog.forEach((ex, i) => {
-            list.innerHTML += `
-            <div class="list-row-clickable" style="cursor:default">
-                <div class="row-content">
-                    <span class="row-title">${i+1}. ${ex.name}</span>
-                    <span class="row-subtitle">יעד: ${ex.target?.w || '-'} ${ex.unit}</span>
-                </div>
-            </div>`;
+            list.innerHTML += `<div class="list-item"><span>${i+1}. ${ex.name}</span><span style="color:var(--primary)">${ex.target?.w || '-'} ${ex.unit}</span></div>`;
         });
     },
 
@@ -178,7 +168,6 @@ const app = {
         }
     },
 
-    // --- ACTIVE WORKOUT ---
     startWorkout: function() {
         this.state.active = {
             on: true,
@@ -207,41 +196,32 @@ const app = {
         
         const noteEl = document.getElementById('coach-note');
         if (ex.note) {
-            noteEl.innerText = ex.note;
-            noteEl.style.display = 'block';
+            noteEl.innerText = "💡 " + ex.note;
+            noteEl.style.display = 'inline-block';
         } else noteEl.style.display = 'none';
 
-        // Check Unit & Type
         const isTime = (ex.unit === 'bodyweight' && (ex.id.includes('plank') || ex.id === 'wall_sit'));
         this.state.active.isStopwatch = isTime;
 
         if (isTime) {
             document.getElementById('cards-container').style.display = 'none';
             document.getElementById('stopwatch-container').style.display = 'flex';
-            
             this.state.active.stopwatchVal = 0;
             this.stopStopwatch();
-            
             document.getElementById('sw-display').innerText = "00:00";
             document.getElementById('btn-sw-toggle').classList.remove('running');
-            // Reset icons
-            document.querySelector('.play-icon').style.display = 'block';
-            document.querySelector('.stop-icon').style.display = 'none';
+            document.getElementById('btn-sw-toggle').innerText = "▶";
             document.getElementById('rest-timer-area').style.display = 'none';
-
         } else {
             document.getElementById('cards-container').style.display = 'flex';
             document.getElementById('stopwatch-container').style.display = 'none';
             document.getElementById('unit-label-card').innerText = ex.unit === 'plates' ? 'פלטות' : 'ק״ג';
             
-            // Populate Selects & Init Values
             this.state.active.inputW = ex.target?.w || 10;
             this.state.active.inputR = ex.target?.r || 12;
-            
             this.populateSelects(ex);
         }
 
-        // Reset UI
         this.state.active.feel = 'good';
         this.updateFeelUI();
         document.getElementById('decision-buttons').style.display = 'none';
@@ -251,20 +231,15 @@ const app = {
         this.updateHistoryPill(ex.id);
     },
 
-    // --- NATIVE SELECT POPULATION ---
     populateSelects: function(ex) {
         const selW = document.getElementById('select-weight');
         const selR = document.getElementById('select-reps');
         const isLegs = ex.cat === 'legs';
 
-        // 1. Populate Weight
         let wOpts = [];
-        if (ex.unit === 'bodyweight') {
-            wOpts = [0];
-        } else if (ex.unit === 'plates') {
-            for(let i=1; i<=20; i++) wOpts.push(i);
-        } else {
-            // KG
+        if (ex.unit === 'bodyweight') wOpts = [0];
+        else if (ex.unit === 'plates') for(let i=1; i<=20; i++) wOpts.push(i);
+        else {
             for(let i=1; i<=10; i++) wOpts.push(i);
             const max = isLegs ? 60 : 35;
             for(let i=12.5; i<=max; i+=2.5) wOpts.push(i);
@@ -279,10 +254,8 @@ const app = {
         });
         selW.value = this.state.active.inputW;
         if(!selW.value && wOpts.length > 0) selW.value = wOpts[0]; 
-        
         selW.onchange = (e) => this.state.active.inputW = Number(e.target.value);
 
-        // 2. Populate Reps
         let rOpts = [];
         const maxReps = ex.cat === 'core' ? 30 : 20;
         for(let i=1; i<=maxReps; i++) rOpts.push(i);
@@ -309,34 +282,24 @@ const app = {
         if(lastLog) {
             const isTime = (exId.includes('plank') || exId === 'wall_sit');
             const rStr = isTime ? `${lastLog.r}שנ׳` : lastLog.r;
-            pill.innerText = `ביצוע אחרון: ${lastLog.w > 0 ? lastLog.w + ' ' : ''}${rStr}`;
+            pill.innerText = `הישג קודם: ${lastLog.w > 0 ? lastLog.w + ' ' : ''}${rStr}`;
         } else {
             pill.innerText = "תרגיל חדש";
         }
     },
 
-    // --- STOPWATCH LOGIC ---
     toggleStopwatch: function() {
         const btn = document.getElementById('btn-sw-toggle');
-        const iconPlay = document.querySelector('.play-icon');
-        const iconStop = document.querySelector('.stop-icon');
-        
         if (this.state.active.timerInterval) {
-            // STOP
             clearInterval(this.state.active.timerInterval);
             this.state.active.timerInterval = null;
             btn.classList.remove('running');
-            iconPlay.style.display = 'block';
-            iconStop.style.display = 'none';
+            btn.innerText = "▶";
         } else {
-            // START
             this.stopRestTimer();
-
             const start = Date.now() - (this.state.active.stopwatchVal * 1000);
             btn.classList.add('running');
-            iconPlay.style.display = 'none';
-            iconStop.style.display = 'block';
-            
+            btn.innerText = "⏹";
             this.state.active.timerInterval = setInterval(() => {
                 const diff = Math.floor((Date.now() - start) / 1000);
                 this.state.active.stopwatchVal = diff;
@@ -352,26 +315,25 @@ const app = {
         this.state.active.timerInterval = null;
     },
 
-    // --- FEELING ---
     selectFeel: function(f) {
         this.state.active.feel = f;
         this.updateFeelUI();
     },
 
     updateFeelUI: function() {
-        // Updated to cleaner terms
-        document.querySelectorAll('.segment-btn').forEach(b => b.classList.remove('selected'));
-        document.querySelector(`.segment-btn.${this.state.active.feel}`).classList.add('selected');
+        const map = { 'easy': 'קליל', 'good': 'בינוני (טוב)', 'hard': 'קשה' };
+        document.querySelectorAll('.feel-btn').forEach(b => b.classList.remove('selected'));
+        document.querySelector(`.feel-btn.${this.state.active.feel}`).classList.add('selected');
+        document.getElementById('feel-text').innerText = map[this.state.active.feel];
     },
 
-    // --- FINISH SET & REST TIMER ---
     finishSet: function() {
         let w, r;
         if (this.state.active.isStopwatch) {
             if(this.state.active.timerInterval) this.toggleStopwatch(); 
             w = 0; 
             r = this.state.active.stopwatchVal; 
-            if (r === 0) { alert("יש להפעיל את הטיימר"); return; }
+            if (r === 0) { alert("לא נמדד זמן"); return; }
         } else {
             w = this.state.active.inputW;
             r = this.state.active.inputR;
@@ -394,7 +356,6 @@ const app = {
             document.getElementById('set-badge').innerText = `סט ${this.state.active.setIdx}`;
             this.state.active.feel = 'good';
             this.updateFeelUI();
-            
             if(this.state.active.isStopwatch) {
                 this.state.active.stopwatchVal = 0;
                 document.getElementById('sw-display').innerText = "00:00";
@@ -407,11 +368,9 @@ const app = {
 
     startRestTimer: function() {
         this.stopRestTimer();
-        
         const area = document.getElementById('rest-timer-area');
         const disp = document.getElementById('rest-timer-val');
         const ring = document.getElementById('rest-ring-prog');
-        
         area.style.display = 'flex';
         let sec = 0;
         disp.innerText = "00:00";
@@ -423,14 +382,12 @@ const app = {
             let m = Math.floor(sec / 60);
             let s = sec % 60;
             disp.innerText = `${m<10?'0'+m:m}:${s<10?'0'+s:s}`;
-
             if (sec <= 60) {
                 const offset = MAX_OFFSET - (MAX_OFFSET * sec / 60);
                 ring.style.strokeDashoffset = offset;
             } else {
                 ring.style.strokeDashoffset = 0; 
             }
-            
             if (sec === 60 && navigator.vibrate) navigator.vibrate([200,100,200]);
         }, 1000);
     },
@@ -462,7 +419,6 @@ const app = {
         const prog = this.state.routines[this.state.currentProgId];
         const ex = prog[this.state.active.exIdx];
         let exLog = this.state.active.log.find(l => l.id === ex.id);
-
         if(exLog && exLog.sets.length > 0) {
             exLog.sets.pop();
             if (this.state.active.setIdx > 1) {
@@ -490,7 +446,6 @@ const app = {
         }
     },
 
-    // --- FINISH ---
     finishWorkout: function() {
         const endTime = Date.now();
         const durationMin = Math.round((endTime - this.state.active.startTime) / 60000);
@@ -505,17 +460,11 @@ const app = {
 
         this.state.active.log.forEach(ex => {
             if(ex.sets.length > 0) {
-                txt += `${ex.name}\n`;
+                txt += `✅ ${ex.name}\n`;
                 const isTime = (ex.id.includes('plank') || ex.id === 'wall_sit');
-                
                 ex.sets.forEach((s, i) => {
-                    let valStr;
-                    if(isTime) {
-                        valStr = `${s.r}שנ׳`;
-                    } else {
-                        valStr = `${s.w > 0 ? s.w+'ק״ג ' : ''}${s.r}`;
-                    }
-                    txt += `• סט ${i+1}: ${valStr}\n`;
+                    let valStr = isTime ? `${s.r}שנ׳` : `${s.w>0?s.w+'ק״ג ':''}${s.r}`;
+                    txt += `   סט ${i+1}: ${valStr}\n`;
                 });
                 txt += "\n";
             }
@@ -544,7 +493,6 @@ const app = {
         window.location.reload();
     },
 
-    // --- HISTORY & ACTIONS ---
     showHistory: function() {
         this.state.historySelection = [];
         this.updateHistoryActions(); 
@@ -557,12 +505,12 @@ const app = {
                     <div style="display:flex; align-items:center">
                         <input type="checkbox" class="custom-chk" onchange="app.toggleHistorySelection(${realIdx}, this)">
                     </div>
-                    <div style="flex:1; margin-right:15px;" onclick="app.showHistoryDetail(${realIdx})">
+                    <div style="flex:1" onclick="app.showHistoryDetail(${realIdx})">
                         <div style="display:flex; justify-content:space-between">
-                            <span style="font-weight:600; color:white">${h.date}</span>
-                            <span style="font-size:0.9rem; color:#8E8E93">${h.program || '-'}</span>
+                            <span style="font-weight:700; color:var(--text)">${h.date}</span>
+                            <span class="badge" style="background:#444; color:white">${h.program || '-'}</span>
                         </div>
-                        <div style="font-size:0.85rem; color:#8E8E93; margin-top:2px">
+                        <div style="font-size:0.85rem; color:var(--text-dim); margin-top:5px">
                             ${h.data.length} תרגילים • ${h.duration||'?'} דק'
                         </div>
                     </div>
@@ -581,6 +529,7 @@ const app = {
     updateHistoryActions: function() {
         const btn = document.getElementById('btn-del-selected');
         btn.disabled = this.state.historySelection.length === 0;
+        btn.innerText = this.state.historySelection.length > 0 ? `מחק (${this.state.historySelection.length})` : "מחק";
     },
 
     selectAllHistory: function() {
@@ -599,15 +548,14 @@ const app = {
 
     deleteSelectedHistory: function() {
         if (this.state.historySelection.length === 0) return;
-        if (!confirm(`למחוק ${this.state.historySelection.length} רשומות?`)) return;
-
+        if (!confirm(`למחוק ${this.state.historySelection.length} אימונים?`)) return;
         this.state.history = this.state.history.filter((_, index) => !this.state.historySelection.includes(index));
         this.saveData();
         this.showHistory();
     },
 
     copySelectedHistory: function() {
-        if(this.state.historySelection.length === 0) { alert("יש לבחור אימון"); return; }
+        if(this.state.historySelection.length === 0) { alert("לא נבחר אימון"); return; }
         
         let fullTxt = "תיעוד אימונים:\n\n";
         const sortedSel = [...this.state.historySelection].sort((a,b) => a-b);
@@ -642,20 +590,12 @@ const app = {
         const content = document.getElementById('hist-detail-content');
         let html = '';
         item.data.forEach(ex => {
-            html += `<div style="padding:15px; border-bottom:0.5px solid #2c2c2e">
-                <div style="font-weight:500; margin-bottom:6px">${ex.name}</div>`;
-            
+            html += `<div style="background:rgba(255,255,255,0.05); padding:10px; border-radius:12px; margin-bottom:10px;">
+                <div style="font-weight:700; color:var(--primary)">${ex.name}</div>`;
             const isTime = (ex.id.includes('plank') || ex.id === 'wall_sit');
-
             ex.sets.forEach((s, si) => {
-                let valStr;
-                if(isTime) {
-                    valStr = `${s.r} שנ׳`;
-                } else {
-                    valStr = `${s.w > 0 ? s.w+'ק״ג ' : ''}${s.r}`;
-                }
-
-                html += `<div style="display:flex; justify-content:space-between; font-size:0.9rem; color:#8E8E93; margin-top:4px;">
+                let valStr = isTime ? `${s.r} שנ׳` : `${s.w > 0 ? s.w+'ק״ג ' : ''}${s.r}`;
+                html += `<div style="display:flex; justify-content:space-between; font-size:0.9rem; margin-top:4px; border-bottom:1px dashed #444; padding-bottom:2px">
                     <span>סט ${si+1}</span>
                     <span>${valStr}</span>
                 </div>`;
@@ -686,7 +626,7 @@ const app = {
     },
 
     deleteCurrentLog: function() {
-        if(confirm("למחוק את הרישום לצמיתות?")) {
+        if(confirm("למחוק את האימון?")) {
             this.state.history.splice(this.state.viewHistoryIdx, 1);
             this.saveData();
             this.closeHistoryModal();
@@ -694,10 +634,9 @@ const app = {
         }
     },
 
-    // --- HELPERS ---
     copyText: function(txt) {
         if (navigator.clipboard) {
-            navigator.clipboard.writeText(txt).then(() => alert("הועתק ללוח"));
+            navigator.clipboard.writeText(txt).then(() => alert("הועתק!"));
         } else {
             const ta = document.createElement('textarea');
             ta.value = txt;
@@ -705,7 +644,7 @@ const app = {
             ta.select();
             document.execCommand('copy');
             document.body.removeChild(ta);
-            alert("הועתק ללוח");
+            alert("הועתק!");
         }
     },
 
@@ -725,18 +664,17 @@ const app = {
             try {
                 const data = JSON.parse(e.target.result);
                 if (Array.isArray(data)) {
-                    if(confirm(`נמצאו ${data.length} רשומות. למזג עם הנתונים הקיימים?`)) {
+                    if(confirm(`נמצאו ${data.length} רשומות. למזג?`)) {
                         app.state.history = [...app.state.history, ...data];
                         app.saveData();
                         app.showHistory();
                     }
                 }
-            } catch(err) { alert("שגיאה בקריאת הקובץ"); }
+            } catch(err) { alert("שגיאה בקובץ"); }
         };
         reader.readAsText(file);
     },
 
-    // --- ADMIN ---
     openAdmin: function() { document.getElementById('admin-modal').style.display = 'flex'; this.renderAdminList(); },
     closeAdmin: function() { document.getElementById('admin-modal').style.display = 'none'; },
     renderAdminList: function() {
@@ -747,14 +685,11 @@ const app = {
         list.innerHTML = '';
         prog.forEach((ex, i) => {
             list.innerHTML += `<div class="admin-item">
-                <div>
-                    <span class="row-title">${i+1}. ${ex.name}</span>
-                    <span class="row-subtitle">יעד: ${ex.target?.w||0} ${ex.unit}</span>
-                </div>
-                <div style="display:flex; gap:8px">
-                    <button class="icon-btn-plain" onclick="app.moveEx('${progId}',${i},-1)">▲</button>
-                    <button class="icon-btn-plain" onclick="app.moveEx('${progId}',${i},1)">▼</button>
-                    <button class="icon-btn-plain" style="color:var(--danger)" onclick="app.remEx('${progId}',${i})">✕</button>
+                <div><b>${i+1}. ${ex.name}</b><br><small>${ex.target?.w||0} ${ex.unit}</small></div>
+                <div style="display:flex; gap:5px">
+                    <button class="icon-btn" onclick="app.moveEx('${progId}',${i},-1)">▲</button>
+                    <button class="icon-btn" onclick="app.moveEx('${progId}',${i},1)">▼</button>
+                    <button class="icon-btn" style="color:var(--danger)" onclick="app.remEx('${progId}',${i})">✕</button>
                 </div>
             </div>`;
         });
@@ -767,8 +702,8 @@ const app = {
         arr[i + dir] = temp;
         this.renderAdminList();
     },
-    remEx: function(pid, i) { if(confirm('להסיר את התרגיל מהתוכנית?')) { this.state.routines[pid].splice(i,1); this.renderAdminList(); } },
-    saveAdmin: function() { this.saveData(); alert('השינויים נשמרו'); this.closeAdmin(); },
+    remEx: function(pid, i) { if(confirm('למחוק?')) { this.state.routines[pid].splice(i,1); this.renderAdminList(); } },
+    saveAdmin: function() { this.saveData(); alert('נשמר'); this.closeAdmin(); },
     openBank: function() { 
         document.getElementById('bank-modal').style.display = 'flex';
         this.filterBank('');
@@ -781,8 +716,7 @@ const app = {
         BANK.filter(e => e.name.toLowerCase().includes(txt))
         .forEach(e => {
             list.innerHTML += `<div class="admin-item" onclick="app.addFromBank('${e.id}')">
-                <span class="row-title">${e.name}</span>
-                <span class="plus-icon">+</span>
+                <span>${e.name}</span><span style="color:var(--primary); font-size:1.5rem">+</span>
             </div>`;
         });
     },
