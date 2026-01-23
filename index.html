@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>GymStart OLED V1.0</title>
+    <title>GymStart OLED V1.1</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <link rel="stylesheet" href="style.css">
@@ -23,8 +23,8 @@
                 <div class="input-group">
                     <label>תוכנית עריכה</label>
                     <select id="admin-prog-select" class="oled-input" onchange="app.renderAdminList()">
-                        <option value="A">תוכנית A</option>
-                        <option value="B">תוכנית B</option>
+                        <option value="A">תוכנית A (רגליים וגב)</option>
+                        <option value="B">תוכנית B (חזה/כתף/יד)</option>
                         <option value="FBW">תוכנית FBW</option>
                     </select>
                 </div>
@@ -46,8 +46,17 @@
                 <h3>בנק תרגילים</h3>
                 <button class="icon-btn" onclick="app.closeBank()">✕</button>
             </div>
-            <div class="bank-filters">
-                <input type="text" id="bank-search" class="oled-input" placeholder="חפש תרגיל..." onkeyup="app.filterBank()">
+            <div class="bank-filters" style="display:flex; gap:10px; margin-bottom:15px;">
+                <select id="bank-cat-select" class="oled-input" style="width:40%" onchange="app.filterBank()">
+                    <option value="all">הכל</option>
+                    <option value="legs">רגליים</option>
+                    <option value="chest">חזה</option>
+                    <option value="back">גב</option>
+                    <option value="shoulders">כתפיים</option>
+                    <option value="arms">ידיים</option>
+                    <option value="core">בטן</option>
+                </select>
+                <input type="text" id="bank-search" class="oled-input" style="width:60%" placeholder="חפש..." onkeyup="app.filterBank()">
             </div>
             <div id="bank-list" class="scroll-list"></div>
         </div>
@@ -113,7 +122,7 @@
                 </button>
             </div>
             
-            <div class="version-tag">OLED V1.0</div>
+            <div class="version-tag">OLED V1.1</div>
         </div>
 
         <!-- 1.5 PROGRAM SELECT -->
