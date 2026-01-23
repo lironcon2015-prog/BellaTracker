@@ -3,170 +3,178 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>GymPro Start</title>
+    <title>GymStart Beta</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="glass-background"></div>
-    <div class="orb orb-1"></div>
-    <div class="orb orb-2"></div>
 
-    <!-- ADMIN MODAL -->
-    <div id="admin-modal" class="modal-overlay">
-        <div class="modal-glass">
+    <!-- Background Elements -->
+    <div class="bg-orb orb-1"></div>
+    <div class="bg-orb orb-2"></div>
+    <div class="glass-overlay"></div>
+
+    <!-- Admin Modal -->
+    <div id="admin-modal" class="modal-wrapper">
+        <div class="glass-modal">
             <div class="modal-header">
-                <h3>⚙️ עריכת תוכנית</h3>
-                <button class="close-btn" onclick="closeAdmin()">✕</button>
+                <h3>⚙️ הגדרות מאמן</h3>
+                <button class="icon-btn" onclick="app.closeAdmin()">✕</button>
             </div>
-            <div id="admin-routine-list" class="vertical-stack scrollable"></div>
-            <div class="admin-actions">
-                <button class="btn-text" onclick="addNewExerciseToRoutine()">+ הוסף תרגיל מהמאגר</button>
-                <button class="btn-main primary-gradient" onclick="saveAdminChanges()">שמור וסגור</button>
+            <div id="admin-list" class="admin-list-container"></div>
+            <div class="modal-footer">
+                <button class="btn-text" onclick="app.addExerciseFromBank()">+ הוסף תרגיל מהבנק</button>
+                <button class="btn-primary" onclick="app.saveAdmin()">שמור וסגור</button>
             </div>
         </div>
     </div>
 
-    <!-- APP CONTAINER -->
+    <!-- Main App -->
     <div class="app-container">
         
-        <!-- HEADER -->
-        <header class="app-header">
-            <button id="nav-back" class="back-btn" onclick="handleBack()">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        <!-- Navbar -->
+        <header class="navbar">
+            <button id="nav-back" class="icon-btn" onclick="app.goBack()" style="visibility: hidden;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
             </button>
-            <div class="brand-logo">GYM<span>START</span></div>
-            <div class="step-indicator" id="step-indicator"></div>
+            <div class="logo">GYM<span>START</span></div>
+            <div style="width: 40px;"></div> <!-- Spacer -->
         </header>
 
-        <main class="content-area">
+        <!-- SCREENS -->
 
-            <!-- HOME SCREEN -->
-            <div id="ui-home" class="screen active">
-                <div class="hero-section">
-                    <h1 id="greeting-text">היי, ברוכה הבאה</h1>
-                    <span>האימון שלך מוכן</span>
+        <!-- 1. HOME -->
+        <div id="screen-home" class="screen active">
+            <div class="hero">
+                <h1 id="greeting">היי, ברוכה הבאה</h1>
+                <p>האימון שלך מוכן לביצוע</p>
+            </div>
+
+            <div class="glass-card status-card">
+                <div class="icon-circle">📅</div>
+                <div>
+                    <div class="label">אימון אחרון</div>
+                    <div id="last-workout-display" class="value">טוען...</div>
                 </div>
+            </div>
 
-                <div class="glass-card status-card">
-                    <div class="icon-box">📅</div>
-                    <div>
-                        <div class="label">אימון אחרון</div>
-                        <div id="last-workout-date" class="value">--</div>
+            <div class="spacer"></div>
+
+            <button class="btn-primary big-btn" onclick="app.startFlow()">
+                <div class="icon">▶</div>
+                <span>התחילי אימון</span>
+            </button>
+
+            <button class="btn-glass" onclick="app.showHistory()">
+                <span>📜 היסטוריית אימונים</span>
+            </button>
+
+            <div class="version-tag">Beta V0.1</div>
+        </div>
+
+        <!-- 2. OVERVIEW -->
+        <div id="screen-overview" class="screen">
+            <h2 class="page-title">סקירת אימון</h2>
+            <div id="overview-list" class="list-stack"></div>
+            
+            <div class="bottom-bar">
+                <button class="btn-primary" onclick="app.startWorkout()">מתחילים! 🚀</button>
+            </div>
+        </div>
+
+        <!-- 3. ACTIVE EXERCISE (The Wizard) -->
+        <div id="screen-active" class="screen">
+            
+            <div class="ex-header">
+                <div id="set-badge" class="badge">סט 1</div>
+                <h2 id="ex-name">שם התרגיל</h2>
+                <div id="coach-note" class="note-pill"></div>
+            </div>
+
+            <div id="history-badge" class="history-pill">--</div>
+
+            <!-- Controls -->
+            <div class="control-grid">
+                <!-- Weight -->
+                <div class="glass-card control-box">
+                    <label id="unit-label">ק״ג</label>
+                    <div class="picker">
+                        <button class="picker-btn" onclick="app.adjustWeight(-1)">−</button>
+                        <div id="val-weight" class="picker-value">0</div>
+                        <button class="picker-btn" onclick="app.adjustWeight(1)">+</button>
                     </div>
                 </div>
 
-                <button class="btn-main primary-gradient pulse-shadow" onclick="startSession()">
-                    <span class="btn-icon">▶</span>
-                    <span>התחילי אימון</span>
-                </button>
-
-                <button class="glass-btn" onclick="navigate('ui-history')">
-                    📜 היסטוריית אימונים
-                </button>
-            </div>
-
-            <!-- OVERVIEW SCREEN -->
-            <div id="ui-overview" class="screen">
-                <h2 class="section-title">סקירת אימון</h2>
-                <div id="overview-list" class="vertical-stack"></div>
-                <div class="bottom-action">
-                    <button class="btn-main primary-gradient" onclick="launchWorkout()">מתחילים! 🚀</button>
+                <!-- Reps -->
+                <div class="glass-card control-box">
+                    <label>חזרות</label>
+                    <div class="picker">
+                        <button class="picker-btn" onclick="app.adjustReps(-1)">−</button>
+                        <div id="val-reps" class="picker-value">12</div>
+                        <button class="picker-btn" onclick="app.adjustReps(1)">+</button>
+                    </div>
                 </div>
             </div>
 
-            <!-- ACTIVE WORKOUT SCREEN (THE CORE) -->
-            <div id="ui-active" class="screen">
+            <!-- Feeling Selector -->
+            <div class="feeling-section">
+                <label>איך הרגיש?</label>
+                <div class="feeling-row">
+                    <button class="feel-btn easy" onclick="app.selectFeel('easy')">😌<br>קל</button>
+                    <button class="feel-btn good" onclick="app.selectFeel('good')">🙂<br>בוינג</button>
+                    <button class="feel-btn hard" onclick="app.selectFeel('hard')">🥵<br>קשה</button>
+                </div>
+            </div>
+
+            <div class="spacer"></div>
+
+            <!-- Action Button / Timer -->
+            <div id="action-area">
+                <button id="btn-finish" class="btn-primary" onclick="app.finishSet()">סיום סט</button>
                 
-                <!-- Exercise Header -->
-                <div class="ex-header-section">
-                    <div class="set-badge" id="set-badge">סט 1</div>
-                    <h2 id="active-ex-name">שם התרגיל</h2>
-                    <div id="active-note" class="coach-note"></div>
-                </div>
-
-                <!-- History Pill -->
-                <div id="history-pill" class="history-pill"></div>
-
-                <!-- Inputs -->
-                <div class="controls-grid">
-                    <!-- Weight Control -->
-                    <div class="glass-card control-card">
-                        <label id="unit-label">ק״ג</label>
-                        <div class="picker-wrapper">
-                            <button class="picker-btn" onclick="adjustWeight(-1)">−</button>
-                            <div class="picker-val" id="val-weight">0</div>
-                            <button class="picker-btn" onclick="adjustWeight(1)">+</button>
-                        </div>
-                    </div>
-
-                    <!-- Reps Control -->
-                    <div class="glass-card control-card">
-                        <label>חזרות</label>
-                        <div class="picker-wrapper">
-                            <button class="picker-btn" onclick="adjustReps(-1)">−</button>
-                            <div class="picker-val" id="val-reps">12</div>
-                            <button class="picker-btn" onclick="adjustReps(1)">+</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Feeling / RIR Replacement -->
-                <div class="feeling-section">
-                    <label>איך הרגיש?</label>
-                    <div class="feeling-grid">
-                        <button class="feel-btn easy" id="btn-easy" onclick="selectFeeling('easy')">😌<br>קל</button>
-                        <button class="feel-btn good" id="btn-good" onclick="selectFeeling('good')">🙂<br>בוינג</button>
-                        <button class="feel-btn hard" id="btn-hard" onclick="selectFeeling('hard')">🥵<br>קשה</button>
-                    </div>
-                </div>
-
-                <!-- Main Action -->
-                <button id="btn-finish-set" class="btn-main primary-gradient" onclick="finishSet()">סיום סט</button>
-
-                <!-- Timer Section (Hidden until set done) -->
-                <div id="timer-area" class="timer-section">
-                    <div class="timer-wrap">
-                        <svg class="timer-svg" viewBox="0 0 100 100">
-                            <circle class="timer-bg" cx="50" cy="50" r="45"></circle>
-                            <circle id="timer-progress" class="timer-bar" cx="50" cy="50" r="45"></circle>
+                <!-- Timer Overlay -->
+                <div id="timer-ui" class="timer-container" style="display: none;">
+                    <div class="timer-circle">
+                        <svg viewBox="0 0 100 100">
+                            <circle class="bg" cx="50" cy="50" r="45"></circle>
+                            <circle id="timer-bar" class="progress" cx="50" cy="50" r="45"></circle>
                         </svg>
-                        <div id="timer-text" class="timer-text">01:30</div>
+                        <div id="timer-text" class="text">01:30</div>
                     </div>
-                    <div class="timer-controls">
-                        <button class="btn-small" onclick="addTime(30)">+30שנ'</button>
-                        <button class="btn-small skip" onclick="skipRest()">דלג מנוחה ⏩</button>
+                    <div class="timer-actions">
+                        <button class="btn-small" onclick="app.addTime()">+30שנ'</button>
+                        <button class="btn-small skip" onclick="app.skipRest()">דלג מנוחה</button>
                     </div>
                 </div>
-
-                <!-- Admin Set Controls -->
-                <div class="set-controls-row">
-                    <button class="text-link" onclick="deleteCurrentSet()">מחק סט אחרון</button>
-                    <button class="text-link" onclick="nextExerciseManual()">עבור תרגיל ⏭</button>
-                </div>
             </div>
 
-            <!-- SUMMARY SCREEN -->
-            <div id="ui-summary" class="screen">
-                <div class="hero-section">
-                    <h1>כל הכבוד! 🎉</h1>
-                    <span>האימון הושלם בהצלחה</span>
-                </div>
-                <div id="summary-content" class="glass-card summary-text"></div>
-                <button class="btn-main primary-gradient" onclick="saveAndExit()">שמור וסיים</button>
+            <!-- Sub Controls -->
+            <div class="sub-actions">
+                <button class="link-btn" onclick="app.deleteLastSet()">מחק סט אחרון</button>
+                <button class="link-btn" onclick="app.nextExercise()">דלג לתרגיל הבא</button>
             </div>
+        </div>
 
-            <!-- HISTORY SCREEN -->
-            <div id="ui-history" class="screen">
-                <h2 class="section-title">היסטוריה</h2>
-                <div id="history-list" class="vertical-stack"></div>
-                <div style="height: 50px;"></div>
-                <button class="admin-trigger" onclick="openAdmin()">🔧 הגדרות מאמן</button>
+        <!-- 4. SUMMARY -->
+        <div id="screen-summary" class="screen">
+            <div class="hero">
+                <h1>כל הכבוד! 🎉</h1>
+                <p>עוד אימון נכנס לכיס</p>
             </div>
+            <div id="summary-text" class="glass-card summary-box"></div>
+            <button class="btn-primary" onclick="app.saveAndHome()">שמור וסיים</button>
+        </div>
 
-        </main>
+        <!-- 5. HISTORY -->
+        <div id="screen-history" class="screen">
+            <h2 class="page-title">היסטוריה</h2>
+            <div id="history-list" class="list-stack"></div>
+            <div class="spacer"></div>
+            <button class="btn-glass" onclick="app.openAdmin()">⚙️ כניסת מאמן</button>
+        </div>
+
     </div>
 
     <script src="script.js"></script>
