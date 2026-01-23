@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>GymStart V1.2</title>
+    <title>GymStart V1.3</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;700&display=swap" rel="stylesheet">
 </head>
@@ -46,7 +46,7 @@
                 <h3>בנק תרגילים</h3>
                 <button class="icon-btn" onclick="app.closeBank()">✕</button>
             </div>
-            <div class="bank-filters" style="display:flex; gap:10px; margin-bottom:15px;">
+            <div class="bank-filters" style="display:flex; gap:10px; margin-bottom:15px; flex-shrink: 0;">
                 <select id="bank-cat-select" class="oled-input" style="width:40%" onchange="app.filterBank()">
                     <option value="all">הכל</option>
                     <option value="legs">רגליים</option>
@@ -69,11 +69,11 @@
                 <h3>פרטי אימון</h3>
                 <button class="icon-btn" onclick="app.closeHistoryModal()">✕</button>
             </div>
-            <div id="hist-meta-header" class="meta-box"></div>
+            <div id="hist-meta-header" class="meta-box" style="flex-shrink: 0;"></div>
             
             <div id="hist-detail-content" class="scroll-list" style="margin-bottom: 20px;"></div>
             
-            <div class="actions-row">
+            <div class="actions-row modal-footer">
                 <button class="btn-outline" onclick="app.copySingleHistory()">העתק</button>
                 <button class="btn-danger-outline" onclick="app.deleteCurrentLog()">מחק</button>
             </div>
@@ -111,7 +111,7 @@
                     </div>
                 </div>
                 
-                <div class="version-tag">GymStart V1.2</div>
+                <div class="version-tag">GymStart V1.3</div>
             </div>
 
             <div class="fixed-footer">
@@ -167,18 +167,19 @@
             </div>
         </div>
 
-        <!-- 3. ACTIVE EXERCISE -->
+        <!-- 3. ACTIVE EXERCISE (NEW LAYOUT V1.3) -->
         <div id="screen-active" class="screen">
-            
-            <div class="scroll-content">
-                <div class="active-header">
+            <div class="active-container">
+                
+                <!-- Top: Header Info -->
+                <div class="active-header-section">
                     <div id="set-badge" class="badge">סט 1</div>
                     <h2 id="ex-name">שם התרגיל</h2>
                     <div id="coach-note" class="note-pill"></div>
+                    <div id="history-badge" class="history-pill">--</div>
                 </div>
 
-                <div id="history-badge" class="history-pill">--</div>
-
+                <!-- Middle: Inputs -->
                 <div class="workspace">
                     <!-- INPUTS -->
                     <div id="cards-container" class="inputs-row">
@@ -200,46 +201,50 @@
                     </div>
                 </div>
 
-                <!-- REST TIMER (Also in scroll area) -->
-                <div id="rest-timer-area" class="rest-box" style="display: none;">
-                    <div class="circular-timer">
-                        <svg viewBox="0 0 100 100">
-                            <circle class="bg-ring" cx="50" cy="50" r="45"></circle>
-                            <circle id="rest-ring-prog" class="prog-ring" cx="50" cy="50" r="45"></circle>
-                        </svg>
-                        <div class="timer-text" id="rest-timer-val">00:00</div>
+                <!-- Controls Cluster -->
+                <div class="active-controls-area">
+                    <!-- FEELING (Moved here) -->
+                    <div class="feeling-section">
+                        <div class="feeling-row">
+                            <button class="feel-btn easy" onclick="app.selectFeel('easy')">😌</button>
+                            <button class="feel-btn good selected" onclick="app.selectFeel('good')">🙂</button>
+                            <button class="feel-btn hard" onclick="app.selectFeel('hard')">🥵</button>
+                        </div>
+                        <div class="feel-label" id="feel-text">בינוני (טוב)</div>
                     </div>
-                    <div class="rest-caption">זמן מנוחה</div>
-                </div>
-            </div>
 
-            <!-- FIXED FOOTER (Feeling + Actions) -->
-            <div class="fixed-footer">
-                <!-- FEELING -->
-                <div class="feeling-section">
-                    <div class="feeling-row">
-                        <button class="feel-btn easy" onclick="app.selectFeel('easy')">😌</button>
-                        <button class="feel-btn good selected" onclick="app.selectFeel('good')">🙂</button>
-                        <button class="feel-btn hard" onclick="app.selectFeel('hard')">🥵</button>
+                    <!-- ACTION BUTTONS -->
+                    <div id="action-area" class="main-action-box">
+                        <button id="btn-finish" class="btn-primary" onclick="app.finishSet()">
+                            סיום סט
+                        </button>
+
+                        <div id="decision-buttons" style="display:none; gap:10px; width:100%;">
+                            <button class="btn-outline" onclick="app.addSet()" style="flex:1">עוד סט</button>
+                            <button class="btn-primary" onclick="app.nextExercise()" style="flex:1">תרגיל הבא</button>
+                        </div>
                     </div>
-                    <div class="feel-label" id="feel-text">בינוני (טוב)</div>
-                </div>
 
-                <div id="action-area">
-                    <button id="btn-finish" class="btn-primary" onclick="app.finishSet()">
-                        סיום סט
-                    </button>
-
-                    <div id="decision-buttons" style="display:none; gap:10px; width:100%;">
-                        <button class="btn-outline" onclick="app.addSet()" style="flex:1">עוד סט</button>
-                        <button class="btn-primary" onclick="app.nextExercise()" style="flex:1">תרגיל הבא</button>
+                    <!-- REST TIMER (Below button) -->
+                    <div id="rest-timer-area" class="rest-box" style="display: none;">
+                        <!-- SVG Increased to 150px, Radius 65 -->
+                        <div class="circular-timer">
+                            <svg viewBox="0 0 150 150">
+                                <circle class="bg-ring" cx="75" cy="75" r="65"></circle>
+                                <circle id="rest-ring-prog" class="prog-ring" cx="75" cy="75" r="65"></circle>
+                            </svg>
+                            <div class="timer-text" id="rest-timer-val">00:00</div>
+                        </div>
+                        <div class="rest-caption">זמן מנוחה</div>
                     </div>
                 </div>
 
-                <div class="sub-actions">
+                <!-- Bottom Safe Links -->
+                <div class="sub-actions-footer">
                     <button class="text-link" onclick="app.deleteLastSet()">בטל סט אחרון</button>
                     <button class="text-link" onclick="app.skipExercise()">דלג תרגיל</button>
                 </div>
+
             </div>
         </div>
 
