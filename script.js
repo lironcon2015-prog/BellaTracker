@@ -1,6 +1,7 @@
 /**
- * GYMSTART V1.6
+ * GYMSTART V1.6.1
  * Features: Professional Admin UI, Manual Badges, Ghost Update Button, Active Safety Check
+ * Fixes: Admin Icon Visibility, CSS styling consistency
  */
 
 const CONFIG = {
@@ -8,7 +9,7 @@ const CONFIG = {
         ROUTINES: 'gymstart_beta_02_routines',
         HISTORY: 'gymstart_beta_02_history'
     },
-    VERSION: '1.6'
+    VERSION: '1.6.1'
 };
 
 const FEEL_MAP_TEXT = {
@@ -48,7 +49,6 @@ const BANK = [
     { id: 'crunches', name: 'כפיפות בטן', unit: 'bodyweight', cat: 'core' }
 ];
 
-// V1.6: Added 'badge' property
 const DEFAULT_ROUTINES_V16 = {
     'A': {
         title: 'רגליים וגב',
@@ -77,18 +77,11 @@ const app = {
         currentProgId: null,
         active: {
             on: false,
-            exIdx: 0,
-            setIdx: 1,
-            totalSets: 3,
-            log: [], 
-            startTime: 0,
-            timerInterval: null, 
-            restInterval: null, 
-            feel: 'good',
-            isStopwatch: false,
-            stopwatchVal: 0,
-            inputW: 10,
-            inputR: 12
+            exIdx: 0, setIdx: 1, totalSets: 3,
+            log: [], startTime: 0,
+            timerInterval: null, restInterval: null, 
+            feel: 'good', isStopwatch: false, stopwatchVal: 0,
+            inputW: 10, inputR: 12
         },
         admin: { viewProgId: 'A' },
         editEx: { progId: null, index: null, data: null },
@@ -101,6 +94,11 @@ const app = {
             this.loadData();
             this.renderHome();
             this.renderProgramSelect(); 
+            
+            // --- FIX: Force Navigation to Home on Init to set UI state ---
+            this.nav('screen-home'); 
+            // -------------------------------------------------------------
+            
         } catch (e) {
             console.error(e);
             alert("שגיאה בטעינת נתונים.");
@@ -117,16 +115,14 @@ const app = {
         if (!loadedRoutines) {
             this.state.routines = JSON.parse(JSON.stringify(DEFAULT_ROUTINES_V16));
         } else {
-            // Migration Logic V1.5 -> V1.6 (Ensure Badges)
             let needsSave = false;
-            // Handle Array legacy first
+            // Legacy Migration Check
             const firstKey = Object.keys(loadedRoutines)[0];
             if (firstKey && Array.isArray(loadedRoutines[firstKey])) {
-                // ... Old migration code from V1.4 ...
-                // Skipping for brevity, assuming V1.5 structure mostly
+               // Skipping complex V1.4 migration code for brevity - assuming V1.5+
             } 
             
-            // Check for Badges
+            // Ensure Badges Exist
             for(const pid in loadedRoutines) {
                 if(!loadedRoutines[pid].badge) {
                     loadedRoutines[pid].badge = pid.substring(0,2).toUpperCase();
@@ -153,14 +149,14 @@ const app = {
 
         if (screenId === 'screen-home') {
             backBtn.style.visibility = 'hidden';
-            adminBtn.style.display = 'flex'; // Show Gear
+            if(adminBtn) adminBtn.style.display = 'flex'; // Show Gear
             this.stopAllTimers();
             
-            // V1.6 Safety Check: Force reset active state
+            // Active State Safety Reset
             this.state.active.on = false;
         } else {
             backBtn.style.visibility = 'visible';
-            adminBtn.style.display = 'none'; // Hide Gear
+            if(adminBtn) adminBtn.style.display = 'none'; // Hide Gear
         }
     },
 
@@ -232,7 +228,6 @@ const app = {
     },
 
     renderHome: function() {
-        // V1.6 Safety Check logic moved to nav(), but we also init UI here
         const lastEl = document.getElementById('last-workout-display');
         if (this.state.history.length > 0) {
             const last = this.state.history[this.state.history.length - 1];
@@ -271,7 +266,6 @@ const app = {
         document.getElementById('ex-name').innerText = ex.name;
         document.getElementById('set-badge').innerText = `סט ${this.state.active.setIdx} / ${this.state.active.totalSets}`;
         
-        // V1.6 Note Logic (Note sits above stats now)
         const noteEl = document.getElementById('coach-note');
         if (ex.note) {
             noteEl.innerText = "💡 " + ex.note;
@@ -613,16 +607,19 @@ const app = {
         window.location.reload();
     },
 
-    /* --- V1.6 ADMIN NEW UI LOGIC --- */
+    /* --- V1.6 ADMIN UI --- */
 
     openAdmin: function() { 
         if (this.state.active.on) {
             alert("לא ניתן להיכנס לניהול בזמן אימון פעיל."); return;
         }
-        // Ensure default view
+        // Check Validity of current ID
         if(!this.state.admin.viewProgId || !this.state.routines[this.state.admin.viewProgId]) {
-            this.state.admin.viewProgId = Object.keys(this.state.routines)[0];
+            const keys = Object.keys(this.state.routines);
+            if(keys.length > 0) this.state.admin.viewProgId = keys[0];
+            else return; // Empty state handle
         }
+        
         document.getElementById('admin-modal').style.display = 'flex'; 
         this.renderAdminTabs();
         this.renderAdminList(); 
@@ -656,20 +653,20 @@ const app = {
 
     renderAdminList: function() {
         const progId = this.state.admin.viewProgId;
+        if(!progId || !this.state.routines[progId]) return;
+
         const prog = this.state.routines[progId];
         
-        // Bind Inputs
         document.getElementById('admin-prog-title').value = prog.title;
         document.getElementById('admin-prog-badge').value = prog.badge || '';
 
         const list = document.getElementById('admin-list');
         list.innerHTML = '';
         
-        // V1.6 Clean List Generation
         prog.exercises.forEach((ex, i) => {
             const metaStr = `${ex.sets} סטים • ${ex.target?.w || 0} ${ex.unit === 'kg' ? 'ק״ג' : ''}`;
             
-            // Minimal Arrows SVG
+            // Clean SVG Arrows
             const upArrow = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 14l5-5 5 5H7z"/></svg>`;
             const downArrow = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5H7z"/></svg>`;
 
@@ -699,7 +696,7 @@ const app = {
         const newVal = document.getElementById('admin-prog-badge').value;
         if(newVal) {
             this.state.routines[this.state.admin.viewProgId].badge = newVal;
-            this.renderAdminTabs(); // Refresh Tabs
+            this.renderAdminTabs(); 
         }
     },
 
