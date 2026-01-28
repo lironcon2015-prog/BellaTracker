@@ -1,7 +1,7 @@
 /**
- * GYMSTART V1.6.1
+ * GYMSTART V1.6.1 (FIXED DATA)
  * Features: Professional Admin UI, Manual Badges, Ghost Update Button, Active Safety Check
- * Fixes: Admin Icon Visibility, CSS styling consistency
+ * Fixes: Restored full default routines data (A, B, FBW)
  */
 
 const CONFIG = {
@@ -49,13 +49,17 @@ const BANK = [
     { id: 'crunches', name: 'כפיפות בטן', unit: 'bodyweight', cat: 'core' }
 ];
 
+// RESTORED FULL DATA
 const DEFAULT_ROUTINES_V16 = {
     'A': {
         title: 'רגליים וגב',
         badge: 'A',
         exercises: [
             { id: 'goblet', name: 'גובלט סקוואט', unit: 'kg', note: 'גב זקוף', target: {w:10, r:12}, cat: 'legs', sets: 3 },
+            { id: 'leg_press', name: 'לחיצת רגליים', unit: 'kg', note: 'ללא נעילת ברכיים', target: {w:30, r:12}, cat: 'legs', sets: 3 },
+            { id: 'rdl', name: 'דדליפט רומני', unit: 'kg', note: 'תנועה איטית', target: {w:10, r:12}, cat: 'legs', sets: 3 },
             { id: 'lat_pull', name: 'פולי עליון', unit: 'plates', note: 'משיכה לחזה', target: {w:6, r:12}, cat: 'back', sets: 3 },
+            { id: 'cable_row', name: 'חתירה בכבל', unit: 'plates', note: 'מרפקים צמודים', target: {w:6, r:12}, cat: 'back', sets: 3 },
             { id: 'bicycle', name: 'בטן אופניים', unit: 'bodyweight', note: 'שליטה בקצב', target: {w:0, r:30}, cat: 'core', sets: 3 }
         ]
     },
@@ -64,8 +68,24 @@ const DEFAULT_ROUTINES_V16 = {
         badge: 'B',
         exercises: [
             { id: 'chest_press', name: 'לחיצת חזה', unit: 'kg', note: 'יציבות', target: {w:7, r:12}, cat: 'chest', sets: 3 },
+            { id: 'fly', name: 'פרפר', unit: 'kg', note: 'תנועה רחבה', target: {w:3, r:12}, cat: 'chest', sets: 3 },
             { id: 'shoulder_press', name: 'לחיצת כתפיים', unit: 'kg', note: 'גב צמוד', target: {w:4, r:12}, cat: 'shoulders', sets: 3 },
+            { id: 'lat_raise', name: 'הרחקה לצדדים', unit: 'kg', note: 'מרפק מוביל', target: {w:3, r:12}, cat: 'shoulders', sets: 3 },
+            { id: 'bicep_curl', name: 'יד קדמית', unit: 'kg', note: 'ללא תנופה', target: {w:5, r:12}, cat: 'arms', sets: 3 },
+            { id: 'tricep_pull', name: 'יד אחורית', unit: 'plates', note: 'מרפקים מקובעים', target: {w:5, r:12}, cat: 'arms', sets: 3 },
             { id: 'plank', name: 'פלאנק סטטי', unit: 'bodyweight', note: 'אגן גבוה', target: {w:0, r:45}, cat: 'core', sets: 3 }
+        ]
+    },
+    'FBW': {
+        title: 'FBW כל הגוף',
+        badge: 'FBW',
+        exercises: [
+            { id: 'goblet', name: 'גובלט סקוואט', unit: 'kg', note: 'רגליים', target: {w:10, r:12}, cat: 'legs', sets: 3 },
+            { id: 'rdl', name: 'דדליפט רומני', unit: 'kg', note: 'רגליים', target: {w:10, r:12}, cat: 'legs', sets: 3 },
+            { id: 'chest_press', name: 'לחיצת חזה', unit: 'kg', note: 'חזה', target: {w:7, r:12}, cat: 'chest', sets: 3 },
+            { id: 'cable_row', name: 'חתירה בכבל', unit: 'plates', note: 'גב', target: {w:6, r:12}, cat: 'back', sets: 3 },
+            { id: 'shoulder_press', name: 'לחיצת כתפיים', unit: 'kg', note: 'כתפיים', target: {w:4, r:12}, cat: 'shoulders', sets: 3 },
+            { id: 'crunches', name: 'כפיפות בטן', unit: 'bodyweight', note: 'בטן', target: {w:0, r:20}, cat: 'core', sets: 3 }
         ]
     }
 };
@@ -94,11 +114,7 @@ const app = {
             this.loadData();
             this.renderHome();
             this.renderProgramSelect(); 
-            
-            // --- FIX: Force Navigation to Home on Init to set UI state ---
-            this.nav('screen-home'); 
-            // -------------------------------------------------------------
-            
+            this.nav('screen-home'); // Force home on init to set UI
         } catch (e) {
             console.error(e);
             alert("שגיאה בטעינת נתונים.");
@@ -116,13 +132,13 @@ const app = {
             this.state.routines = JSON.parse(JSON.stringify(DEFAULT_ROUTINES_V16));
         } else {
             let needsSave = false;
-            // Legacy Migration Check
+            // Legacy Check
             const firstKey = Object.keys(loadedRoutines)[0];
             if (firstKey && Array.isArray(loadedRoutines[firstKey])) {
-               // Skipping complex V1.4 migration code for brevity - assuming V1.5+
+               // Migration code if needed
             } 
             
-            // Ensure Badges Exist
+            // Ensure Badges
             for(const pid in loadedRoutines) {
                 if(!loadedRoutines[pid].badge) {
                     loadedRoutines[pid].badge = pid.substring(0,2).toUpperCase();
@@ -143,20 +159,17 @@ const app = {
         document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
         document.getElementById(screenId).classList.add('active');
         
-        // Handle Icons Visibility
         const backBtn = document.getElementById('nav-back');
         const adminBtn = document.getElementById('btn-admin-home');
 
         if (screenId === 'screen-home') {
             backBtn.style.visibility = 'hidden';
-            if(adminBtn) adminBtn.style.display = 'flex'; // Show Gear
+            if(adminBtn) adminBtn.style.display = 'flex';
             this.stopAllTimers();
-            
-            // Active State Safety Reset
             this.state.active.on = false;
         } else {
             backBtn.style.visibility = 'visible';
-            if(adminBtn) adminBtn.style.display = 'none'; // Hide Gear
+            if(adminBtn) adminBtn.style.display = 'none';
         }
     },
 
@@ -613,11 +626,10 @@ const app = {
         if (this.state.active.on) {
             alert("לא ניתן להיכנס לניהול בזמן אימון פעיל."); return;
         }
-        // Check Validity of current ID
         if(!this.state.admin.viewProgId || !this.state.routines[this.state.admin.viewProgId]) {
             const keys = Object.keys(this.state.routines);
             if(keys.length > 0) this.state.admin.viewProgId = keys[0];
-            else return; // Empty state handle
+            else return;
         }
         
         document.getElementById('admin-modal').style.display = 'flex'; 
