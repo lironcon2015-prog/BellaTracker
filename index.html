@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>GymStart V1.4</title>
+    <title>GymStart V1.5</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="stylesheet" href="style.css">
@@ -11,36 +11,101 @@
 </head>
 <body>
 
-    <!-- Admin Modal -->
+    <!-- Hidden File Inputs for Import -->
+    <input type="file" id="file-import-history" hidden accept=".json" onchange="app.importHistory(this)">
+    <input type="file" id="file-import-config" hidden accept=".json" onchange="app.importConfig(this)">
+
+    <!-- 1. Admin Modal (General Config) -->
     <div id="admin-modal" class="modal-wrapper">
         <div class="oled-modal">
             <div class="modal-header">
-                <h3>ניהול תוכנית</h3>
+                <h3>ניהול מאמן</h3>
                 <button class="icon-btn" onclick="app.closeAdmin()">✕</button>
             </div>
             
-            <div class="admin-controls">
+            <!-- Program Management -->
+            <div class="admin-section">
                 <div class="input-group">
-                    <label>תוכנית עריכה</label>
-                    <select id="admin-prog-select" class="oled-input" onchange="app.renderAdminList()">
-                        <option value="A">A (רגליים וגב)</option>
-                        <option value="B">B (חזה/כתף/יד)</option>
-                        <option value="FBW">FBW מלא</option>
-                    </select>
+                    <label>בחרי תוכנית לעריכה</label>
+                    <div style="display:flex; gap:10px;">
+                        <select id="admin-prog-select" class="oled-input" onchange="app.renderAdminList()"></select>
+                        <button class="btn-tool-outline" onclick="app.createNewProgram()">+</button>
+                    </div>
+                </div>
+                
+                <div class="input-group" style="margin-top:10px;">
+                    <label>שם התוכנית</label>
+                    <div style="display:flex; gap:10px;">
+                        <input type="text" id="admin-prog-title" class="oled-input" onchange="app.updateProgramTitle()">
+                        <button class="btn-tool-danger" onclick="app.deleteProgram()">מחק</button>
+                    </div>
                 </div>
             </div>
 
-            <div id="admin-list" class="scroll-list"></div>
+            <div id="admin-list" class="scroll-list" style="max-height: 250px;"></div>
             
-            <div class="modal-footer">
-                <button class="btn-outline" onclick="app.openBank()">+ הוסף תרגיל</button>
-                <button class="btn-primary" onclick="app.saveAdmin()">שמור</button>
+            <div class="modal-footer" style="flex-direction: column; gap: 15px;">
+                <button class="btn-outline" onclick="app.openBank()">+ הוסף תרגיל מהבנק</button>
+                
+                <div class="backup-area">
+                    <label>עדכון והפצה (קובץ מוח)</label>
+                    <div style="display:flex; gap:10px; width:100%;">
+                        <button class="btn-tool" onclick="app.exportConfig()" style="flex:1">יצוא תוכניות</button>
+                        <button class="btn-tool" onclick="document.getElementById('file-import-config').click()" style="flex:1">יבוא/עדכון</button>
+                    </div>
+                </div>
+
+                <div style="text-align:center;">
+                    <button class="text-link" style="color:#555; font-size:0.8rem;" onclick="app.factoryReset()">שחזור הגדרות יצרן</button>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Bank Modal -->
-    <div id="bank-modal" class="modal-wrapper" style="z-index: 110;">
+    <!-- 2. Exercise Edit Modal (Drill Down) -->
+    <div id="ex-edit-modal" class="modal-wrapper" style="z-index: 120;">
+        <div class="oled-modal">
+            <div class="modal-header">
+                <h3 id="edit-ex-title">עריכת תרגיל</h3>
+                <button class="icon-btn" onclick="app.closeExEdit()">✕</button>
+            </div>
+            
+            <div class="edit-form">
+                <div class="input-group">
+                    <label>מספר סטים</label>
+                    <div class="stepper">
+                        <button onclick="app.updateEditSets(-1)">-</button>
+                        <span id="edit-sets-val">3</span>
+                        <button onclick="app.updateEditSets(1)">+</button>
+                    </div>
+                </div>
+
+                <div class="inputs-row" style="margin-bottom:15px;">
+                    <div class="input-group" style="flex:1">
+                        <label>משקל יעד</label>
+                        <input type="number" id="edit-target-w" class="oled-input-small">
+                    </div>
+                    <div class="input-group" style="flex:1">
+                        <label>חזרות יעד</label>
+                        <input type="number" id="edit-target-r" class="oled-input-small">
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>הערות מאמן (טיפ לביצוע)</label>
+                    <textarea id="edit-note" class="oled-textarea" rows="4"></textarea>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn-danger-outline" onclick="app.removeCurrentEx()">מחק תרגיל</button>
+                <button class="btn-primary" onclick="app.saveExEdit()">שמור וסגור</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. Bank Modal -->
+    <div id="bank-modal" class="modal-wrapper" style="z-index: 130;">
         <div class="oled-modal">
             <div class="modal-header">
                 <h3>בנק תרגילים</h3>
@@ -62,7 +127,7 @@
         </div>
     </div>
 
-    <!-- History Detail Modal -->
+    <!-- 4. History Detail Modal -->
     <div id="history-modal" class="modal-wrapper">
         <div class="oled-modal">
             <div class="modal-header">
@@ -95,7 +160,7 @@
 
         <!-- SCREENS -->
 
-        <!-- 1. HOME -->
+        <!-- SCREEN 1: HOME -->
         <div id="screen-home" class="screen active">
             <div class="scroll-content">
                 <div class="hero">
@@ -111,12 +176,12 @@
                     </div>
                 </div>
                 
-                <div class="version-tag">GymStart V1.4</div>
+                <div class="version-tag">GymStart V1.5</div>
             </div>
 
             <div class="fixed-footer">
                 <button class="btn-primary big-btn" onclick="app.nav('screen-program-select')">
-                    התחלי אימון
+                    התחילי אימון
                 </button>
                 <div style="height: 15px;"></div>
                 <button class="btn-outline" onclick="app.showHistory()">
@@ -125,37 +190,19 @@
             </div>
         </div>
 
-        <!-- 1.5 PROGRAM SELECT -->
+        <!-- SCREEN 1.5: PROGRAM SELECT (Dynamic) -->
         <div id="screen-program-select" class="screen">
             <div class="scroll-content">
                 <h2 class="page-title">בחרי תוכנית</h2>
-                <div class="card-grid">
-                    <div class="oled-card prog-card" onclick="app.selectProgram('A')">
-                        <div class="prog-icon">A</div>
-                        <div class="prog-content">
-                            <div class="prog-title">רגליים וגב</div>
-                            <div class="prog-desc">סקוואט, דדליפט, פולי</div>
-                        </div>
-                    </div>
-                    <div class="oled-card prog-card" onclick="app.selectProgram('B')">
-                        <div class="prog-icon">B</div>
-                        <div class="prog-content">
-                            <div class="prog-title">חזה, כתפיים, ידיים</div>
-                            <div class="prog-desc">לחיצות, ידיים, פלאנק</div>
-                        </div>
-                    </div>
-                    <div class="oled-card prog-card" onclick="app.selectProgram('FBW')">
-                        <div class="prog-icon">F</div>
-                        <div class="prog-content">
-                            <div class="prog-title">FBW כל הגוף</div>
-                            <div class="prog-desc">אימון מלא וממוקד</div>
-                        </div>
-                    </div>
-                </div>
+                <!-- Programs will be injected here -->
+                <div id="prog-list-container" class="card-grid"></div>
+            </div>
+            <div class="fixed-footer">
+                 <button class="btn-outline" onclick="app.openAdmin()">⚙️ ניהול מאמן</button>
             </div>
         </div>
 
-        <!-- 2. OVERVIEW -->
+        <!-- SCREEN 2: OVERVIEW -->
         <div id="screen-overview" class="screen">
             <div class="scroll-content">
                 <h2 class="page-title" id="overview-title">סקירה</h2>
@@ -163,11 +210,11 @@
             </div>
             
             <div class="fixed-footer">
-                <button class="btn-primary" onclick="app.startWorkout()">התחלי אימון ⚡</button>
+                <button class="btn-primary" onclick="app.startWorkout()">התחילי אימון ⚡</button>
             </div>
         </div>
 
-        <!-- 3. ACTIVE EXERCISE -->
+        <!-- SCREEN 3: ACTIVE EXERCISE -->
         <div id="screen-active" class="screen">
             <div class="active-container">
                 
@@ -175,8 +222,11 @@
                 <div class="active-header-section">
                     <div id="set-badge" class="badge">סט 1</div>
                     <h2 id="ex-name">שם התרגיל</h2>
+                    
+                    <!-- Notes & Stats -->
                     <div id="coach-note" class="note-pill"></div>
-                    <div id="history-badge" class="history-pill">--</div>
+                    <!-- New Stats Strip -->
+                    <div id="last-stat-strip" class="stats-strip">--</div>
                 </div>
 
                 <!-- Middle: Inputs -->
@@ -250,7 +300,7 @@
             </div>
         </div>
 
-        <!-- 4. SUMMARY -->
+        <!-- SCREEN 4: SUMMARY -->
         <div id="screen-summary" class="screen">
             <div class="scroll-content">
                 <div class="hero">
@@ -268,16 +318,14 @@
             </div>
         </div>
 
-        <!-- 5. HISTORY -->
+        <!-- SCREEN 5: HISTORY -->
         <div id="screen-history" class="screen">
             <div class="scroll-content">
                 <div class="page-header">
                     <h2 class="page-title">היסטוריה</h2>
                     <div class="header-tools">
-                         <button class="btn-tool" onclick="app.exportData()">גיבוי</button>
-                         <label class="btn-tool">
-                             שחזור <input type="file" hidden onchange="app.importData(this)">
-                         </label>
+                         <button class="btn-tool" onclick="app.exportHistory()">גיבוי</button>
+                         <button class="btn-tool" onclick="document.getElementById('file-import-history').click()">שחזור</button>
                     </div>
                 </div>
                 
@@ -290,10 +338,6 @@
                 </div>
 
                 <div id="history-list" class="history-list-container"></div>
-            </div>
-            
-            <div class="fixed-footer">
-                <button class="btn-outline" onclick="app.openAdmin()">הגדרות מאמן</button>
             </div>
         </div>
 
