@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>GymStart V1.6</title>
+    <title>GymStart V1.7.3</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="stylesheet" href="style.css">
@@ -15,121 +15,189 @@
     <input type="file" id="file-import-history" hidden accept=".json" onchange="app.importHistory(this)">
     <input type="file" id="file-import-config" hidden accept=".json" onchange="app.importConfig(this)">
 
-    <!-- 1. Admin Modal (Redesigned V1.6) -->
+    <!-- ADMIN MODAL -->
     <div id="admin-modal" class="modal-wrapper">
-        <div class="oled-modal">
-            <div class="modal-header">
-                <h3>ניהול מאמן</h3>
-                <button class="icon-btn" onclick="app.closeAdmin()">✕</button>
-            </div>
+        <div class="oled-modal admin-layout">
             
-            <!-- V1.6: Tabs for Programs -->
-            <div id="admin-tabs" class="admin-tabs-container"></div>
-
-            <div class="admin-section">
-                <div class="input-group">
-                    <label>הגדרות תוכנית</label>
-                    <div style="display:flex; gap:10px;">
-                        <!-- Badge Input -->
-                        <input type="text" id="admin-prog-badge" class="oled-input" style="width: 60px; text-align:center;" maxlength="3" placeholder="סמל" onchange="app.updateProgramBadge()">
-                        <!-- Title Input -->
-                        <input type="text" id="admin-prog-title" class="oled-input" style="flex:1;" onchange="app.updateProgramTitle()">
-                    </div>
-                    <div style="display:flex; gap:10px; margin-top:10px; justify-content: flex-end;">
-                        <button class="text-btn-danger" onclick="app.deleteProgram()">מחיקת תוכנית</button>
-                        <button class="text-btn" onclick="app.createNewProgram()">+ תוכנית חדשה</button>
-                    </div>
+            <!-- VIEW 1: ADMIN HOME (Program List) -->
+            <div id="admin-view-home" class="admin-view">
+                <div class="modal-header">
+                    <h3>ניהול תוכניות</h3>
+                    <button class="text-close-btn" onclick="app.closeAdmin()">סגור ×</button>
                 </div>
-            </div>
-
-            <!-- V1.6: Clean List -->
-            <div id="admin-list" class="scroll-list" style="max-height: 300px;"></div>
-            
-            <div class="modal-footer" style="flex-direction: column; gap: 15px;">
-                <button class="btn-outline" onclick="app.openBank()">+ הוסף תרגיל</button>
                 
-                <div class="backup-area">
-                    <label>ניהול קבצים</label>
-                    <div style="display:flex; gap:10px; width:100%;">
-                        <button class="btn-tool" onclick="app.exportConfig()" style="flex:1">יצוא מוח</button>
-                        <button class="btn-tool-danger" onclick="app.factoryReset()">איפוס מלא</button>
+                <div class="admin-nav-row">
+                     <button class="btn-tool-outline" onclick="app.openExerciseManager()">📚 ניהול מאגר תרגילים</button>
+                </div>
+
+                <div id="admin-prog-list" class="vertical-stack scroll-y" style="margin-top:15px;"></div>
+                
+                <div class="modal-footer-column">
+                    <button class="btn-primary" onclick="app.createNewProgram()">+ צור תוכנית חדשה</button>
+                    
+                    <div class="backup-area">
+                        <label>ניהול נתונים</label>
+                        <div class="tools-row">
+                            <button class="btn-tool-outline" onclick="app.exportConfig()">ייצוא תבנית (Config)</button>
+                            <button class="btn-tool-danger" onclick="app.factoryReset()">איפוס מלא</button>
+                        </div>
                     </div>
                 </div>
+            </div>
+
+            <!-- VIEW 2: PROGRAM EDITOR -->
+            <div id="admin-view-edit" class="admin-view" style="display:none;">
+                <div class="modal-header">
+                    <h3>עריכת תוכנית</h3>
+                </div>
+                
+                <div class="oled-card compact" style="margin-bottom: 15px;">
+                    <label class="input-label-small">שם התוכנית</label>
+                    <input type="text" id="edit-prog-title" class="minimal-input" placeholder="שם התוכנית" oninput="app.updateProgramTitle()">
+                </div>
+
+                <div class="subtitle-label">רשימת תרגילים</div>
+                <div id="admin-ex-list" class="vertical-stack scroll-y"></div>
+                
+                <div class="modal-footer-column">
+                    <button class="btn-dashed" onclick="app.openAdminSelector()">+ הוסף תרגיל</button>
+                    <div style="display:flex; gap:10px; margin-top: 15px;">
+                        <button class="btn-primary" onclick="app.saveAndCloseEditor()">שמור וסיים</button>
+                        <button class="btn-outline" onclick="app.openAdminHome()">ביטול</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW 3: EXERCISE SELECTOR (Smart Picker) -->
+            <div id="admin-view-selector" class="admin-view" style="display:none;">
+                <div class="modal-header">
+                    <h3>בחר תרגיל</h3>
+                    <button class="text-close-btn" onclick="app.closeSelector()">ביטול</button>
+                </div>
+
+                <input type="text" id="selector-search" class="search-input" placeholder="חפש תרגיל..." onkeyup="app.filterSelector()">
+                
+                <div class="chip-container">
+                    <button class="chip active" onclick="app.setSelectorFilter('all', this)">הכל</button>
+                    <button class="chip" onclick="app.setSelectorFilter('legs', this)">רגליים</button>
+                    <button class="chip" onclick="app.setSelectorFilter('chest', this)">חזה</button>
+                    <button class="chip" onclick="app.setSelectorFilter('back', this)">גב</button>
+                    <button class="chip" onclick="app.setSelectorFilter('shoulders', this)">כתפיים</button>
+                    <button class="chip" onclick="app.setSelectorFilter('arms', this)">ידיים</button>
+                    <button class="chip" onclick="app.setSelectorFilter('core', this)">בטן</button>
+                </div>
+
+                <div id="selector-list" class="vertical-stack scroll-y" style="margin-top:10px;"></div>
+            </div>
+
+            <!-- VIEW 4: EXERCISE MANAGER (New) -->
+            <div id="admin-view-ex-manager" class="admin-view" style="display:none;">
+                <div class="modal-header">
+                    <h3>מאגר תרגילים</h3>
+                    <button class="text-close-btn" onclick="app.openAdminHome()">חזרה</button>
+                </div>
+                <input type="text" id="ex-mgr-search" class="search-input" placeholder="חפש במאגר..." onkeyup="app.renderExerciseManagerList()">
+                <div id="ex-mgr-list" class="vertical-stack scroll-y" style="margin-top:10px;"></div>
+                <div class="modal-footer-column">
+                    <button class="btn-primary" onclick="app.createNewExerciseInBank()">+ תרגיל חדש</button>
+                </div>
+            </div>
+
+            <!-- VIEW 5: EXERCISE EDIT FORM (New) -->
+            <div id="admin-view-ex-edit" class="admin-view" style="display:none;">
+                <div class="modal-header">
+                    <h3>עריכת תרגיל</h3>
+                </div>
+                <div class="scroll-y vertical-stack">
+                    <div class="oled-card compact">
+                        <label class="input-label-small">שם התרגיל</label>
+                        <input type="text" id="edit-ex-name" class="minimal-input">
+                    </div>
+                    
+                    <div class="oled-card compact">
+                        <label class="input-label-small">קטגוריה</label>
+                        <select id="edit-ex-cat" class="oled-select">
+                            <option value="legs">רגליים</option>
+                            <option value="chest">חזה</option>
+                            <option value="back">גב</option>
+                            <option value="shoulders">כתפיים</option>
+                            <option value="arms">ידיים</option>
+                            <option value="core">בטן</option>
+                            <option value="other">אחר</option>
+                        </select>
+                    </div>
+
+                    <div class="oled-card compact">
+                        <label class="input-label-small">קישור להדגמה (Youtube)</label>
+                        <input type="text" id="edit-ex-video" class="minimal-input" placeholder="https://...">
+                    </div>
+
+                    <div class="oled-card compact">
+                        <label class="input-label-small">הגדרות משקל</label>
+                        <div class="inputs-row" style="margin-top:10px;">
+                            <div style="flex:1">
+                                <span class="input-label-small">יחידות</span>
+                                <select id="edit-ex-unit" class="oled-select small">
+                                    <option value="kg">ק״ג</option>
+                                    <option value="plates">פלטות</option>
+                                    <option value="bodyweight">גוף</option>
+                                </select>
+                            </div>
+                            <div style="flex:1">
+                                <span class="input-label-small">קפיצות</span>
+                                <select id="edit-ex-step" class="oled-select small">
+                                    <option value="0.5">0.5</option>
+                                    <option value="1">1.0</option>
+                                    <option value="2.5">2.5</option>
+                                    <option value="5">5.0</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="inputs-row" style="margin-top:10px;">
+                            <div style="flex:1">
+                                <span class="input-label-small">מינימום</span>
+                                <input type="number" id="edit-ex-min" class="oled-input-num" value="0">
+                            </div>
+                            <div style="flex:1">
+                                <span class="input-label-small">מקסימום</span>
+                                <input type="number" id="edit-ex-max" class="oled-input-num" value="100">
+                            </div>
+                        </div>
+                        <div style="margin-top:15px; display:flex; align-items:center; gap:10px;">
+                            <input type="checkbox" id="edit-ex-unilateral" class="custom-chk">
+                            <span style="font-size:0.9rem; color:#bbb;">תרגיל צד-אחד (יד/רגל אחת)</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer-column">
+                    <div style="display:flex; gap:10px;">
+                        <button class="btn-primary" onclick="app.saveExerciseToBank()">שמור</button>
+                        <button class="btn-outline" onclick="app.cancelExerciseEdit()">ביטול</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Tip Edit Modal -->
+    <div id="tip-modal" class="modal-wrapper" style="z-index: 150;">
+        <div class="tip-modal-content">
+            <h4 style="margin:0 0 10px 0;">עריכת טיפ</h4>
+            <textarea id="tip-input" class="oled-textarea" rows="4" placeholder="כתוב הערה למתאמנת..."></textarea>
+            <div style="display:flex; justify-content: flex-end; gap:10px;">
+                <button class="text-btn" onclick="app.closeTipModal()">ביטול</button>
+                <button class="btn-primary-small" onclick="app.saveTip()">שמור</button>
             </div>
         </div>
     </div>
 
-    <!-- 2. Exercise Edit Modal -->
-    <div id="ex-edit-modal" class="modal-wrapper" style="z-index: 120;">
-        <div class="oled-modal">
-            <div class="modal-header">
-                <h3 id="edit-ex-title">עריכה</h3>
-                <button class="icon-btn" onclick="app.closeExEdit()">✕</button>
-            </div>
-            
-            <div class="edit-form">
-                <div class="input-group">
-                    <label>מספר סטים</label>
-                    <div class="stepper">
-                        <button onclick="app.updateEditSets(-1)">-</button>
-                        <span id="edit-sets-val">3</span>
-                        <button onclick="app.updateEditSets(1)">+</button>
-                    </div>
-                </div>
-
-                <div class="inputs-row" style="margin-bottom:15px;">
-                    <div class="input-group" style="flex:1">
-                        <label>משקל יעד</label>
-                        <input type="number" id="edit-target-w" class="oled-input-small">
-                    </div>
-                    <div class="input-group" style="flex:1">
-                        <label>חזרות יעד</label>
-                        <input type="number" id="edit-target-r" class="oled-input-small">
-                    </div>
-                </div>
-
-                <div class="input-group">
-                    <label>הערות מאמן</label>
-                    <textarea id="edit-note" class="oled-textarea" rows="4"></textarea>
-                </div>
-            </div>
-
-            <div class="modal-footer">
-                <button class="btn-danger-outline" onclick="app.removeCurrentEx()">מחק תרגיל</button>
-                <button class="btn-primary" onclick="app.saveExEdit()">שמור וסגור</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 3. Bank Modal -->
-    <div id="bank-modal" class="modal-wrapper" style="z-index: 130;">
-        <div class="oled-modal">
-            <div class="modal-header">
-                <h3>בנק תרגילים</h3>
-                <button class="icon-btn" onclick="app.closeBank()">✕</button>
-            </div>
-            <div class="bank-filters" style="display:flex; gap:10px; margin-bottom:15px; flex-shrink: 0;">
-                <select id="bank-cat-select" class="oled-input" style="width:40%" onchange="app.filterBank()">
-                    <option value="all">הכל</option>
-                    <option value="legs">רגליים</option>
-                    <option value="chest">חזה</option>
-                    <option value="back">גב</option>
-                    <option value="shoulders">כתפיים</option>
-                    <option value="arms">ידיים</option>
-                    <option value="core">בטן</option>
-                </select>
-                <input type="text" id="bank-search" class="oled-input" style="width:60%" placeholder="חפש..." onkeyup="app.filterBank()">
-            </div>
-            <div id="bank-list" class="scroll-list"></div>
-        </div>
-    </div>
-
-    <!-- 4. History Detail Modal -->
+    <!-- History Detail Modal -->
     <div id="history-modal" class="modal-wrapper">
         <div class="oled-modal">
             <div class="modal-header">
                 <h3>פרטי אימון</h3>
-                <button class="icon-btn" onclick="app.closeHistoryModal()">✕</button>
+                <button class="text-close-btn" onclick="app.closeHistoryModal()">סגור ×</button>
             </div>
             <div id="hist-meta-header" class="meta-box" style="flex-shrink: 0;"></div>
             <div id="hist-detail-content" class="scroll-list" style="margin-bottom: 20px;"></div>
@@ -146,8 +214,7 @@
         <!-- Navbar -->
         <header class="navbar">
             <div class="nav-left">
-                <!-- V1.6: Admin Gear Icon on Home Only (Injected via JS or CSS logic) -->
-                <button id="btn-admin-home" class="icon-btn" onclick="app.openAdmin()" style="display:none;">
+                <button id="btn-admin-home" class="icon-btn" onclick="app.openAdminHome()" style="display:none;">
                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 5 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
                 </button>
             </div>
@@ -177,7 +244,7 @@
                     </div>
                 </div>
                 
-                <div class="version-tag">GymStart V1.6</div>
+                <div class="version-tag">GymStart V1.7.3</div>
             </div>
 
             <div class="fixed-footer">
@@ -189,7 +256,6 @@
                     היסטוריה
                 </button>
                 <div style="height: 25px;"></div>
-                <!-- V1.6: Update Button -->
                 <button class="btn-ghost" onclick="document.getElementById('file-import-config').click()">
                     קבלת עדכון מאמן
                 </button>
@@ -215,15 +281,17 @@
             </div>
         </div>
 
-        <!-- SCREEN 3: ACTIVE EXERCISE (V1.6 Layout Update) -->
+        <!-- SCREEN 3: ACTIVE EXERCISE -->
         <div id="screen-active" class="screen">
             <div class="active-container">
                 
                 <div class="active-header-section">
                     <div id="set-badge" class="badge">סט 1</div>
-                    <h2 id="ex-name">שם התרגיל</h2>
+                    <div style="display:flex; justify-content:center; align-items:center; gap:8px;">
+                         <h2 id="ex-name">שם התרגיל</h2>
+                         <a id="ex-video-link" href="#" target="_blank" class="video-icon" style="display:none;">▶</a>
+                    </div>
                     
-                    <!-- V1.6: Note is NOW ABOVE the stats strip -->
                     <div id="coach-note" class="note-pill"></div>
                     <div id="last-stat-strip" class="stats-strip">--</div>
                 </div>
