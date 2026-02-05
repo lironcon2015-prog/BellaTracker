@@ -1,8 +1,7 @@
 /**
- * GYMSTART V1.7.3
- * - Dynamic Exercise Bank Manager (Add/Edit/Delete exercises)
- * - Enhanced Weight Selector logic (based on Step, Min, Max)
- * - UI Polish: No "Edit" button, Improved Summary text, Video Links.
+ * GYMSTART V1.7.5
+ * - UI Update: Swap button moved to action area, text only, visible ONLY on set 1 of core exercises.
+ * - Logic Update: "Unilateral" renamed to "Single Side Weight" with output indication in summary.
  */
 
 const CONFIG = {
@@ -11,7 +10,7 @@ const CONFIG = {
         HISTORY: 'gymstart_beta_02_history',
         EXERCISES: 'gymstart_v1_7_exercises_bank'
     },
-    VERSION: '1.7.3'
+    VERSION: '1.7.5'
 };
 
 const FEEL_MAP_TEXT = { 'easy': 'קל', 'good': 'בינוני', 'hard': 'קשה' };
@@ -61,6 +60,7 @@ const app = {
         currentProgId: null,
         active: {
             on: false,
+            sessionExercises: [], // DYNAMIC PLAYLIST
             exIdx: 0, setIdx: 1, totalSets: 3,
             log: [], startTime: 0,
             timerInterval: null, restInterval: null, 
@@ -71,8 +71,12 @@ const app = {
             viewProgId: null, 
             editTipEx: null, 
             selectorFilter: 'all',
+            exManagerFilter: 'all',
             tempExercises: [],
             editingExId: null // For Bank Manager
+        },
+        userSelector: {
+            mode: null, // 'swap' or 'add'
         },
         historySelection: [],
         viewHistoryIdx: null
@@ -242,8 +246,12 @@ const app = {
             alert("התוכנית ריקה"); return;
         }
 
+        const prog = this.state.routines[this.state.currentProgId];
+
         this.state.active = {
             on: true,
+            // Deep copy exercises for dynamic playlist (swapping/adding support)
+            sessionExercises: JSON.parse(JSON.stringify(prog.exercises)),
             exIdx: 0, setIdx: 1, totalSets: 3,
             log: [], startTime: Date.now(),
             timerInterval: null, restInterval: null, 
@@ -255,8 +263,8 @@ const app = {
     },
 
     loadActiveExercise: function() {
-        const prog = this.state.routines[this.state.currentProgId];
-        const exInst = prog.exercises[this.state.active.exIdx];
+        // USE SESSION EXERCISES NOT ROUTINE
+        const exInst = this.state.active.sessionExercises[this.state.active.exIdx];
         const exDef = this.getExerciseDef(exInst.id);
         
         this.state.active.totalSets = exInst.sets || 3;
@@ -271,6 +279,14 @@ const app = {
             vidBtn.href = exDef.videoUrl;
         } else {
             vidBtn.style.display = 'none';
+        }
+
+        // Swap Button Logic: Core exercises ONLY, and ONLY on Set 1
+        const swapBtn = document.getElementById('btn-swap-ex');
+        if (exDef.cat === 'core' && this.state.active.setIdx === 1) {
+            swapBtn.style.display = 'block';
+        } else {
+            swapBtn.style.display = 'none';
         }
 
         const noteEl = document.getElementById('coach-note');
@@ -369,11 +385,9 @@ const app = {
             const max = parseFloat(s.max);
             const step = parseFloat(s.step) || 2.5;
             
-            // Build options based on dynamic settings
             for(let v = min; v <= max; v += step) {
-                // Fix floating point issues (e.g. 12.500000001)
                 let cleanV = parseFloat(v.toFixed(1));
-                if(cleanV % 1 === 0) cleanV = parseInt(cleanV); // 10 instead of 10.0
+                if(cleanV % 1 === 0) cleanV = parseInt(cleanV); 
                 wOpts.push(cleanV);
             }
         }
@@ -386,11 +400,9 @@ const app = {
             selW.appendChild(opt);
         });
 
-        // SAFETY: Select nearest value if history weight is invalid
         if(wOpts.includes(this.state.active.inputW)) {
             selW.value = this.state.active.inputW;
         } else {
-            // Find closest
             const closest = wOpts.reduce((prev, curr) => {
                 return (Math.abs(curr - this.state.active.inputW) < Math.abs(prev - this.state.active.inputW) ? curr : prev);
             });
@@ -400,7 +412,6 @@ const app = {
         
         selW.onchange = (e) => this.state.active.inputW = Number(e.target.value);
 
-        // Reps
         let rOpts = [];
         const maxReps = exDef.cat === 'core' ? 50 : 30;
         for(let i=1; i<=maxReps; i++) rOpts.push(i);
@@ -467,8 +478,8 @@ const app = {
             r = this.state.active.inputR;
         }
 
-        const prog = this.state.routines[this.state.currentProgId];
-        const exInst = prog.exercises[this.state.active.exIdx];
+        // Use sessionExercises
+        const exInst = this.state.active.sessionExercises[this.state.active.exIdx];
         
         let exLog = this.state.active.log.find(l => l.id === exInst.id);
         if(!exLog) {
@@ -483,6 +494,10 @@ const app = {
         if (this.state.active.setIdx < this.state.active.totalSets) {
             this.state.active.setIdx++;
             document.getElementById('set-badge').innerText = `סט ${this.state.active.setIdx} / ${this.state.active.totalSets}`;
+            
+            // Hide swap button if it was visible (only for set 1)
+            document.getElementById('btn-swap-ex').style.display = 'none';
+            
             this.state.active.feel = 'good';
             this.updateFeelUI();
             if(this.state.active.isStopwatch) {
@@ -490,14 +505,26 @@ const app = {
                 document.getElementById('sw-display').innerText = "00:00";
             }
         } else {
+            // Hide swap button just in case
+            document.getElementById('btn-swap-ex').style.display = 'none';
+            
             document.getElementById('btn-finish').style.display = 'none';
             document.getElementById('decision-buttons').style.display = 'flex';
             document.getElementById('rest-timer-area').style.display = 'none';
 
-            const nextEx = prog.exercises[this.state.active.exIdx + 1];
+            const nextEx = this.state.active.sessionExercises[this.state.active.exIdx + 1];
             const nextEl = document.getElementById('next-ex-preview');
             nextEl.innerText = nextEx ? `הבא בתור: ${nextEx.name}` : "הבא בתור: סיום אימון";
             nextEl.style.display = 'block';
+
+            // Check Add Button Logic
+            const exDef = this.getExerciseDef(exInst.id);
+            const addBtn = document.getElementById('btn-add-core');
+            if (exDef.cat === 'core') {
+                addBtn.style.display = 'block';
+            } else {
+                addBtn.style.display = 'none';
+            }
         }
     },
 
@@ -549,6 +576,9 @@ const app = {
         this.state.active.setIdx++;
         document.getElementById('set-badge').innerText = `סט ${this.state.active.setIdx} / ${this.state.active.totalSets}`;
         
+        // Ensure swap button is hidden (added sets are never set 1)
+        document.getElementById('btn-swap-ex').style.display = 'none';
+        
         document.getElementById('decision-buttons').style.display = 'none';
         document.getElementById('next-ex-preview').style.display = 'none';
         document.getElementById('btn-finish').style.display = 'flex';
@@ -562,9 +592,8 @@ const app = {
     },
 
     deleteLastSet: function() {
-        const prog = this.state.routines[this.state.currentProgId];
-        const ex = prog.exercises[this.state.active.exIdx];
-        let exLog = this.state.active.log.find(l => l.id === ex.id);
+        const exInst = this.state.active.sessionExercises[this.state.active.exIdx];
+        let exLog = this.state.active.log.find(l => l.id === exInst.id);
         
         if(exLog && exLog.sets.length > 0) {
             exLog.sets.pop();
@@ -573,6 +602,13 @@ const app = {
             if (this.state.active.setIdx > 1) {
                 this.state.active.setIdx--;
                 document.getElementById('set-badge').innerText = `סט ${this.state.active.setIdx} / ${this.state.active.totalSets}`;
+                
+                // If we went back to set 1, AND it is a core exercise, show swap button again
+                const exDef = this.getExerciseDef(exInst.id);
+                if (exDef.cat === 'core' && this.state.active.setIdx === 1) {
+                     document.getElementById('btn-swap-ex').style.display = 'block';
+                }
+
                 document.getElementById('decision-buttons').style.display = 'none';
                 document.getElementById('next-ex-preview').style.display = 'none';
                 document.getElementById('btn-finish').style.display = 'flex';
@@ -586,8 +622,8 @@ const app = {
 
     nextExercise: function() {
         this.stopAllTimers();
-        const prog = this.state.routines[this.state.currentProgId];
-        if (this.state.active.exIdx < prog.exercises.length - 1) {
+        // Use sessionExercises
+        if (this.state.active.exIdx < this.state.active.sessionExercises.length - 1) {
             this.state.active.exIdx++;
             this.state.active.setIdx = 1;
             this.loadActiveExercise();
@@ -627,13 +663,17 @@ const app = {
                 txt += `✅ ${ex.name}\n`;
                 const exDef = this.getExerciseDef(ex.id);
                 const isTime = (ex.id.includes('plank') || exDef.settings.unit === 'bodyweight' && ex.sets[0].w === 0);
-                
+                const isSingleSide = exDef.settings.isUnilateral;
+
                 ex.sets.forEach((s, i) => {
                     let valStr;
                     if(isTime && s.w === 0) {
                          valStr = `${s.r} שנ׳`;
                     } else {
-                         valStr = `${s.w} ק״ג | ${s.r} חזרות`;
+                         valStr = `${s.w} ק״ג`;
+                         if(isSingleSide) valStr += ` (לצד)`;
+                         valStr += ` | ${s.r} חזרות`;
+                         
                          if(exDef.settings.unit === 'plates') valStr = `${s.w} פלטות | ${s.r} חזרות`;
                          if(s.w === 0) valStr = `משקל גוף | ${s.r} חזרות`;
                     }
@@ -666,6 +706,76 @@ const app = {
             this.saveData();
         }
         window.location.reload();
+    },
+
+    /* --- USER SELECTOR (SWAP/ADD) --- */
+    
+    openSwapExercise: function() {
+        this.state.userSelector.mode = 'swap';
+        this.renderUserSelector('core');
+        document.getElementById('user-sel-title').innerText = "החליפי תרגיל";
+        document.getElementById('user-selector-modal').style.display = 'flex';
+    },
+
+    openAddCoreExercise: function() {
+        this.state.userSelector.mode = 'add';
+        this.renderUserSelector('core');
+        document.getElementById('user-sel-title').innerText = "הוסיפי תרגיל";
+        document.getElementById('user-selector-modal').style.display = 'flex';
+    },
+
+    closeUserSelector: function() {
+        document.getElementById('user-selector-modal').style.display = 'none';
+    },
+
+    renderUserSelector: function(cat) {
+        const list = document.getElementById('user-sel-list');
+        list.innerHTML = '';
+        
+        // Filter by category
+        let candidates = this.state.exercises.filter(e => e.cat === cat);
+
+        // If 'Add' mode, filter out exercises already done in session
+        if (this.state.userSelector.mode === 'add') {
+             const currentIds = this.state.active.sessionExercises.map(e => e.id);
+             candidates = candidates.filter(e => !currentIds.includes(e.id));
+        }
+
+        candidates.forEach(e => {
+            list.innerHTML += `
+            <div class="list-item" onclick="app.userSelectExercise('${e.id}')">
+                <span style="font-weight:700">${e.name}</span>
+                <span style="color:var(--primary)">+</span>
+            </div>`;
+        });
+    },
+
+    userSelectExercise: function(exId) {
+        const newExDef = this.getExerciseDef(exId);
+        
+        if (this.state.userSelector.mode === 'swap') {
+            // REPLACE current exercise
+            this.state.active.sessionExercises[this.state.active.exIdx] = {
+                id: exId,
+                name: newExDef.name,
+                sets: 3, // Reset to default sets
+                rest: 60
+            };
+            this.loadActiveExercise();
+        } else if (this.state.userSelector.mode === 'add') {
+            // INSERT after current exercise
+            const newExInst = {
+                id: exId,
+                name: newExDef.name,
+                sets: 3,
+                rest: 60
+            };
+            this.state.active.sessionExercises.splice(this.state.active.exIdx + 1, 0, newExInst);
+            // Move to it immediately
+            this.nextExercise();
+        }
+
+        this.closeUserSelector();
     },
 
     /* --- ADMIN: VIEWS & NAVIGATION --- */
@@ -822,15 +932,35 @@ const app = {
         document.getElementById('admin-view-home').style.display = 'none';
         document.getElementById('admin-view-ex-manager').style.display = 'flex';
         document.getElementById('ex-mgr-search').value = '';
+        this.state.admin.exManagerFilter = 'all';
+        this.updateExManagerChips();
         this.renderExerciseManagerList();
+    },
+
+    setExManagerFilter: function(cat, btn) {
+        this.state.admin.exManagerFilter = cat;
+        this.updateExManagerChips();
+        this.renderExerciseManagerList();
+    },
+
+    updateExManagerChips: function() {
+        const map = { 'all':0, 'legs':1, 'chest':2, 'back':3, 'shoulders':4, 'arms':5, 'core':6 };
+        const idx = map[this.state.admin.exManagerFilter];
+        const chips = document.querySelector('#admin-view-ex-manager .chip-container').querySelectorAll('.chip');
+        chips.forEach((c, i) => i === idx ? c.classList.add('active') : c.classList.remove('active'));
     },
 
     renderExerciseManagerList: function() {
         const list = document.getElementById('ex-mgr-list');
         list.innerHTML = '';
         const term = document.getElementById('ex-mgr-search').value.toLowerCase();
+        const cat = this.state.admin.exManagerFilter;
         
-        this.state.exercises.filter(e => e.name.toLowerCase().includes(term)).forEach(e => {
+        this.state.exercises.filter(e => {
+            const matchName = e.name.toLowerCase().includes(term);
+            const matchCat = cat === 'all' || e.cat === cat;
+            return matchName && matchCat;
+        }).forEach(e => {
              list.innerHTML += `
              <div class="list-item" onclick="app.editExerciseInBank('${e.id}')">
                 <div style="font-weight:700">${e.name}</div>
@@ -884,6 +1014,7 @@ const app = {
                 step: Number(document.getElementById('edit-ex-step').value),
                 min: Number(document.getElementById('edit-ex-min').value),
                 max: Number(document.getElementById('edit-ex-max').value),
+                // Note: Keeping key as 'isUnilateral' for compatibility, but UI label says "Single Side Weight"
                 isUnilateral: document.getElementById('edit-ex-unilateral').checked
             }
         };
@@ -931,7 +1062,7 @@ const app = {
     updateFilterChips: function() {
         const map = { 'all':0, 'legs':1, 'chest':2, 'back':3, 'shoulders':4, 'arms':5, 'core':6 };
         const idx = map[this.state.admin.selectorFilter];
-        const chips = document.querySelectorAll('.chip');
+        const chips = document.querySelector('#admin-view-selector .chip-container').querySelectorAll('.chip');
         chips.forEach((c, i) => i === idx ? c.classList.add('active') : c.classList.remove('active'));
     },
 
@@ -1162,13 +1293,17 @@ const app = {
                 <div style="font-weight:700; color:var(--primary)">${ex.name}</div>`;
             const exDef = this.getExerciseDef(ex.id);
             const isTime = (ex.id.includes('plank') || (exDef.settings.unit === 'bodyweight' && ex.sets[0].w === 0));
+            const isSingleSide = exDef.settings.isUnilateral;
             
             ex.sets.forEach((s, si) => {
                 let valStr;
                 if(isTime && s.w === 0) {
                      valStr = `${s.r} שנ׳`;
                 } else {
-                     valStr = `${s.w} ק״ג | ${s.r} חזרות`;
+                     valStr = `${s.w} ק״ג`;
+                     if(isSingleSide) valStr += ' (לצד)';
+                     valStr += ` | ${s.r} חזרות`;
+                     
                      if(exDef.settings.unit === 'plates') valStr = `${s.w} פלטות | ${s.r} חזרות`;
                      if(s.w === 0) valStr = `משקל גוף | ${s.r} חזרות`;
                 }
