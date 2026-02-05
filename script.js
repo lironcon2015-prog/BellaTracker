@@ -1,99 +1,63 @@
 /**
- * GYMSTART V1.6.1 (FIXED DATA)
- * Features: Professional Admin UI, Manual Badges, Ghost Update Button, Active Safety Check
- * Fixes: Restored full default routines data (A, B, FBW)
+ * GYMSTART V1.7.3
+ * - Dynamic Exercise Bank Manager (Add/Edit/Delete exercises)
+ * - Enhanced Weight Selector logic (based on Step, Min, Max)
+ * - UI Polish: No "Edit" button, Improved Summary text, Video Links.
  */
 
 const CONFIG = {
     KEYS: {
-        ROUTINES: 'gymstart_beta_02_routines',
-        HISTORY: 'gymstart_beta_02_history'
+        ROUTINES: 'gymstart_v1_7_routines',
+        HISTORY: 'gymstart_beta_02_history',
+        EXERCISES: 'gymstart_v1_7_exercises_bank'
     },
-    VERSION: '1.6.1'
+    VERSION: '1.7.3'
 };
 
-const FEEL_MAP_TEXT = {
-    'easy': 'קל',
-    'good': 'בינוני',
-    'hard': 'קשה'
-};
+const FEEL_MAP_TEXT = { 'easy': 'קל', 'good': 'בינוני', 'hard': 'קשה' };
 
-const BANK = [
-    { id: 'goblet', name: 'גובלט סקוואט', unit: 'kg', cat: 'legs' },
-    { id: 'leg_press', name: 'לחיצת רגליים', unit: 'kg', cat: 'legs' },
-    { id: 'rdl', name: 'דדליפט רומני', unit: 'kg', cat: 'legs' },
-    { id: 'lunge', name: 'מכרעים (Lunges)', unit: 'kg', cat: 'legs' },
-    { id: 'hip_thrust', name: 'גשר עכוז', unit: 'kg', cat: 'legs' },
-    { id: 'leg_ext', name: 'פשיטת ברכיים', unit: 'plates', cat: 'legs' },
-    { id: 'leg_curl', name: 'כפיפת ברכיים', unit: 'plates', cat: 'legs' },
-    { id: 'calf_raise', name: 'הרמת עקבים', unit: 'kg', cat: 'legs' },
-    { id: 'chest_press', name: 'לחיצת חזה משקולות', unit: 'kg', cat: 'chest' },
-    { id: 'fly', name: 'פרפר (Fly)', unit: 'kg', cat: 'chest' },
-    { id: 'pushup', name: 'שכיבות סמיכה', unit: 'bodyweight', cat: 'chest' },
-    { id: 'incline_bench', name: 'לחיצת חזה שיפוע עליון', unit: 'kg', cat: 'chest' },
-    { id: 'lat_pull', name: 'פולי עליון', unit: 'plates', cat: 'back' },
-    { id: 'cable_row', name: 'חתירה בכבל', unit: 'plates', cat: 'back' },
-    { id: 'db_row', name: 'חתירה במשקולת', unit: 'kg', cat: 'back' },
-    { id: 'hyperext', name: 'פשיטת גו (Hyper)', unit: 'bodyweight', cat: 'back' },
-    { id: 'shoulder_press', name: 'לחיצת כתפיים', unit: 'kg', cat: 'shoulders' },
-    { id: 'lat_raise', name: 'הרחקה לצדדים', unit: 'kg', cat: 'shoulders' },
-    { id: 'face_pull', name: 'פייס-פולס', unit: 'plates', cat: 'shoulders' },
-    { id: 'bicep_curl', name: 'כפיפת מרפקים', unit: 'kg', cat: 'arms' },
-    { id: 'tricep_pull', name: 'פשיטת מרפקים', unit: 'plates', cat: 'arms' },
-    { id: 'tricep_rope', name: 'פשיטת מרפקים חבל', unit: 'plates', cat: 'arms' },
-    { id: 'hammer_curl', name: 'כפיפת פטישים', unit: 'kg', cat: 'arms' },
-    { id: 'plank', name: 'פלאנק (סטטי)', unit: 'bodyweight', cat: 'core' },
-    { id: 'side_plank', name: 'פלאנק צידי', unit: 'bodyweight', cat: 'core' },
-    { id: 'bicycle', name: 'בטן אופניים', unit: 'bodyweight', cat: 'core' },
-    { id: 'knee_raise', name: 'הרמת ברכיים', unit: 'bodyweight', cat: 'core' },
-    { id: 'crunches', name: 'כפיפות בטן', unit: 'bodyweight', cat: 'core' }
+// BASE EXERCISES FOR MIGRATION ONLY (Not used directly anymore)
+const BASE_BANK_INIT = [
+    { id: 'goblet', name: 'גובלט סקוואט', cat: 'legs', settings: {unit:'kg', step:2.5, min:2.5, max:60} },
+    { id: 'leg_press', name: 'לחיצת רגליים', cat: 'legs', settings: {unit:'kg', step:5, min:20, max:200} },
+    { id: 'rdl', name: 'דדליפט רומני', cat: 'legs', settings: {unit:'kg', step:2.5, min:10, max:100} },
+    { id: 'lunge', name: 'מכרעים (Lunges)', cat: 'legs', settings: {unit:'kg', step:1, min:1, max:30} },
+    { id: 'hip_thrust', name: 'גשר עכוז', cat: 'legs', settings: {unit:'kg', step:2.5, min:10, max:120} },
+    { id: 'leg_ext', name: 'פשיטת ברכיים', cat: 'legs', settings: {unit:'plates', step:1, min:1, max:20} },
+    { id: 'leg_curl', name: 'כפיפת ברכיים', cat: 'legs', settings: {unit:'plates', step:1, min:1, max:20} },
+    { id: 'calf_raise', name: 'הרמת עקבים', cat: 'legs', settings: {unit:'kg', step:2.5, min:10, max:80} },
+    { id: 'chest_press', name: 'לחיצת חזה משקולות', cat: 'chest', settings: {unit:'kg', step:1, min:2, max:40} },
+    { id: 'fly', name: 'פרפר (Fly)', cat: 'chest', settings: {unit:'kg', step:1, min:2, max:20} },
+    { id: 'pushup', name: 'שכיבות סמיכה', cat: 'chest', settings: {unit:'bodyweight', step:0, min:0, max:0} },
+    { id: 'incline_bench', name: 'לחיצת חזה שיפוע עליון', cat: 'chest', settings: {unit:'kg', step:1, min:2, max:40} },
+    { id: 'lat_pull', name: 'פולי עליון', cat: 'back', settings: {unit:'plates', step:1, min:1, max:20} },
+    { id: 'cable_row', name: 'חתירה בכבל', cat: 'back', settings: {unit:'plates', step:1, min:1, max:20} },
+    { id: 'db_row', name: 'חתירה במשקולת', cat: 'back', settings: {unit:'kg', step:1, min:4, max:40} },
+    { id: 'hyperext', name: 'פשיטת גו (Hyper)', cat: 'back', settings: {unit:'bodyweight', step:0, min:0, max:0} },
+    { id: 'shoulder_press', name: 'לחיצת כתפיים', cat: 'shoulders', settings: {unit:'kg', step:1, min:2, max:30} },
+    { id: 'lat_raise', name: 'הרחקה לצדדים', cat: 'shoulders', settings: {unit:'kg', step:1, min:1, max:15} },
+    { id: 'face_pull', name: 'פייס-פולס', cat: 'shoulders', settings: {unit:'plates', step:1, min:1, max:20} },
+    { id: 'bicep_curl', name: 'כפיפת מרפקים', cat: 'arms', settings: {unit:'kg', step:1, min:2, max:25} },
+    { id: 'tricep_pull', name: 'פשיטת מרפקים', cat: 'arms', settings: {unit:'plates', step:1, min:1, max:20} },
+    { id: 'tricep_rope', name: 'פשיטת מרפקים חבל', cat: 'arms', settings: {unit:'plates', step:1, min:1, max:20} },
+    { id: 'hammer_curl', name: 'כפיפת פטישים', cat: 'arms', settings: {unit:'kg', step:1, min:2, max:25} },
+    { id: 'plank', name: 'פלאנק (סטטי)', cat: 'core', settings: {unit:'bodyweight', step:0, min:0, max:0} },
+    { id: 'side_plank', name: 'פלאנק צידי', cat: 'core', settings: {unit:'bodyweight', step:0, min:0, max:0} },
+    { id: 'bicycle', name: 'בטן אופניים', cat: 'core', settings: {unit:'bodyweight', step:0, min:0, max:0} },
+    { id: 'knee_raise', name: 'הרמת ברכיים', cat: 'core', settings: {unit:'bodyweight', step:0, min:0, max:0} },
+    { id: 'crunches', name: 'כפיפות בטן', cat: 'core', settings: {unit:'bodyweight', step:0, min:0, max:0} }
 ];
 
-// RESTORED FULL DATA
-const DEFAULT_ROUTINES_V16 = {
-    'A': {
-        title: 'רגליים וגב',
-        badge: 'A',
-        exercises: [
-            { id: 'goblet', name: 'גובלט סקוואט', unit: 'kg', note: 'גב זקוף', target: {w:10, r:12}, cat: 'legs', sets: 3 },
-            { id: 'leg_press', name: 'לחיצת רגליים', unit: 'kg', note: 'ללא נעילת ברכיים', target: {w:30, r:12}, cat: 'legs', sets: 3 },
-            { id: 'rdl', name: 'דדליפט רומני', unit: 'kg', note: 'תנועה איטית', target: {w:10, r:12}, cat: 'legs', sets: 3 },
-            { id: 'lat_pull', name: 'פולי עליון', unit: 'plates', note: 'משיכה לחזה', target: {w:6, r:12}, cat: 'back', sets: 3 },
-            { id: 'cable_row', name: 'חתירה בכבל', unit: 'plates', note: 'מרפקים צמודים', target: {w:6, r:12}, cat: 'back', sets: 3 },
-            { id: 'bicycle', name: 'בטן אופניים', unit: 'bodyweight', note: 'שליטה בקצב', target: {w:0, r:30}, cat: 'core', sets: 3 }
-        ]
-    },
-    'B': {
-        title: 'חזה, כתפיים, ידיים',
-        badge: 'B',
-        exercises: [
-            { id: 'chest_press', name: 'לחיצת חזה', unit: 'kg', note: 'יציבות', target: {w:7, r:12}, cat: 'chest', sets: 3 },
-            { id: 'fly', name: 'פרפר', unit: 'kg', note: 'תנועה רחבה', target: {w:3, r:12}, cat: 'chest', sets: 3 },
-            { id: 'shoulder_press', name: 'לחיצת כתפיים', unit: 'kg', note: 'גב צמוד', target: {w:4, r:12}, cat: 'shoulders', sets: 3 },
-            { id: 'lat_raise', name: 'הרחקה לצדדים', unit: 'kg', note: 'מרפק מוביל', target: {w:3, r:12}, cat: 'shoulders', sets: 3 },
-            { id: 'bicep_curl', name: 'יד קדמית', unit: 'kg', note: 'ללא תנופה', target: {w:5, r:12}, cat: 'arms', sets: 3 },
-            { id: 'tricep_pull', name: 'יד אחורית', unit: 'plates', note: 'מרפקים מקובעים', target: {w:5, r:12}, cat: 'arms', sets: 3 },
-            { id: 'plank', name: 'פלאנק סטטי', unit: 'bodyweight', note: 'אגן גבוה', target: {w:0, r:45}, cat: 'core', sets: 3 }
-        ]
-    },
-    'FBW': {
-        title: 'FBW כל הגוף',
-        badge: 'FBW',
-        exercises: [
-            { id: 'goblet', name: 'גובלט סקוואט', unit: 'kg', note: 'רגליים', target: {w:10, r:12}, cat: 'legs', sets: 3 },
-            { id: 'rdl', name: 'דדליפט רומני', unit: 'kg', note: 'רגליים', target: {w:10, r:12}, cat: 'legs', sets: 3 },
-            { id: 'chest_press', name: 'לחיצת חזה', unit: 'kg', note: 'חזה', target: {w:7, r:12}, cat: 'chest', sets: 3 },
-            { id: 'cable_row', name: 'חתירה בכבל', unit: 'plates', note: 'גב', target: {w:6, r:12}, cat: 'back', sets: 3 },
-            { id: 'shoulder_press', name: 'לחיצת כתפיים', unit: 'kg', note: 'כתפיים', target: {w:4, r:12}, cat: 'shoulders', sets: 3 },
-            { id: 'crunches', name: 'כפיפות בטן', unit: 'bodyweight', note: 'בטן', target: {w:0, r:20}, cat: 'core', sets: 3 }
-        ]
-    }
+const DEFAULT_ROUTINES_V17 = {
+    'A': { title: 'רגליים וגב (A)', exercises: [ {id:'goblet', sets:3, rest:90}, {id:'leg_press', sets:3}, {id:'lat_pull', sets:3} ] },
+    'B': { title: 'חזה וכתפיים (B)', exercises: [ {id:'chest_press', sets:3}, {id:'shoulder_press', sets:3}, {id:'plank', sets:3} ] }
 };
 
 const app = {
     state: {
         routines: {},
         history: [],
+        exercises: [], // Dynamic Bank
         currentProgId: null,
         active: {
             on: false,
@@ -103,8 +67,13 @@ const app = {
             feel: 'good', isStopwatch: false, stopwatchVal: 0,
             inputW: 10, inputR: 12
         },
-        admin: { viewProgId: 'A' },
-        editEx: { progId: null, index: null, data: null },
+        admin: { 
+            viewProgId: null, 
+            editTipEx: null, 
+            selectorFilter: 'all',
+            tempExercises: [],
+            editingExId: null // For Bank Manager
+        },
         historySelection: [],
         viewHistoryIdx: null
     },
@@ -114,7 +83,7 @@ const app = {
             this.loadData();
             this.renderHome();
             this.renderProgramSelect(); 
-            this.nav('screen-home'); // Force home on init to set UI
+            this.nav('screen-home'); 
         } catch (e) {
             console.error(e);
             alert("שגיאה בטעינת נתונים.");
@@ -122,37 +91,45 @@ const app = {
     },
 
     loadData: function() {
+        // Load History
         const h = localStorage.getItem(CONFIG.KEYS.HISTORY);
         this.state.history = h ? JSON.parse(h) : [];
         
+        // Load Routines
         const r = localStorage.getItem(CONFIG.KEYS.ROUTINES);
         let loadedRoutines = r ? JSON.parse(r) : null;
-
         if (!loadedRoutines) {
-            this.state.routines = JSON.parse(JSON.stringify(DEFAULT_ROUTINES_V16));
-        } else {
-            let needsSave = false;
-            // Legacy Check
-            const firstKey = Object.keys(loadedRoutines)[0];
-            if (firstKey && Array.isArray(loadedRoutines[firstKey])) {
-               // Migration code if needed
-            } 
-            
-            // Ensure Badges
-            for(const pid in loadedRoutines) {
-                if(!loadedRoutines[pid].badge) {
-                    loadedRoutines[pid].badge = pid.substring(0,2).toUpperCase();
-                    needsSave = true;
-                }
+            this.state.routines = JSON.parse(JSON.stringify(DEFAULT_ROUTINES_V17));
+            // Fill details from Init Bank for first load
+            for(const pid in this.state.routines) {
+                this.state.routines[pid].exercises.forEach(ex => {
+                    const bankEx = BASE_BANK_INIT.find(b => b.id === ex.id);
+                    if(bankEx) {
+                        ex.name = bankEx.name;
+                        ex.unit = bankEx.settings.unit;
+                        ex.cat = bankEx.cat;
+                    }
+                });
             }
+        } else {
             this.state.routines = loadedRoutines;
-            if(needsSave) this.saveData();
+        }
+
+        // Load Exercises (Migration Logic)
+        const e = localStorage.getItem(CONFIG.KEYS.EXERCISES);
+        if(e) {
+            this.state.exercises = JSON.parse(e);
+        } else {
+            // First time migration: Use Base Bank
+            this.state.exercises = JSON.parse(JSON.stringify(BASE_BANK_INIT));
+            this.saveData();
         }
     },
 
     saveData: function() {
         localStorage.setItem(CONFIG.KEYS.ROUTINES, JSON.stringify(this.state.routines));
         localStorage.setItem(CONFIG.KEYS.HISTORY, JSON.stringify(this.state.history));
+        localStorage.setItem(CONFIG.KEYS.EXERCISES, JSON.stringify(this.state.exercises));
     },
 
     nav: function(screenId) {
@@ -188,6 +165,13 @@ const app = {
         }
     },
 
+    getExerciseDef: function(exId) {
+        return this.state.exercises.find(e => e.id === exId) || 
+               { name: 'תרגיל לא ידוע', settings: {unit:'kg', step:2.5, min:0, max:50} };
+    },
+
+    /* --- RENDERING --- */
+
     renderProgramSelect: function() {
         const container = document.getElementById('prog-list-container');
         container.innerHTML = '';
@@ -200,7 +184,7 @@ const app = {
 
         ids.forEach(pid => {
             const prog = this.state.routines[pid];
-            const badge = prog.badge || pid.charAt(0);
+            const badge = pid.charAt(0).toUpperCase();
             const count = prog.exercises.length;
             
             let desc = `${count} תרגילים`;
@@ -272,22 +256,33 @@ const app = {
 
     loadActiveExercise: function() {
         const prog = this.state.routines[this.state.currentProgId];
-        const ex = prog.exercises[this.state.active.exIdx];
+        const exInst = prog.exercises[this.state.active.exIdx];
+        const exDef = this.getExerciseDef(exInst.id);
         
-        this.state.active.totalSets = ex.sets || 3;
+        this.state.active.totalSets = exInst.sets || 3;
 
-        document.getElementById('ex-name').innerText = ex.name;
+        document.getElementById('ex-name').innerText = exInst.name;
         document.getElementById('set-badge').innerText = `סט ${this.state.active.setIdx} / ${this.state.active.totalSets}`;
         
+        // Video Link
+        const vidBtn = document.getElementById('ex-video-link');
+        if (exDef.videoUrl && exDef.videoUrl.length > 5) {
+            vidBtn.style.display = 'flex';
+            vidBtn.href = exDef.videoUrl;
+        } else {
+            vidBtn.style.display = 'none';
+        }
+
         const noteEl = document.getElementById('coach-note');
-        if (ex.note) {
-            noteEl.innerText = "💡 " + ex.note;
+        if (exInst.note) {
+            noteEl.innerText = "💡 " + exInst.note;
             noteEl.style.display = 'block';
         } else noteEl.style.display = 'none';
 
-        this.renderStatsStrip(ex.id, ex.unit);
+        this.renderStatsStrip(exInst.id, exDef.settings.unit);
 
-        const isTime = (ex.unit === 'bodyweight' && (ex.id.includes('plank') || ex.id === 'wall_sit'));
+        // Check type
+        const isTime = (exDef.settings.unit === 'bodyweight' && (exInst.id.includes('plank') || exInst.id.includes('static')));
         this.state.active.isStopwatch = isTime;
 
         if (isTime) {
@@ -302,11 +297,22 @@ const app = {
         } else {
             document.getElementById('cards-container').style.display = 'flex';
             document.getElementById('stopwatch-container').style.display = 'none';
-            document.getElementById('unit-label-card').innerText = ex.unit === 'plates' ? 'פלטות' : 'ק״ג';
+            document.getElementById('unit-label-card').innerText = exDef.settings.unit === 'plates' ? 'פלטות' : 'ק״ג';
             
-            this.state.active.inputW = ex.target?.w || 10;
-            this.state.active.inputR = ex.target?.r || 12;
-            this.populateSelects(ex);
+            // SMART WEIGHT PREDICTION
+            let smartWeight = exInst.target?.w || 10;
+            // Overwrite with history if exists
+            for(let i=this.state.history.length-1; i>=0; i--) {
+                const sess = this.state.history[i];
+                const found = sess.data.find(e => e.id === exInst.id);
+                if(found && found.sets.length > 0) {
+                    smartWeight = found.sets[found.sets.length-1].w;
+                    break;
+                }
+            }
+            this.state.active.inputW = smartWeight;
+            this.state.active.inputR = exInst.target?.r || 12;
+            this.populateSelects(exDef);
         }
 
         this.state.active.feel = 'good';
@@ -335,30 +341,41 @@ const app = {
             return;
         }
 
-        const isBody = (unit === 'bodyweight');
-        const wStr = isBody ? 'גוף' : `${lastLog.w}`;
-        const rStr = (this.state.active.isStopwatch) ? `${lastLog.r}שנ׳` : `${lastLog.r}חז׳`;
-        const feelTxt = FEEL_MAP_TEXT[lastLog.feel] || '-';
-
-        strip.innerHTML = `
-            <span>${wStr}</span> <span style="color:#444">|</span>
-            <span>${rStr}</span> <span style="color:#444">|</span>
-            <span>${feelTxt}</span>
-        `;
+        const isTime = this.state.active.isStopwatch;
+        const isBody = (unit === 'bodyweight' && !isTime);
+        
+        let wStr = isBody ? 'משקל גוף' : `${lastLog.w} ק״ג`;
+        if (unit === 'plates') wStr = `${lastLog.w} פלטות`;
+        
+        let rStr = isTime ? `${lastLog.r} שניות` : `${lastLog.r} חזרות`;
+        
+        if (isTime && unit === 'bodyweight') {
+            strip.innerText = `${rStr} (אימון קודם)`;
+        } else {
+            strip.innerText = `${wStr} | ${rStr}`;
+        }
     },
 
-    populateSelects: function(ex) {
+    populateSelects: function(exDef) {
         const selW = document.getElementById('select-weight');
         const selR = document.getElementById('select-reps');
-        const isLegs = ex.cat === 'legs';
+        const s = exDef.settings || {unit:'kg', step:2.5, min:0, max:50};
 
         let wOpts = [];
-        if (ex.unit === 'bodyweight') wOpts = [0];
-        else if (ex.unit === 'plates') for(let i=1; i<=20; i++) wOpts.push(i);
-        else {
-            for(let i=1; i<=10; i++) wOpts.push(i);
-            const max = isLegs ? 60 : 35;
-            for(let i=12.5; i<=max; i+=2.5) wOpts.push(i);
+        if (s.unit === 'bodyweight') {
+            wOpts = [0];
+        } else {
+            const min = parseFloat(s.min);
+            const max = parseFloat(s.max);
+            const step = parseFloat(s.step) || 2.5;
+            
+            // Build options based on dynamic settings
+            for(let v = min; v <= max; v += step) {
+                // Fix floating point issues (e.g. 12.500000001)
+                let cleanV = parseFloat(v.toFixed(1));
+                if(cleanV % 1 === 0) cleanV = parseInt(cleanV); // 10 instead of 10.0
+                wOpts.push(cleanV);
+            }
         }
 
         selW.innerHTML = '';
@@ -368,12 +385,24 @@ const app = {
             opt.text = val;
             selW.appendChild(opt);
         });
-        selW.value = this.state.active.inputW;
-        if(!selW.value && wOpts.length > 0) selW.value = wOpts[0]; 
+
+        // SAFETY: Select nearest value if history weight is invalid
+        if(wOpts.includes(this.state.active.inputW)) {
+            selW.value = this.state.active.inputW;
+        } else {
+            // Find closest
+            const closest = wOpts.reduce((prev, curr) => {
+                return (Math.abs(curr - this.state.active.inputW) < Math.abs(prev - this.state.active.inputW) ? curr : prev);
+            });
+            selW.value = closest;
+            this.state.active.inputW = closest;
+        }
+        
         selW.onchange = (e) => this.state.active.inputW = Number(e.target.value);
 
+        // Reps
         let rOpts = [];
-        const maxReps = ex.cat === 'core' ? 50 : 25;
+        const maxReps = exDef.cat === 'core' ? 50 : 30;
         for(let i=1; i<=maxReps; i++) rOpts.push(i);
 
         selR.innerHTML = '';
@@ -439,16 +468,17 @@ const app = {
         }
 
         const prog = this.state.routines[this.state.currentProgId];
-        const ex = prog.exercises[this.state.active.exIdx];
+        const exInst = prog.exercises[this.state.active.exIdx];
         
-        let exLog = this.state.active.log.find(l => l.id === ex.id);
+        let exLog = this.state.active.log.find(l => l.id === exInst.id);
         if(!exLog) {
-            exLog = { id: ex.id, name: ex.name, sets: [] };
+            exLog = { id: exInst.id, name: exInst.name, sets: [] };
             this.state.active.log.push(exLog);
         }
         exLog.sets.push({ w, r, feel: this.state.active.feel });
 
-        this.startRestTimer();
+        const restTime = exInst.rest || 60;
+        this.startRestTimer(restTime);
 
         if (this.state.active.setIdx < this.state.active.totalSets) {
             this.state.active.setIdx++;
@@ -471,7 +501,7 @@ const app = {
         }
     },
 
-    startRestTimer: function() {
+    startRestTimer: function(durationSec) {
         this.stopRestTimer();
         const area = document.getElementById('rest-timer-area');
         const disp = document.getElementById('rest-timer-val');
@@ -490,13 +520,16 @@ const app = {
             let m = Math.floor(sec / 60);
             let s = sec % 60;
             disp.innerText = `${m<10?'0'+m:m}:${s<10?'0'+s:s}`;
-            if (sec <= 60) {
-                const offset = MAX_OFFSET - (MAX_OFFSET * sec / 60);
+            
+            if (sec <= durationSec) {
+                const ratio = sec / durationSec;
+                const offset = MAX_OFFSET - (MAX_OFFSET * ratio);
                 ring.style.strokeDashoffset = offset;
             } else {
                 ring.style.strokeDashoffset = 0; 
             }
-            if (sec === 60 && navigator.vibrate) navigator.vibrate([200,100,200]);
+
+            if (sec === durationSec && navigator.vibrate) navigator.vibrate([200,100,200]);
         }, 1000);
     },
 
@@ -512,8 +545,10 @@ const app = {
     },
 
     addSet: function() {
+        this.state.active.totalSets++;
         this.state.active.setIdx++;
-        document.getElementById('set-badge').innerText = `סט ${this.state.active.setIdx} / ${this.state.active.totalSets}+`;
+        document.getElementById('set-badge').innerText = `סט ${this.state.active.setIdx} / ${this.state.active.totalSets}`;
+        
         document.getElementById('decision-buttons').style.display = 'none';
         document.getElementById('next-ex-preview').style.display = 'none';
         document.getElementById('btn-finish').style.display = 'flex';
@@ -530,8 +565,11 @@ const app = {
         const prog = this.state.routines[this.state.currentProgId];
         const ex = prog.exercises[this.state.active.exIdx];
         let exLog = this.state.active.log.find(l => l.id === ex.id);
+        
         if(exLog && exLog.sets.length > 0) {
             exLog.sets.pop();
+            this.stopRestTimer();
+
             if (this.state.active.setIdx > 1) {
                 this.state.active.setIdx--;
                 document.getElementById('set-badge').innerText = `סט ${this.state.active.setIdx} / ${this.state.active.totalSets}`;
@@ -587,9 +625,19 @@ const app = {
         historyItem.data.forEach(ex => {
             if(ex.sets.length > 0) {
                 txt += `✅ ${ex.name}\n`;
-                const isTime = (ex.id.includes('plank') || ex.id === 'wall_sit');
+                const exDef = this.getExerciseDef(ex.id);
+                const isTime = (ex.id.includes('plank') || exDef.settings.unit === 'bodyweight' && ex.sets[0].w === 0);
+                
                 ex.sets.forEach((s, i) => {
-                    let valStr = isTime ? `${s.r}שנ׳` : `${s.w>0?s.w+'ק״ג ':''}${s.r}`;
+                    let valStr;
+                    if(isTime && s.w === 0) {
+                         valStr = `${s.r} שנ׳`;
+                    } else {
+                         valStr = `${s.w} ק״ג | ${s.r} חזרות`;
+                         if(exDef.settings.unit === 'plates') valStr = `${s.w} פלטות | ${s.r} חזרות`;
+                         if(s.w === 0) valStr = `משקל גוף | ${s.r} חזרות`;
+                    }
+                    
                     let feelStr = FEEL_MAP_TEXT[s.feel] || 'טוב';
                     txt += `   סט ${i+1}: ${valStr} (${feelStr})\n`;
                 });
@@ -620,240 +668,363 @@ const app = {
         window.location.reload();
     },
 
-    /* --- V1.6 ADMIN UI --- */
+    /* --- ADMIN: VIEWS & NAVIGATION --- */
 
-    openAdmin: function() { 
-        if (this.state.active.on) {
-            alert("לא ניתן להיכנס לניהול בזמן אימון פעיל."); return;
-        }
-        if(!this.state.admin.viewProgId || !this.state.routines[this.state.admin.viewProgId]) {
-            const keys = Object.keys(this.state.routines);
-            if(keys.length > 0) this.state.admin.viewProgId = keys[0];
-            else return;
-        }
+    openAdminHome: function() { 
+        if (this.state.active.on) { alert("לא ניתן להיכנס לניהול בזמן אימון פעיל."); return; }
         
-        document.getElementById('admin-modal').style.display = 'flex'; 
-        this.renderAdminTabs();
-        this.renderAdminList(); 
+        document.getElementById('admin-modal').style.display = 'flex';
+        // Reset Views
+        document.getElementById('admin-view-home').style.display = 'flex';
+        document.getElementById('admin-view-edit').style.display = 'none';
+        document.getElementById('admin-view-selector').style.display = 'none';
+        document.getElementById('admin-view-ex-manager').style.display = 'none';
+        document.getElementById('admin-view-ex-edit').style.display = 'none';
+        
+        this.renderAdminList();
     },
-    
+
     closeAdmin: function() { 
         this.saveData();
         this.renderProgramSelect(); 
         document.getElementById('admin-modal').style.display = 'none'; 
     },
 
-    renderAdminTabs: function() {
-        const container = document.getElementById('admin-tabs');
-        container.innerHTML = '';
-        Object.keys(this.state.routines).forEach(pid => {
+    renderAdminList: function() {
+        const list = document.getElementById('admin-prog-list');
+        list.innerHTML = '';
+        const ids = Object.keys(this.state.routines);
+
+        if(ids.length === 0) list.innerHTML = '<div style="text-align:center; color:#666; padding:20px;">אין תוכניות</div>';
+
+        ids.forEach(pid => {
             const prog = this.state.routines[pid];
-            const isActive = (pid === this.state.admin.viewProgId);
-            const badge = prog.badge || pid;
-            
-            const btn = document.createElement('button');
-            btn.className = `admin-tab ${isActive ? 'active' : ''}`;
-            btn.innerText = badge;
-            btn.onclick = () => {
-                this.state.admin.viewProgId = pid;
-                this.renderAdminTabs();
-                this.renderAdminList();
-            };
-            container.appendChild(btn);
+            // No "Edit" button, click card to edit.
+            list.innerHTML += `
+            <div class="manager-item" onclick="app.openAdminEdit('${pid}')">
+                <div class="manager-info">
+                    <h3>${prog.title}</h3>
+                    <p>${prog.exercises.length} תרגילים</p>
+                </div>
+                <div class="manager-actions">
+                    <button class="btn-text-action" onclick="event.stopPropagation(); app.duplicateProgram('${pid}')">שכפל</button>
+                    <button class="btn-text-action delete" onclick="event.stopPropagation(); app.deleteProgram('${pid}')">מחק</button>
+                </div>
+            </div>`;
         });
     },
 
-    renderAdminList: function() {
-        const progId = this.state.admin.viewProgId;
-        if(!progId || !this.state.routines[progId]) return;
+    createNewProgram: function() {
+        const id = 'prog_' + Date.now();
+        this.state.routines[id] = { title: 'תוכנית חדשה', exercises: [] };
+        this.openAdminEdit(id);
+    },
 
-        const prog = this.state.routines[progId];
+    duplicateProgram: function(pid) {
+        const newId = 'prog_' + Date.now();
+        const original = this.state.routines[pid];
+        const copy = JSON.parse(JSON.stringify(original));
+        copy.title += " (עותק)";
+        this.state.routines[newId] = copy;
+        this.renderAdminList();
+    },
+
+    deleteProgram: function(pid) {
+        if(confirm("למחוק את התוכנית?")) {
+            delete this.state.routines[pid];
+            this.renderAdminList();
+        }
+    },
+
+    openAdminEdit: function(pid) {
+        this.state.admin.viewProgId = pid;
+        this.state.admin.tempExercises = JSON.parse(JSON.stringify(this.state.routines[pid].exercises));
         
-        document.getElementById('admin-prog-title').value = prog.title;
-        document.getElementById('admin-prog-badge').value = prog.badge || '';
+        document.getElementById('admin-view-home').style.display = 'none';
+        document.getElementById('admin-view-edit').style.display = 'flex';
+        document.getElementById('edit-prog-title').value = this.state.routines[pid].title;
+        
+        this.renderEditorList();
+    },
 
-        const list = document.getElementById('admin-list');
+    saveAndCloseEditor: function() {
+        const pid = this.state.admin.viewProgId;
+        this.state.routines[pid].exercises = this.state.admin.tempExercises;
+        this.state.routines[pid].title = document.getElementById('edit-prog-title').value;
+        this.saveData();
+        this.openAdminHome();
+    },
+
+    updateProgramTitle: function() { },
+
+    renderEditorList: function() {
+        const list = document.getElementById('admin-ex-list');
         list.innerHTML = '';
-        
-        prog.exercises.forEach((ex, i) => {
-            const metaStr = `${ex.sets} סטים • ${ex.target?.w || 0} ${ex.unit === 'kg' ? 'ק״ג' : ''}`;
-            
-            // Clean SVG Arrows
-            const upArrow = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 14l5-5 5 5H7z"/></svg>`;
-            const downArrow = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5H7z"/></svg>`;
+        const exList = this.state.admin.tempExercises;
 
+        exList.forEach((ex, i) => {
+            const hasTip = ex.note ? 'has-tip' : '';
             list.innerHTML += `
-            <div class="admin-row">
-                <div class="row-info">
+            <div class="editor-row">
+                <div class="row-top">
                     <div class="row-title">${i+1}. ${ex.name}</div>
-                    <div class="row-meta">${metaStr}</div>
+                    <div class="row-ctrls">
+                        <button class="ctrl-btn" onclick="app.moveEx(${i}, -1)">▲</button>
+                        <button class="ctrl-btn" onclick="app.moveEx(${i}, 1)">▼</button>
+                        <button class="ctrl-btn del" onclick="app.removeEx(${i})">×</button>
+                    </div>
                 </div>
-                <div class="row-actions">
-                    <button class="btn-text-action" onclick="app.openExEdit('${progId}', ${i})">עריכה</button>
-                    <div class="arrow-controls">
-                         <button class="arrow-btn" onclick="app.moveEx('${progId}',${i},-1)">${upArrow}</button>
-                         <button class="arrow-btn" onclick="app.moveEx('${progId}',${i},1)">${downArrow}</button>
+                <div class="row-btm">
+                    <button class="tip-btn ${hasTip}" onclick="app.openTipModal(${i})">💡 טיפ</button>
+                    
+                    <div class="stepper">
+                        <div class="step-label" style="padding-right:5px;">סטים</div>
+                        <button class="step-btn" onclick="app.updateTempEx(${i}, 'sets', -1)">-</button>
+                        <div class="step-val">${ex.sets}</div>
+                        <button class="step-btn" onclick="app.updateTempEx(${i}, 'sets', 1)">+</button>
+                    </div>
+                    <div class="stepper">
+                        <div class="step-label" style="padding-right:5px;">מנוחה</div>
+                        <button class="step-btn" onclick="app.updateTempEx(${i}, 'rest', -15)">-</button>
+                        <div class="step-val">${ex.rest||60}</div>
+                        <button class="step-btn" onclick="app.updateTempEx(${i}, 'rest', 15)">+</button>
                     </div>
                 </div>
             </div>`;
         });
     },
 
-    updateProgramTitle: function() {
-        const newVal = document.getElementById('admin-prog-title').value;
-        if(newVal) this.state.routines[this.state.admin.viewProgId].title = newVal;
+    updateTempEx: function(i, field, delta) {
+        let val = (this.state.admin.tempExercises[i][field] || 0) + delta;
+        if(field === 'sets' && val < 1) val = 1;
+        if(field === 'rest' && val < 0) val = 0;
+        this.state.admin.tempExercises[i][field] = val;
+        this.renderEditorList();
     },
 
-    updateProgramBadge: function() {
-        const newVal = document.getElementById('admin-prog-badge').value;
-        if(newVal) {
-            this.state.routines[this.state.admin.viewProgId].badge = newVal;
-            this.renderAdminTabs(); 
-        }
-    },
-
-    createNewProgram: function() {
-        const id = 'prog_' + Date.now();
-        this.state.routines[id] = {
-            title: 'תוכנית חדשה',
-            badge: 'New',
-            exercises: []
-        };
-        this.state.admin.viewProgId = id;
-        this.renderAdminTabs();
-        this.renderAdminList();
-    },
-
-    deleteProgram: function() {
-        const pid = this.state.admin.viewProgId;
-        if(confirm("למחוק את התוכנית כולה?")) {
-            delete this.state.routines[pid];
-            const keys = Object.keys(this.state.routines);
-            if(keys.length === 0) {
-                this.createNewProgram();
-            } else {
-                this.state.admin.viewProgId = keys[0];
-                this.renderAdminTabs();
-                this.renderAdminList();
-            }
-        }
-    },
-
-    moveEx: function(pid, i, dir) {
-        const arr = this.state.routines[pid].exercises;
+    moveEx: function(i, dir) {
+        const arr = this.state.admin.tempExercises;
         if ((i === 0 && dir === -1) || (i === arr.length - 1 && dir === 1)) return;
         const temp = arr[i];
         arr[i] = arr[i + dir];
         arr[i + dir] = temp;
-        this.renderAdminList();
+        this.renderEditorList();
     },
 
-    /* --- DRILL DOWN EDIT --- */
-    openExEdit: function(progId, idx) {
-        const ex = this.state.routines[progId].exercises[idx];
-        this.state.editEx = { progId, index: idx, data: JSON.parse(JSON.stringify(ex)) };
-        
-        document.getElementById('edit-ex-title').innerText = ex.name;
-        document.getElementById('edit-sets-val').innerText = ex.sets || 3;
-        document.getElementById('edit-target-w').value = ex.target?.w || 0;
-        document.getElementById('edit-target-r').value = ex.target?.r || 0;
-        document.getElementById('edit-note').value = ex.note || '';
-
-        document.getElementById('ex-edit-modal').style.display = 'flex';
+    removeEx: function(i) {
+        this.state.admin.tempExercises.splice(i, 1);
+        this.renderEditorList();
     },
 
-    closeExEdit: function() {
-        document.getElementById('ex-edit-modal').style.display = 'none';
-        this.state.editEx = { progId: null, index: null, data: null };
+    /* --- ADMIN: EXERCISE MANAGER (NEW) --- */
+    
+    openExerciseManager: function() {
+        document.getElementById('admin-view-home').style.display = 'none';
+        document.getElementById('admin-view-ex-manager').style.display = 'flex';
+        document.getElementById('ex-mgr-search').value = '';
+        this.renderExerciseManagerList();
     },
 
-    updateEditSets: function(delta) {
-        let val = this.state.editEx.data.sets || 3;
-        val += delta;
-        if(val < 1) val = 1;
-        this.state.editEx.data.sets = val;
-        document.getElementById('edit-sets-val').innerText = val;
-    },
-
-    saveExEdit: function() {
-        const d = this.state.editEx.data;
-        d.target = {
-            w: Number(document.getElementById('edit-target-w').value),
-            r: Number(document.getElementById('edit-target-r').value)
-        };
-        d.note = document.getElementById('edit-note').value;
-        this.state.routines[this.state.editEx.progId].exercises[this.state.editEx.index] = d;
-        this.closeExEdit();
-        this.renderAdminList();
-    },
-
-    removeCurrentEx: function() {
-        if(confirm("למחוק את התרגיל?")) {
-            this.state.routines[this.state.editEx.progId].exercises.splice(this.state.editEx.index, 1);
-            this.closeExEdit();
-            this.renderAdminList();
-        }
-    },
-
-    /* --- BANK --- */
-    openBank: function() { 
-        document.getElementById('bank-modal').style.display = 'flex';
-        this.filterBank();
-    },
-    closeBank: function() { document.getElementById('bank-modal').style.display = 'none'; },
-    filterBank: function() {
-        const txtEl = document.getElementById('bank-search');
-        const catEl = document.getElementById('bank-cat-select');
-        if(!txtEl || !catEl) return;
-
-        const txt = txtEl.value.toLowerCase();
-        const cat = catEl.value; 
-        const list = document.getElementById('bank-list');
+    renderExerciseManagerList: function() {
+        const list = document.getElementById('ex-mgr-list');
         list.innerHTML = '';
+        const term = document.getElementById('ex-mgr-search').value.toLowerCase();
         
-        BANK.filter(e => {
-            const matchesName = e.name.toLowerCase().includes(txt);
-            const matchesCat = cat === 'all' || e.cat === cat;
-            return matchesName && matchesCat;
-        })
-        .forEach(e => {
-            list.innerHTML += `<div class="admin-row" onclick="app.addFromBank('${e.id}')">
-                <div class="row-info"><div class="row-title">${e.name}</div></div>
-                <div class="row-actions"><span style="color:var(--primary); font-size:1.5rem">+</span></div>
+        this.state.exercises.filter(e => e.name.toLowerCase().includes(term)).forEach(e => {
+             list.innerHTML += `
+             <div class="list-item" onclick="app.editExerciseInBank('${e.id}')">
+                <div style="font-weight:700">${e.name}</div>
+                <div style="font-size:0.8rem; color:#888;">${this.getCatLabel(e.cat)}</div>
+             </div>`;
+        });
+    },
+
+    createNewExerciseInBank: function() {
+        const newId = 'custom_' + Date.now();
+        this.state.admin.editingExId = newId;
+        // Default Template
+        this.fillExerciseEditor({
+            id: newId,
+            name: 'תרגיל חדש',
+            cat: 'other',
+            videoUrl: '',
+            settings: { unit: 'kg', step: 2.5, min: 0, max: 100, isUnilateral: false }
+        });
+    },
+
+    editExerciseInBank: function(exId) {
+        this.state.admin.editingExId = exId;
+        const ex = this.state.exercises.find(e => e.id === exId);
+        this.fillExerciseEditor(ex);
+    },
+
+    fillExerciseEditor: function(ex) {
+        document.getElementById('admin-view-ex-manager').style.display = 'none';
+        document.getElementById('admin-view-ex-edit').style.display = 'flex';
+
+        document.getElementById('edit-ex-name').value = ex.name;
+        document.getElementById('edit-ex-cat').value = ex.cat;
+        document.getElementById('edit-ex-video').value = ex.videoUrl || '';
+        document.getElementById('edit-ex-unit').value = ex.settings.unit;
+        document.getElementById('edit-ex-step').value = ex.settings.step;
+        document.getElementById('edit-ex-min').value = ex.settings.min;
+        document.getElementById('edit-ex-max').value = ex.settings.max;
+        document.getElementById('edit-ex-unilateral').checked = ex.settings.isUnilateral || false;
+    },
+
+    saveExerciseToBank: function() {
+        const exId = this.state.admin.editingExId;
+        const newEx = {
+            id: exId,
+            name: document.getElementById('edit-ex-name').value,
+            cat: document.getElementById('edit-ex-cat').value,
+            videoUrl: document.getElementById('edit-ex-video').value,
+            settings: {
+                unit: document.getElementById('edit-ex-unit').value,
+                step: Number(document.getElementById('edit-ex-step').value),
+                min: Number(document.getElementById('edit-ex-min').value),
+                max: Number(document.getElementById('edit-ex-max').value),
+                isUnilateral: document.getElementById('edit-ex-unilateral').checked
+            }
+        };
+
+        const existingIdx = this.state.exercises.findIndex(e => e.id === exId);
+        if (existingIdx > -1) {
+            this.state.exercises[existingIdx] = newEx;
+        } else {
+            this.state.exercises.push(newEx);
+        }
+        
+        this.saveData();
+        // Go back to list
+        document.getElementById('admin-view-ex-edit').style.display = 'none';
+        document.getElementById('admin-view-ex-manager').style.display = 'flex';
+        this.renderExerciseManagerList();
+    },
+
+    cancelExerciseEdit: function() {
+        document.getElementById('admin-view-ex-edit').style.display = 'none';
+        document.getElementById('admin-view-ex-manager').style.display = 'flex';
+    },
+
+    /* --- SELECTOR (Uses Dynamic Bank) --- */
+    openAdminSelector: function() {
+        document.getElementById('admin-view-edit').style.display = 'none';
+        document.getElementById('admin-view-selector').style.display = 'flex';
+        document.getElementById('selector-search').value = '';
+        this.state.admin.selectorFilter = 'all';
+        this.updateFilterChips();
+        this.renderSelectorList();
+    },
+
+    closeSelector: function() {
+        document.getElementById('admin-view-selector').style.display = 'none';
+        document.getElementById('admin-view-edit').style.display = 'flex';
+    },
+
+    setSelectorFilter: function(cat, btn) {
+        this.state.admin.selectorFilter = cat;
+        this.updateFilterChips();
+        this.renderSelectorList();
+    },
+
+    updateFilterChips: function() {
+        const map = { 'all':0, 'legs':1, 'chest':2, 'back':3, 'shoulders':4, 'arms':5, 'core':6 };
+        const idx = map[this.state.admin.selectorFilter];
+        const chips = document.querySelectorAll('.chip');
+        chips.forEach((c, i) => i === idx ? c.classList.add('active') : c.classList.remove('active'));
+    },
+
+    filterSelector: function() { this.renderSelectorList(); },
+
+    renderSelectorList: function() {
+        const list = document.getElementById('selector-list');
+        list.innerHTML = '';
+        const search = document.getElementById('selector-search').value.toLowerCase();
+        const cat = this.state.admin.selectorFilter;
+
+        // Use Dynamic Bank
+        this.state.exercises.filter(e => {
+            const matchName = e.name.toLowerCase().includes(search);
+            const matchCat = cat === 'all' || e.cat === cat;
+            return matchName && matchCat;
+        }).forEach(e => {
+            list.innerHTML += `
+            <div class="list-item" onclick="app.addExerciseFromSelector('${e.id}')">
+                <span style="font-weight:700">${e.name}</span>
+                <span style="color:var(--primary)">+</span>
             </div>`;
         });
     },
-    addFromBank: function(id) {
-        const n = JSON.parse(JSON.stringify(BANK.find(e=>e.id===id)));
-        n.target = {w:10, r:12};
-        n.sets = 3;
-        this.state.routines[this.state.admin.viewProgId].exercises.push(n);
-        this.closeBank();
-        this.renderAdminList();
+
+    addExerciseFromSelector: function(exId) {
+        const bankEx = this.getExerciseDef(exId);
+        const newEx = {
+            id: bankEx.id,
+            name: bankEx.name,
+            sets: 3,
+            rest: 60,
+            note: '',
+            target: {w:10, r:12}
+        };
+
+        this.state.admin.tempExercises.push(newEx);
+        this.closeSelector();
+        this.renderEditorList();
+    },
+
+    getCatLabel: function(c) {
+        const map = {legs:'רגליים', chest:'חזה', back:'גב', shoulders:'כתפיים', arms:'ידיים', core:'בטן', other:'אחר'};
+        return map[c] || c;
+    },
+
+    /* --- TIPS --- */
+    openTipModal: function(idx) {
+        this.state.admin.editTipEx = idx;
+        const ex = this.state.admin.tempExercises[idx];
+        document.getElementById('tip-input').value = ex.note || '';
+        document.getElementById('tip-modal').style.display = 'flex';
+    },
+
+    closeTipModal: function() { document.getElementById('tip-modal').style.display = 'none'; },
+    
+    saveTip: function() {
+        const idx = this.state.admin.editTipEx;
+        if(idx !== null) {
+            this.state.admin.tempExercises[idx].note = document.getElementById('tip-input').value;
+            this.renderEditorList();
+        }
+        this.closeTipModal();
     },
 
     /* --- BACKUP & RESTORE --- */
     exportConfig: function() {
-        const data = { type: 'config', ver: CONFIG.VERSION, date: new Date().toLocaleDateString(), routines: this.state.routines };
-        this.downloadJSON(data, `gymstart_config_${Date.now()}.json`);
+        // Now includes Custom Exercises!
+        const data = { 
+            type: 'config', 
+            ver: CONFIG.VERSION, 
+            date: new Date().toLocaleDateString(), 
+            routines: this.state.routines,
+            exercises: this.state.exercises 
+        };
+        this.downloadJSON(data, `gymstart_config_v${CONFIG.VERSION}_${Date.now()}.json`);
     },
 
     importConfig: function(input) {
-        if(this.state.active.on) {
-            alert("לא ניתן לעדכן באמצע אימון."); input.value = ''; return;
-        }
-        const file = input.files[0];
-        if (!file) return;
+        const file = input.files[0]; if (!file) return;
         const reader = new FileReader();
         reader.onload = function(e) {
             try {
                 const json = JSON.parse(e.target.result);
                 if (json.type !== 'config') { alert("קובץ שגוי."); return; }
-                if(confirm("עדכון תוכניות יחליף את ההגדרות הקיימות. להמשיך?")) {
+                if(confirm("עדכון תוכניות יחליף את ההגדרות ואת מאגר התרגילים. להמשיך?")) {
                     app.state.routines = json.routines;
+                    // Import Exercises if exist, otherwise keep current
+                    if(json.exercises) app.state.exercises = json.exercises;
+                    
                     app.saveData();
-                    app.renderProgramSelect(); 
-                    alert("התוכניות עודכנו בהצלחה!");
+                    alert("ההגדרות עודכנו בהצלחה!");
+                    location.reload();
                 }
             } catch(err) { alert("קובץ לא תקין"); }
         };
@@ -867,16 +1038,13 @@ const app = {
     },
 
     importHistory: function(input) {
-        const file = input.files[0];
-        if (!file) return;
+        const file = input.files[0]; if (!file) return;
         const reader = new FileReader();
         reader.onload = function(e) {
             try {
                 const json = JSON.parse(e.target.result);
-                let newHist = [];
-                if (Array.isArray(json)) newHist = json;
-                else if (json.type === 'history') newHist = json.history;
-                else { alert("שגיאה בקובץ היסטוריה."); return; }
+                let newHist = Array.isArray(json) ? json : json.history;
+                if (!newHist) throw new Error();
 
                 if(confirm(`נמצאו ${newHist.length} רשומות. למזג?`)) {
                     app.state.history = [...app.state.history, ...newHist];
@@ -894,9 +1062,7 @@ const app = {
     downloadJSON: function(data, filename) {
         const str = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data));
         const a = document.createElement('a');
-        a.href = str;
-        a.download = filename;
-        a.click();
+        a.href = str; a.download = filename; a.click();
     },
 
     factoryReset: function() {
@@ -994,9 +1160,19 @@ const app = {
         item.data.forEach(ex => {
             html += `<div style="background:var(--bg-card); padding:15px; border-radius:12px; margin-bottom:10px; border:1px solid #222;">
                 <div style="font-weight:700; color:var(--primary)">${ex.name}</div>`;
-            const isTime = (ex.id.includes('plank') || ex.id === 'wall_sit');
+            const exDef = this.getExerciseDef(ex.id);
+            const isTime = (ex.id.includes('plank') || (exDef.settings.unit === 'bodyweight' && ex.sets[0].w === 0));
+            
             ex.sets.forEach((s, si) => {
-                let valStr = isTime ? `${s.r} שנ׳` : `${s.w > 0 ? s.w+'ק״ג ' : ''}${s.r}`;
+                let valStr;
+                if(isTime && s.w === 0) {
+                     valStr = `${s.r} שנ׳`;
+                } else {
+                     valStr = `${s.w} ק״ג | ${s.r} חזרות`;
+                     if(exDef.settings.unit === 'plates') valStr = `${s.w} פלטות | ${s.r} חזרות`;
+                     if(s.w === 0) valStr = `משקל גוף | ${s.r} חזרות`;
+                }
+                
                 let feelStr = FEEL_MAP_TEXT[s.feel] || 'טוב';
                 html += `<div style="display:flex; justify-content:space-between; font-size:0.9rem; margin-top:5px; border-bottom:1px dashed #333; padding-bottom:5px">
                     <span>סט ${si+1} <small style="color:#777">(${feelStr})</small></span>
