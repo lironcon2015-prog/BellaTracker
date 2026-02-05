@@ -108,6 +108,8 @@ body, html {
     box-shadow: 0 4px 10px rgba(0,0,0,0.5);
 }
 
+.compact { padding: 15px; }
+
 /* Buttons */
 .btn-primary {
     background: var(--primary); color: #000;
@@ -118,6 +120,13 @@ body, html {
 }
 .btn-primary:active { transform: scale(0.98); opacity: 0.9; }
 
+.btn-primary-small {
+    background: var(--primary); color: #000;
+    border: none; border-radius: 8px;
+    padding: 10px 20px; font-weight: 700; font-size: 1rem;
+    cursor: pointer;
+}
+
 .btn-outline {
     background: transparent;
     border: 1px solid var(--border-dim);
@@ -127,7 +136,16 @@ body, html {
 }
 .btn-outline:active { background: #222; border-color: #555; }
 
-/* V1.6 Ghost Button (Fixed Visibility) */
+.btn-dashed {
+    background: transparent;
+    border: 1px dashed var(--primary);
+    color: var(--primary);
+    border-radius: 12px; padding: 12px;
+    width: 100%; cursor: pointer;
+    font-size: 0.95rem; margin-top: 10px;
+}
+
+/* Ghost Button */
 .btn-ghost {
     background: transparent;
     border: 1px solid #333;
@@ -162,7 +180,7 @@ body, html {
 /* Active Workout */
 .badge { background: var(--primary); color: black; font-weight: 800; padding: 4px 12px; border-radius: 4px; font-size: 0.85rem; display: inline-block; margin-bottom: 5px; }
 #ex-name { font-size: 1.8rem; font-weight: 700; margin: 0; line-height: 1.1; }
-/* Note Pill Full Width */
+.video-icon { background: #cc0000; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; text-decoration: none; box-shadow: 0 2px 5px rgba(0,0,0,0.5); }
 .note-pill { color: #ffe600; font-size: 0.95rem; margin-top: 10px; display: block; font-weight: 500; width: 100%; white-space: pre-wrap; line-height: 1.4; }
 .stats-strip {
     margin-top: 10px; font-size: 0.9rem; color: var(--text-sec);
@@ -213,7 +231,7 @@ body, html {
 .text-link { background: none; border: none; color: var(--text-sec); text-decoration: underline; cursor: pointer; font-size: 0.9rem; padding: 10px; }
 
 /* Lists */
-.simple-list, .scroll-list, .history-list-container { display: flex; flex-direction: column; gap: 10px; }
+.simple-list, .scroll-list, .history-list-container, .vertical-stack { display: flex; flex-direction: column; gap: 10px; }
 .scroll-list { padding-bottom: 10px; flex: 1; overflow-y: auto; min-height: 0; }
 .list-item { background: var(--bg-card); padding: 18px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #222; }
 .hist-item-row { background: var(--bg-card); border: 1px solid #222; padding: 16px; border-radius: 12px; display: flex; align-items: center; gap: 15px; margin-bottom: 10px; }
@@ -224,51 +242,19 @@ body, html {
     background: #0a0a0a; width: 100%; max-width: 500px; border-radius: 20px; padding: 24px; 
     display: flex; flex-direction: column; max-height: 85vh; border: 1px solid #333; 
 }
-.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #222; flex-shrink: 0; }
+.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #222; flex-shrink: 0; }
 .modal-footer { display: flex; gap: 10px; margin-top: 20px; flex-shrink: 0; }
 .oled-input { background: #1a1a1a; border: 1px solid #333; padding: 14px; border-radius: 10px; color: white; width: 100%; font-size: 1rem; }
-.input-group label { display: block; margin-bottom: 8px; color: #888; font-size: 0.8rem; text-transform: uppercase; }
-
-/* V1.6 Admin Redesign (Explicit Styles) */
-.admin-section { margin-bottom: 15px; border-bottom: 1px solid #222; padding-bottom: 15px; flex-shrink: 0; }
-.admin-tabs-container { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 5px; margin-bottom: 20px; flex-shrink: 0; }
-.admin-tab { background: #1a1a1a; border: 1px solid #333; color: #777; padding: 10px 15px; border-radius: 8px; cursor: pointer; white-space: nowrap; font-weight: 500; }
-.admin-tab.active { border-color: var(--primary); color: white; background: rgba(0,255,238,0.1); }
-
-/* Clean Row Admin */
-.admin-row { 
-    display: flex; justify-content: space-between; align-items: center; 
-    padding: 14px; /* More padding */
-    border-bottom: 1px solid #1a1a1a; 
-    background: var(--bg-card); /* Ensure background */
-    border-radius: 8px;
-    margin-bottom: 5px;
-}
-.row-info { flex: 1; }
-.row-title { font-size: 1rem; color: white; margin-bottom: 4px; font-weight: 500; }
-.row-meta { font-size: 0.85rem; color: #666; }
-.row-actions { display: flex; align-items: center; gap: 15px; }
-.btn-text-action { background: none; border: none; color: var(--primary); font-size: 0.9rem; cursor: pointer; padding: 5px; font-weight: 600; }
-.arrow-controls { display: flex; flex-direction: column; gap: 4px; }
-.arrow-btn { background: none; border: none; color: #555; padding: 4px; cursor: pointer; line-height: 1; }
-.arrow-btn:active { color: white; }
-.arrow-btn svg { width: 14px; height: 14px; display: block; }
-
-/* Admin Inputs */
-#admin-prog-title { font-weight: 700; font-size: 1.1rem; border: none; border-bottom: 1px solid #555; border-radius: 0; padding: 5px; background: transparent; color: white; }
-#admin-prog-badge { font-family: monospace; font-weight: 700; border: 1px solid #333; background: #111; color: var(--primary); }
-
-.oled-input-small { background: #1a1a1a; border: 1px solid #333; padding: 10px; border-radius: 8px; color: white; width: 100%; font-size: 1.1rem; text-align: center; }
 .oled-textarea { background: #1a1a1a; border: 1px solid #333; padding: 14px; border-radius: 10px; color: white; width: 100%; font-size: 1rem; resize: none; font-family: var(--font); }
-.stepper { display: flex; align-items: center; justify-content: center; gap: 15px; background: #1a1a1a; padding: 5px; border-radius: 10px; border: 1px solid #333; }
-.stepper button { width: 40px; height: 40px; border-radius: 8px; background: #333; border: none; color: white; font-size: 1.4rem; cursor: pointer; }
-.stepper span { font-size: 1.4rem; font-weight: 700; width: 40px; text-align: center; }
-
-/* Text Buttons */
-.text-btn { background:none; border:none; color: var(--primary); font-size:0.9rem; cursor: pointer; padding: 5px; }
-.text-btn-danger { background:none; border:none; color: var(--danger); font-size:0.9rem; cursor: pointer; padding: 5px; }
-
-.backup-area { background: #111; padding: 15px; border-radius: 10px; border: 1px dashed #444; margin-top: 10px; text-align: center; }
+.oled-select {
+    background: #1a1a1a; border: 1px solid #333; color: white;
+    padding: 12px; border-radius: 10px; font-size: 1rem; width: 100%; font-family: inherit;
+}
+.oled-select.small { padding: 8px; font-size: 0.9rem; }
+.oled-input-num {
+    background: #1a1a1a; border: 1px solid #333; color: white;
+    padding: 8px; border-radius: 10px; font-size: 0.9rem; width: 100%; text-align: center;
+}
 
 /* Buttons Tool */
 .btn-danger-outline { background: transparent; border: 1px solid var(--danger); color: var(--danger); padding: 14px; border-radius: 12px; width: 100%; cursor: pointer; font-weight: 600; }
@@ -277,7 +263,87 @@ body, html {
 .btn-tool-outline { background: transparent; border: 1px solid var(--primary); color: var(--primary); }
 .btn-tool-danger { background: transparent; border: 1px solid var(--danger); color: var(--danger); opacity: 0.5; }
 .btn-tool-danger:enabled { opacity: 1; }
+.text-close-btn { background: none; border: none; color: #777; font-size: 1rem; cursor: pointer; }
 
+/* --- NEW GYMPRO STYLE ADMIN --- */
+.admin-layout { padding: 0; background: #000; overflow: hidden; height: 90vh; }
+.admin-view { display: flex; flex-direction: column; height: 100%; padding: 20px; overflow: hidden; }
+.scroll-y { overflow-y: auto; flex: 1; min-height: 0; }
+.modal-footer-column { flex-shrink: 0; margin-top: 15px; display: flex; flex-direction: column; }
+.admin-nav-row { display: flex; justify-content: flex-end; margin-bottom: 10px; }
+
+/* Manager Card */
+.manager-item {
+    background: var(--bg-card); border: 1px solid var(--border-dim); border-radius: 12px; padding: 15px;
+    display: flex; justify-content: space-between; align-items: center; cursor: pointer;
+}
+.manager-item:active { background: #1a1a1a; }
+.manager-info h3 { margin: 0; font-size: 1.1rem; color: white; }
+.manager-info p { margin: 5px 0 0; font-size: 0.85rem; color: var(--text-sec); }
+.manager-actions { display: flex; gap: 8px; }
+.btn-text-action {
+    background: rgba(255,255,255,0.05); border: 1px solid var(--border-dim);
+    border-radius: 8px; color: var(--text-sec); padding: 6px 10px;
+    font-size: 0.8rem; cursor: pointer;
+}
+.btn-text-action.delete { color: var(--danger); border-color: rgba(255, 51, 51, 0.3); }
+
+/* Editor */
+.minimal-input {
+    background: transparent; border: none; border-bottom: 1px solid var(--border-dim);
+    color: white; font-size: 1.1rem; width: 100%; padding: 10px 0; font-family: inherit; font-weight: 700;
+}
+.input-label-small { font-size: 0.75rem; color: var(--text-sec); text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 4px; }
+
+.editor-row {
+    background: var(--bg-card); border: 1px solid var(--border-dim); border-radius: 12px;
+    padding: 12px; display: flex; flex-direction: column; gap: 10px;
+}
+.row-top { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222; padding-bottom: 8px; }
+.row-title { font-weight: 700; font-size: 1rem; }
+.row-ctrls { display: flex; gap: 10px; }
+.ctrl-btn { background: none; border: none; color: #666; font-size: 1.1rem; padding: 0; cursor: pointer; }
+.ctrl-btn.del { color: #844; }
+
+.row-btm { display: flex; gap: 10px; align-items: center; }
+.stepper { display: flex; align-items: center; background: #000; border: 1px solid #333; border-radius: 6px; }
+.step-btn { width: 30px; height: 30px; background: none; border: none; color: #888; cursor: pointer; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; }
+.step-val { width: 35px; text-align: center; font-size: 0.9rem; font-weight: 700; color: white; }
+.step-label { font-size: 0.75rem; color: #555; margin-right: 5px; }
+
+.tip-btn { 
+    background: none; border: 1px solid #444; color: #888; border-radius: 6px; 
+    font-size: 0.75rem; padding: 4px 8px; cursor: pointer; margin-right: auto; 
+}
+.tip-btn.has-tip { border-color: #ffe600; color: #ffe600; }
+
+/* Selector */
+.search-input {
+    background: var(--bg-card); border: 1px solid var(--border-dim);
+    border-radius: 12px; padding: 12px; color: white; width: 100%;
+    font-family: inherit; font-size: 1rem; margin-bottom: 10px;
+}
+.chip-container {
+    display: flex; gap: 8px; overflow-x: auto; 
+    padding-bottom: 5px; scrollbar-width: none;
+    -webkit-overflow-scrolling: touch; flex-shrink: 0;
+}
+.chip {
+    background: #222; border: none; color: #aaa;
+    padding: 8px 16px; border-radius: 20px; font-size: 0.9rem;
+    white-space: nowrap; cursor: pointer; transition: 0.2s;
+}
+.chip.active { background: var(--primary); color: black; font-weight: 600; }
+
+.backup-area { margin-top: 15px; border-top: 1px solid #222; padding-top: 15px; }
+.backup-area label { display: block; font-size: 0.8rem; color: #666; margin-bottom: 10px; }
+.tools-row { display: flex; gap: 10px; }
+
+/* Tip Edit Modal (Small) */
+.tip-modal-content {
+    background: #111; border: 1px solid #333; padding: 20px; border-radius: 16px;
+    width: 90%; max-width: 350px; display: flex; flex-direction: column; gap: 15px;
+}
 .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
 .header-tools { display: flex; gap: 10px; }
 .bulk-tools { display: flex; justify-content: space-between; margin-bottom: 15px; }
