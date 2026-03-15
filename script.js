@@ -1,10 +1,13 @@
 /**
- * GYMSTART V1.8.1 (Ghost Resume Fix + Global Win Card + Tactile UI)
+ * GYMSTART V1.8.2 (History Match Fix + Smart Defaults + Static UI & Haptics)
+ * - FIX: History matching now uses both ID and exact Name to prevent data loss on recreation.
+ * - FIX: Smart Defaults pulls BOTH Weight and Reps from previous history.
+ * - FIX: iOS Safari :active CSS unlocked via touchstart listener.
+ * - NEW: Haptic feedback added for main actions.
  * - FIX: Ghost Resume bug resolved by turning off active state before clearing local storage.
- * - FIX: Win Card now searches the entire history for the specific exercise, independent of program.
- * - NEW: Added tactile visual feedback (CSS active states) across the UI.
- * - Endless Rest Timer (Counts up seamlessly, visually stops at 100%).
- * - Current Program ID preserved safely in State to avoid "Casual Workout" bug.
+ * - FIX: Win Card searches the entire history for the specific exercise.
+ * - Endless Rest Timer.
+ * - Current Program ID preserved safely in State.
  * - Enhanced Stats Strip with Sparkline.
  */
 
@@ -15,7 +18,7 @@ const CONFIG = {
         EXERCISES: 'gymstart_v1_7_exercises_bank',
         ACTIVE_WORKOUT: 'gymstart_active_workout_state'
     },
-    VERSION: '1.8.1'
+    VERSION: '1.8.2'
 };
 
 const FEEL_MAP_TEXT = { 'easy': 'קל', 'good': 'בינוני', 'hard': 'קשה' };
@@ -90,6 +93,9 @@ const app = {
 
     init: function() {
         try {
+            // iOS Safari Hack to unlock :active CSS pseudo-classes
+            document.body.addEventListener('touchstart', function() {}, {passive: true});
+
             this.loadData();
             this.checkActiveWorkout();
             this.renderHome();
@@ -102,6 +108,13 @@ const app = {
         } catch (e) {
             console.error(e);
             alert("שגיאה בטעינת נתונים.");
+        }
+    },
+
+    // Optional Haptic Feedback helper
+    vibrate: function(ms = 15) {
+        if (navigator.vibrate) {
+            try { navigator.vibrate(ms); } catch(e) {}
         }
     },
 
@@ -405,17 +418,23 @@ const app = {
             document.getElementById('stopwatch-container').style.display = 'none';
             document.getElementById('unit-label-card').innerText = exDef.settings.unit === 'plates' ? 'פלטות' : 'ק״ג';
             
+            // SMART DEFAULTS (Pulling both Weight and Reps from previous history)
             let smartWeight = exInst.target?.w || 10;
+            let smartReps = exInst.target?.r || 12;
+            
             for(let i=this.state.history.length-1; i>=0; i--) {
                 const sess = this.state.history[i];
-                const found = sess.data.find(e => e.id === exInst.id);
+                // Match by ID OR Exact Name to prevent loss on recreation
+                const found = sess.data.find(e => e.id === exInst.id || e.name === exDef.name);
                 if(found && found.sets.length > 0) {
-                    smartWeight = found.sets[found.sets.length-1].w;
+                    const lastSet = found.sets[found.sets.length-1];
+                    smartWeight = lastSet.w;
+                    smartReps = lastSet.r;
                     break;
                 }
             }
             this.state.active.inputW = smartWeight;
-            this.state.active.inputR = exInst.target?.r || 12;
+            this.state.active.inputR = smartReps;
             this.populateSelects(exDef);
         }
 
@@ -438,12 +457,14 @@ const app = {
     renderStatsStrip: function(exId, unit) {
         const strip = document.getElementById('last-stat-strip');
         strip.innerHTML = '';
+        
+        const exDef = this.getExerciseDef(exId);
 
-        // אוספים את כל ההיסטוריה של התרגיל הזה
+        // אוספים את כל ההיסטוריה של התרגיל הזה (לפי ID או שם)
         const exHistory =[];
         for (let i = 0; i < this.state.history.length; i++) {
             const sess = this.state.history[i];
-            const found = sess.data.find(e => e.id === exId);
+            const found = sess.data.find(e => e.id === exId || e.name === exDef.name);
             if (found && found.sets.length > 0) {
                 exHistory.push(found);
             }
@@ -454,7 +475,6 @@ const app = {
             return;
         }
 
-        const exDef = this.getExerciseDef(exId);
         const isBodyweight = exDef.settings.unit === 'bodyweight';
         const isTime = this.state.active.isStopwatch;
 
@@ -554,7 +574,7 @@ const app = {
         }
         
         // Fixed Bug: Fallback if min > max 
-        if(wOpts.length === 0) wOpts = [parseFloat(s.min) || 0];
+        if(wOpts.length === 0) wOpts =[parseFloat(s.min) || 0];
 
         selW.innerHTML = '';
         wOpts.forEach(val => {
@@ -584,11 +604,14 @@ const app = {
             opt.text = val;
             selR.appendChild(opt);
         });
+        
+        // Set Default Reps
         selR.value = this.state.active.inputR;
         selR.onchange = (e) => this.state.active.inputR = Number(e.target.value);
     },
 
     toggleStopwatch: function() {
+        this.vibrate(15);
         const btn = document.getElementById('btn-sw-toggle');
         if (this.state.active.swIsRunning) {
             // Pause
@@ -640,6 +663,8 @@ const app = {
     },
 
     finishSet: function() {
+        this.vibrate(25);
+        
         let w, r;
         if (this.state.active.isStopwatch) {
             if(this.state.active.swIsRunning) this.toggleStopwatch(); 
@@ -744,6 +769,7 @@ const app = {
     },
 
     addSet: function() {
+        this.vibrate(15);
         this.state.active.totalSets++;
         
         // Fixed Bug: AddSet UI alignment
@@ -769,6 +795,7 @@ const app = {
     },
 
     deleteLastSet: function() {
+        this.vibrate(15);
         const exInst = this.state.active.sessionExercises[this.state.active.exIdx];
         let exLog = this.state.active.log.find(l => l.id === exInst.id);
         
@@ -874,11 +901,13 @@ const app = {
         summary.data.forEach(ex => {
             if (ex.sets.length === 0) return;
 
-            // Search entire history backwards for the last time this specific exercise was performed
+            const exDef = this.getExerciseDef(ex.id);
+
+            // Search entire history backwards for the last time this specific exercise was performed (by ID or exact Name)
             let prevEx = null;
             for (let i = this.state.history.length - 1; i >= 0; i--) {
                 const pastSession = this.state.history[i];
-                const found = pastSession.data.find(p => p.id === ex.id);
+                const found = pastSession.data.find(p => p.id === ex.id || p.name === exDef.name);
                 if (found && found.sets.length > 0) {
                     prevEx = found;
                     break;
@@ -887,7 +916,6 @@ const app = {
 
             if (!prevEx) return;
 
-            const exDef = this.getExerciseDef(ex.id);
             const isTime = (parseFloat(exDef.settings.step) === 0 || ex.id.includes('plank') || (exDef.settings.unit === 'bodyweight' && ex.sets[0].w === 0));
             const isBodyweight = exDef.settings.unit === 'bodyweight';
 
@@ -1465,7 +1493,7 @@ const app = {
                 let newHist = Array.isArray(json) ? json : json.history;
                 if (!newHist) throw new Error();
                 if(confirm(`נמצאו ${newHist.length} רשומות. למזג?`)) {
-                    app.state.history = [...app.state.history, ...newHist];
+                    app.state.history =[...app.state.history, ...newHist];
                     app.state.history.sort((a,b) => (a.timestamp || 0) - (b.timestamp || 0));
                     app.saveData();
                     app.showHistory();
@@ -1495,8 +1523,7 @@ const app = {
         this.state.historySelection =[];
         this.updateHistoryActions(); 
         const list = document.getElementById('history-list');
-        list.innerHTML = '';
-        [...this.state.history].reverse().forEach((h, i) => {
+        list.innerHTML = '';[...this.state.history].reverse().forEach((h, i) => {
             const realIdx = this.state.history.length - 1 - i;
             const pName = h.programTitle || h.program;
             list.innerHTML += `
