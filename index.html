@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>GymStart V1.7.5</title>
+    <title>GymStart V1.8.0</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="stylesheet" href="style.css">
@@ -15,7 +15,30 @@
     <input type="file" id="file-import-history" hidden accept=".json" onchange="app.importHistory(this)">
     <input type="file" id="file-import-config" hidden accept=".json" onchange="app.importConfig(this)">
 
-    <!-- USER SELECTOR MODAL (For Swap/Add) -->
+    <!-- RESUME WORKOUT MODAL -->
+    <div id="resume-modal" class="modal-wrapper" style="z-index: 200;">
+        <div class="oled-modal" style="text-align: center;">
+            <h3 style="margin-bottom: 10px;">נמצא אימון פעיל</h3>
+            <p style="color: var(--text-sec); margin-bottom: 25px;">האם ברצונך להמשיך מהנקודה שבה הפסקת?</p>
+            <div class="vertical-stack">
+                <button class="btn-primary" onclick="app.resumeWorkout()">כן, המשך אימון</button>
+                <button class="btn-outline" onclick="app.discardWorkout()">לא, התחל חדש</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- REORDER / SWAP MODAL -->
+    <div id="reorder-modal" class="modal-wrapper">
+        <div class="oled-modal" style="max-height: 80vh;">
+            <div class="modal-header">
+                <h3 id="reorder-title">שינוי סדר תרגילים</h3>
+                <button class="text-close-btn" onclick="app.closeReorder()">ביטול</button>
+            </div>
+            <div id="reorder-list" class="vertical-stack scroll-y"></div>
+        </div>
+    </div>
+
+    <!-- USER SELECTOR MODAL -->
     <div id="user-selector-modal" class="modal-wrapper">
         <div class="oled-modal" style="max-height: 80vh;">
             <div class="modal-header">
@@ -101,7 +124,7 @@
                 <div id="selector-list" class="vertical-stack scroll-y" style="margin-top:10px;"></div>
             </div>
 
-            <!-- VIEW 4: EXERCISE MANAGER (New) -->
+            <!-- VIEW 4: EXERCISE MANAGER -->
             <div id="admin-view-ex-manager" class="admin-view" style="display:none;">
                 <div class="modal-header">
                     <h3>מאגר תרגילים</h3>
@@ -110,7 +133,6 @@
                 
                 <input type="text" id="ex-mgr-search" class="search-input" placeholder="חפש במאגר..." onkeyup="app.renderExerciseManagerList()">
                 
-                <!-- Chips Filter for Manager -->
                 <div class="chip-container">
                     <button class="chip active" onclick="app.setExManagerFilter('all', this)">הכל</button>
                     <button class="chip" onclick="app.setExManagerFilter('legs', this)">רגליים</button>
@@ -127,7 +149,7 @@
                 </div>
             </div>
 
-            <!-- VIEW 5: EXERCISE EDIT FORM (New) -->
+            <!-- VIEW 5: EXERCISE EDIT FORM -->
             <div id="admin-view-ex-edit" class="admin-view" style="display:none;">
                 <div class="modal-header">
                     <h3>עריכת תרגיל</h3>
@@ -170,6 +192,7 @@
                             <div style="flex:1">
                                 <span class="input-label-small">קפיצות</span>
                                 <select id="edit-ex-step" class="oled-select small">
+                                    <option value="0">ללא (זמן/סטטי)</option>
                                     <option value="0.5">0.5</option>
                                     <option value="1">1.0</option>
                                     <option value="2.5">2.5</option>
@@ -189,7 +212,7 @@
                         </div>
                         <div style="margin-top:15px; display:flex; align-items:center; gap:10px;">
                             <input type="checkbox" id="edit-ex-unilateral" class="custom-chk">
-                            <span style="font-size:0.9rem; color:#bbb;">משקל לכל צד (יד/רגל)</span>
+                            <span style="font-size:0.9rem; color:#bbb;">משקל יד אחת / צד אחד</span>
                         </div>
                     </div>
                 </div>
@@ -268,7 +291,7 @@
                     </div>
                 </div>
                 
-                <div class="version-tag">GymStart V1.7.5</div>
+                <div class="version-tag">GymStart V1.8.0</div>
             </div>
 
             <div class="fixed-footer">
@@ -355,9 +378,9 @@
                             סיום סט
                         </button>
                         
-                        <!-- Swap Exercise Button (Initially hidden, handled by JS) -->
-                        <button id="btn-swap-ex" class="btn-quiet" onclick="app.openSwapExercise()" style="display:none;">
-                            החליפי תרגיל
+                        <!-- Unified Button for Reorder/Swap -->
+                        <button id="btn-reorder" class="btn-quiet" onclick="app.openReorder()" style="display:none;">
+                            שינוי סדר
                         </button>
                         
                         <div id="next-ex-preview" class="next-preview-text" style="display: none;"></div>
@@ -382,7 +405,7 @@
                             </svg>
                             <div class="timer-text" id="rest-timer-val">00:00</div>
                         </div>
-                        <div class="rest-caption">זמן מנוחה</div>
+                        <div class="rest-caption">זמן מנוחה מומלץ</div>
                     </div>
                 </div>
 
@@ -405,9 +428,7 @@
             </div>
             
             <div class="fixed-footer">
-                <button class="btn-outline" onclick="app.copySummaryToClipboard()">העתק סיכום</button>
-                <div style="height:10px"></div>
-                <button class="btn-primary" onclick="app.saveAndHome()">שמור וסיים</button>
+                <button class="btn-primary big-btn" onclick="app.finishAndCopy()">סיים, העתק ושמור</button>
             </div>
         </div>
 
