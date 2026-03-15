@@ -1,22 +1,26 @@
 /**
- * GYMSTART V1.7.5
- * - UI Update: Swap button moved to action area, text only, visible ONLY on set 1 of core exercises.
- * - Logic Update: "Unilateral" renamed to "Single Side Weight" with output indication in summary.
+ * GYMSTART V1.8.0 (Bug Fixes & Timer Upgrades)
+ * - Endless Rest Timer (Counts up seamlessly, visually stops at 100%).
+ * - Fixed Workout duration gap (Page refresh & screen-off persistence).
+ * - Fixed "Undo Set" UI state when totalSets === 1.
+ * - Current Program ID preserved safely in State to avoid "Casual Workout" bug.
+ * - Added support for Custom Time/Stopwatch exercises.
  */
 
 const CONFIG = {
     KEYS: {
         ROUTINES: 'gymstart_v1_7_routines',
         HISTORY: 'gymstart_beta_02_history',
-        EXERCISES: 'gymstart_v1_7_exercises_bank'
+        EXERCISES: 'gymstart_v1_7_exercises_bank',
+        ACTIVE_WORKOUT: 'gymstart_active_workout_state'
     },
-    VERSION: '1.7.5'
+    VERSION: '1.8.0'
 };
 
 const FEEL_MAP_TEXT = { 'easy': 'קל', 'good': 'בינוני', 'hard': 'קשה' };
 
-// BASE EXERCISES FOR MIGRATION ONLY (Not used directly anymore)
-const BASE_BANK_INIT = [
+// BASE EXERCISES
+const BASE_BANK_INIT =[
     { id: 'goblet', name: 'גובלט סקוואט', cat: 'legs', settings: {unit:'kg', step:2.5, min:2.5, max:60} },
     { id: 'leg_press', name: 'לחיצת רגליים', cat: 'legs', settings: {unit:'kg', step:5, min:20, max:200} },
     { id: 'rdl', name: 'דדליפט רומני', cat: 'legs', settings: {unit:'kg', step:2.5, min:10, max:100} },
@@ -48,46 +52,52 @@ const BASE_BANK_INIT = [
 ];
 
 const DEFAULT_ROUTINES_V17 = {
-    'A': { title: 'רגליים וגב (A)', exercises: [ {id:'goblet', sets:3, rest:90}, {id:'leg_press', sets:3}, {id:'lat_pull', sets:3} ] },
-    'B': { title: 'חזה וכתפיים (B)', exercises: [ {id:'chest_press', sets:3}, {id:'shoulder_press', sets:3}, {id:'plank', sets:3} ] }
+    'A': { title: 'רגליים וגב (A)', exercises:[ {id:'goblet', sets:3, rest:90}, {id:'leg_press', sets:3}, {id:'lat_pull', sets:3} ] },
+    'B': { title: 'חזה וכתפיים (B)', exercises:[ {id:'chest_press', sets:3}, {id:'shoulder_press', sets:3}, {id:'plank', sets:3} ] }
 };
 
 const app = {
     state: {
         routines: {},
         history: [],
-        exercises: [], // Dynamic Bank
+        exercises:[], 
         currentProgId: null,
         active: {
             on: false,
-            sessionExercises: [], // DYNAMIC PLAYLIST
+            programId: null, // Fixed Bug: Keep programId explicitly
+            sessionExercises:[],
             exIdx: 0, setIdx: 1, totalSets: 3,
-            log: [], startTime: 0,
+            log:[], 
+            startTime: 0, 
+            accumulatedTime: 0, 
             timerInterval: null, restInterval: null, 
-            feel: 'good', isStopwatch: false, stopwatchVal: 0,
+            restStartTime: 0, 
+            restDuration: 60,
+            feel: 'good', 
+            isStopwatch: false, stopwatchVal: 0, swAccumulated: 0, swStartTime: 0, swIsRunning: false,
             inputW: 10, inputR: 12
         },
+        tempActive: null,
         admin: { 
-            viewProgId: null, 
-            editTipEx: null, 
-            selectorFilter: 'all',
-            exManagerFilter: 'all',
-            tempExercises: [],
-            editingExId: null // For Bank Manager
+            viewProgId: null, editTipEx: null, selectorFilter: 'all', exManagerFilter: 'all',
+            tempExercises:[], editingExId: null 
         },
-        userSelector: {
-            mode: null, // 'swap' or 'add'
-        },
-        historySelection: [],
+        userSelector: { mode: null },
+        historySelection:[],
         viewHistoryIdx: null
     },
 
     init: function() {
         try {
             this.loadData();
+            this.checkActiveWorkout();
             this.renderHome();
             this.renderProgramSelect(); 
-            this.nav('screen-home'); 
+            if(!this.state.tempActive) this.nav('screen-home'); 
+            
+            // Handle App Pauses (Screen off / minimized) for precise timer drift recovery
+            document.addEventListener('visibilitychange', () => this.handleVisibilityChange());
+            
         } catch (e) {
             console.error(e);
             alert("שגיאה בטעינת נתונים.");
@@ -95,36 +105,27 @@ const app = {
     },
 
     loadData: function() {
-        // Load History
         const h = localStorage.getItem(CONFIG.KEYS.HISTORY);
-        this.state.history = h ? JSON.parse(h) : [];
+        this.state.history = h ? JSON.parse(h) :[];
         
-        // Load Routines
         const r = localStorage.getItem(CONFIG.KEYS.ROUTINES);
         let loadedRoutines = r ? JSON.parse(r) : null;
         if (!loadedRoutines) {
             this.state.routines = JSON.parse(JSON.stringify(DEFAULT_ROUTINES_V17));
-            // Fill details from Init Bank for first load
             for(const pid in this.state.routines) {
                 this.state.routines[pid].exercises.forEach(ex => {
                     const bankEx = BASE_BANK_INIT.find(b => b.id === ex.id);
-                    if(bankEx) {
-                        ex.name = bankEx.name;
-                        ex.unit = bankEx.settings.unit;
-                        ex.cat = bankEx.cat;
-                    }
+                    if(bankEx) { ex.name = bankEx.name; ex.unit = bankEx.settings.unit; ex.cat = bankEx.cat; }
                 });
             }
         } else {
             this.state.routines = loadedRoutines;
         }
 
-        // Load Exercises (Migration Logic)
         const e = localStorage.getItem(CONFIG.KEYS.EXERCISES);
         if(e) {
             this.state.exercises = JSON.parse(e);
         } else {
-            // First time migration: Use Base Bank
             this.state.exercises = JSON.parse(JSON.stringify(BASE_BANK_INIT));
             this.saveData();
         }
@@ -136,6 +137,82 @@ const app = {
         localStorage.setItem(CONFIG.KEYS.EXERCISES, JSON.stringify(this.state.exercises));
     },
 
+    /* --- PERSISTENCE & RESUME --- */
+    
+    saveActiveState: function() {
+        if (!this.state.active.on) {
+            localStorage.removeItem(CONFIG.KEYS.ACTIVE_WORKOUT);
+            return;
+        }
+        const currentSession = Date.now() - this.state.active.startTime;
+        const stateToSave = { ...this.state.active };
+        stateToSave.accumulatedTime = this.state.active.accumulatedTime + currentSession;
+        stateToSave.timerInterval = null; // Don't save live interval IDs
+        stateToSave.restInterval = null;
+        
+        localStorage.setItem(CONFIG.KEYS.ACTIVE_WORKOUT, JSON.stringify(stateToSave));
+        // Reset start time to now so we don't double count if we stay in the app
+        this.state.active.accumulatedTime = stateToSave.accumulatedTime;
+        this.state.active.startTime = Date.now();
+    },
+
+    handleVisibilityChange: function() {
+        if (!this.state.active.on) return;
+
+        if (document.visibilityState === 'hidden') {
+            this.saveActiveState();
+            // Pause Stopwatch correctly
+            if (this.state.active.isStopwatch && this.state.active.swIsRunning) {
+                this.state.active.swAccumulated += Date.now() - this.state.active.swStartTime;
+                clearInterval(this.state.active.timerInterval);
+            }
+        } else {
+            this.state.active.startTime = Date.now();
+            // Resume Stopwatch seamlessly
+            if (this.state.active.isStopwatch && this.state.active.swIsRunning) {
+                this.state.active.swStartTime = Date.now();
+                this.state.active.timerInterval = setInterval(() => this.tickStopwatch(), 100);
+            }
+        }
+    },
+
+    checkActiveWorkout: function() {
+        const saved = localStorage.getItem(CONFIG.KEYS.ACTIVE_WORKOUT);
+        if (saved) {
+            this.state.tempActive = JSON.parse(saved);
+            document.getElementById('resume-modal').style.display = 'flex';
+        }
+    },
+
+    resumeWorkout: function() {
+        if (this.state.tempActive) {
+            this.state.active = this.state.tempActive;
+            this.state.active.startTime = Date.now(); 
+            this.state.active.timerInterval = null;
+            this.state.active.restInterval = null;
+            
+            // Fixed Bug: Reliable currentProgId recovery
+            this.state.currentProgId = this.state.active.programId || Object.keys(this.state.routines)[0];
+            
+            // Resume Rest Timer if it was running (Continues counting endlessly)
+            if (this.state.active.restStartTime > 0) {
+                 this.startRestTimer(this.state.active.restDuration, true);
+            }
+
+            document.getElementById('resume-modal').style.display = 'none';
+            this.loadActiveExercise();
+            this.nav('screen-active');
+        }
+    },
+
+    discardWorkout: function() {
+        localStorage.removeItem(CONFIG.KEYS.ACTIVE_WORKOUT);
+        this.state.tempActive = null;
+        document.getElementById('resume-modal').style.display = 'none';
+        this.nav('screen-home');
+    },
+
+    /* --- NAVIGATION --- */
     nav: function(screenId) {
         document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
         document.getElementById(screenId).classList.add('active');
@@ -160,6 +237,7 @@ const app = {
             if (confirm("לצאת מהאימון?")) {
                 this.stopAllTimers();
                 this.state.active.on = false;
+                localStorage.removeItem(CONFIG.KEYS.ACTIVE_WORKOUT);
                 this.nav('screen-overview');
             }
         } else if (activeScreen === 'screen-overview') {
@@ -169,34 +247,21 @@ const app = {
         }
     },
 
-    getExerciseDef: function(exId) {
-        return this.state.exercises.find(e => e.id === exId) || 
-               { name: 'תרגיל לא ידוע', settings: {unit:'kg', step:2.5, min:0, max:50} };
-    },
-
     /* --- RENDERING --- */
-
     renderProgramSelect: function() {
         const container = document.getElementById('prog-list-container');
         container.innerHTML = '';
         const ids = Object.keys(this.state.routines);
-        
         if(ids.length === 0) {
             container.innerHTML = '<div style="text-align:center; color:#666;">אין תוכניות זמינות.</div>';
             return;
         }
-
         ids.forEach(pid => {
             const prog = this.state.routines[pid];
             const badge = pid.charAt(0).toUpperCase();
             const count = prog.exercises.length;
-            
             let desc = `${count} תרגילים`;
-            if (count > 0) {
-                const firstEx = prog.exercises[0].name;
-                desc += ` • מתחיל ב: ${firstEx}`;
-            }
-
+            if (count > 0) desc += ` • מתחיל ב: ${prog.exercises[0].name}`;
             container.innerHTML += `
                 <div class="oled-card prog-card" onclick="app.selectProgram('${pid}')">
                     <div class="prog-icon">${badge}</div>
@@ -204,8 +269,7 @@ const app = {
                         <div class="prog-title">${prog.title}</div>
                         <div class="prog-desc">${desc}</div>
                     </div>
-                </div>
-            `;
+                </div>`;
         });
     },
 
@@ -239,6 +303,19 @@ const app = {
         }
     },
 
+    getExerciseDef: function(exId) {
+        const found = this.state.exercises.find(e => e.id === exId);
+        if (found) return found;
+        
+        // Safety Fallback
+        let isCore = exId.includes('plank') || exId.includes('core') || exId.includes('situp') || exId.includes('crunch');
+        return { 
+            name: 'תרגיל לא ידוע', 
+            cat: isCore ? 'core' : 'other', 
+            settings: {unit:'kg', step:2.5, min:0, max:50} 
+        };
+    },
+
     /* --- WORKOUT LOGIC --- */
     startWorkout: function() {
         if (!this.state.routines[this.state.currentProgId] || 
@@ -250,20 +327,26 @@ const app = {
 
         this.state.active = {
             on: true,
-            // Deep copy exercises for dynamic playlist (swapping/adding support)
+            programId: this.state.currentProgId, // Save for safe resume
             sessionExercises: JSON.parse(JSON.stringify(prog.exercises)),
             exIdx: 0, setIdx: 1, totalSets: 3,
-            log: [], startTime: Date.now(),
+            log:[], 
+            startTime: Date.now(),
+            accumulatedTime: 0,
             timerInterval: null, restInterval: null, 
-            feel: 'good', isStopwatch: false, stopwatchVal: 0,
+            restStartTime: 0,
+            restDuration: 60,
+            feel: 'good', 
+            isStopwatch: false, stopwatchVal: 0, swAccumulated: 0, swStartTime: 0, swIsRunning: false,
             inputW: 10, inputR: 12
         };
+        
+        this.saveActiveState();
         this.loadActiveExercise();
         this.nav('screen-active');
     },
 
     loadActiveExercise: function() {
-        // USE SESSION EXERCISES NOT ROUTINE
         const exInst = this.state.active.sessionExercises[this.state.active.exIdx];
         const exDef = this.getExerciseDef(exInst.id);
         
@@ -272,21 +355,24 @@ const app = {
         document.getElementById('ex-name').innerText = exInst.name;
         document.getElementById('set-badge').innerText = `סט ${this.state.active.setIdx} / ${this.state.active.totalSets}`;
         
-        // Video Link
         const vidBtn = document.getElementById('ex-video-link');
         if (exDef.videoUrl && exDef.videoUrl.length > 5) {
             vidBtn.style.display = 'flex';
             vidBtn.href = exDef.videoUrl;
-        } else {
-            vidBtn.style.display = 'none';
-        }
+        } else { vidBtn.style.display = 'none'; }
 
-        // Swap Button Logic: Core exercises ONLY, and ONLY on Set 1
-        const swapBtn = document.getElementById('btn-swap-ex');
-        if (exDef.cat === 'core' && this.state.active.setIdx === 1) {
-            swapBtn.style.display = 'block';
+        // Reorder / Swap Logic
+        const reorderBtn = document.getElementById('btn-reorder');
+        if (this.state.active.setIdx === 1) {
+            reorderBtn.style.display = 'block';
+            if (exDef.cat === 'core') reorderBtn.innerText = "החליפי תרגיל";
+            else reorderBtn.innerText = "שינוי סדר";
+            
+            if (exDef.cat !== 'core' && this.state.active.exIdx >= this.state.active.sessionExercises.length - 1) {
+                 reorderBtn.style.display = 'none';
+            }
         } else {
-            swapBtn.style.display = 'none';
+            reorderBtn.style.display = 'none';
         }
 
         const noteEl = document.getElementById('coach-note');
@@ -295,29 +381,30 @@ const app = {
             noteEl.style.display = 'block';
         } else noteEl.style.display = 'none';
 
-        this.renderStatsStrip(exInst.id, exDef.settings.unit);
-
-        // Check type
-        const isTime = (exDef.settings.unit === 'bodyweight' && (exInst.id.includes('plank') || exInst.id.includes('static')));
+        // Custom time exercise support (step === 0 indicates time/static exercise)
+        const stepVal = parseFloat(exDef.settings.step);
+        const isTime = (stepVal === 0 || exInst.id.includes('plank') || exInst.id.includes('static'));
         this.state.active.isStopwatch = isTime;
+
+        this.renderStatsStrip(exInst.id, exDef.settings.unit);
 
         if (isTime) {
             document.getElementById('cards-container').style.display = 'none';
             document.getElementById('stopwatch-container').style.display = 'flex';
             this.state.active.stopwatchVal = 0;
+            this.state.active.swAccumulated = 0;
+            this.state.active.swStartTime = 0;
+            this.state.active.swIsRunning = false;
             this.stopStopwatch();
             document.getElementById('sw-display').innerText = "00:00";
             document.getElementById('btn-sw-toggle').classList.remove('running');
             document.getElementById('btn-sw-toggle').innerText = "▶";
-            document.getElementById('rest-timer-area').style.display = 'none';
         } else {
             document.getElementById('cards-container').style.display = 'flex';
             document.getElementById('stopwatch-container').style.display = 'none';
             document.getElementById('unit-label-card').innerText = exDef.settings.unit === 'plates' ? 'פלטות' : 'ק״ג';
             
-            // SMART WEIGHT PREDICTION
             let smartWeight = exInst.target?.w || 10;
-            // Overwrite with history if exists
             for(let i=this.state.history.length-1; i>=0; i--) {
                 const sess = this.state.history[i];
                 const found = sess.data.find(e => e.id === exInst.id);
@@ -333,43 +420,37 @@ const app = {
 
         this.state.active.feel = 'good';
         this.updateFeelUI();
+        
+        // UI reset for start of exercise
         document.getElementById('decision-buttons').style.display = 'none';
         document.getElementById('next-ex-preview').style.display = 'none';
         document.getElementById('btn-finish').style.display = 'flex';
-        document.getElementById('rest-timer-area').style.display = 'none';
+        
+        // Timer display (Only hide if it wasn't running)
+        if (!this.state.active.restStartTime) {
+             document.getElementById('rest-timer-area').style.display = 'none';
+        } else {
+             document.getElementById('rest-timer-area').style.display = 'flex';
+        }
     },
 
     renderStatsStrip: function(exId, unit) {
         const strip = document.getElementById('last-stat-strip');
-        
         let lastLog = null;
         for(let i=this.state.history.length-1; i>=0; i--) {
             const sess = this.state.history[i];
             const found = sess.data.find(e => e.id === exId);
-            if(found && found.sets.length > 0) { 
-                lastLog = found.sets[found.sets.length-1]; 
-                break; 
-            }
+            if(found && found.sets.length > 0) { lastLog = found.sets[found.sets.length-1]; break; }
         }
-
-        if (!lastLog) {
-            strip.innerText = "אין הישג קודם";
-            return;
-        }
+        if (!lastLog) { strip.innerText = "אין הישג קודם"; return; }
 
         const isTime = this.state.active.isStopwatch;
         const isBody = (unit === 'bodyweight' && !isTime);
-        
         let wStr = isBody ? 'משקל גוף' : `${lastLog.w} ק״ג`;
         if (unit === 'plates') wStr = `${lastLog.w} פלטות`;
-        
         let rStr = isTime ? `${lastLog.r} שניות` : `${lastLog.r} חזרות`;
         
-        if (isTime && unit === 'bodyweight') {
-            strip.innerText = `${rStr} (אימון קודם)`;
-        } else {
-            strip.innerText = `${wStr} | ${rStr}`;
-        }
+        strip.innerText = (isTime && unit === 'bodyweight') ? `${rStr} (אימון קודם)` : `${wStr} | ${rStr}`;
     },
 
     populateSelects: function(exDef) {
@@ -377,20 +458,21 @@ const app = {
         const selR = document.getElementById('select-reps');
         const s = exDef.settings || {unit:'kg', step:2.5, min:0, max:50};
 
-        let wOpts = [];
-        if (s.unit === 'bodyweight') {
-            wOpts = [0];
-        } else {
+        let wOpts =[];
+        if (s.unit === 'bodyweight') wOpts = [0];
+        else {
             const min = parseFloat(s.min);
             const max = parseFloat(s.max);
             const step = parseFloat(s.step) || 2.5;
-            
             for(let v = min; v <= max; v += step) {
                 let cleanV = parseFloat(v.toFixed(1));
                 if(cleanV % 1 === 0) cleanV = parseInt(cleanV); 
                 wOpts.push(cleanV);
             }
         }
+        
+        // Fixed Bug: Fallback if min > max 
+        if(wOpts.length === 0) wOpts = [parseFloat(s.min) || 0];
 
         selW.innerHTML = '';
         wOpts.forEach(val => {
@@ -400,19 +482,16 @@ const app = {
             selW.appendChild(opt);
         });
 
-        if(wOpts.includes(this.state.active.inputW)) {
-            selW.value = this.state.active.inputW;
-        } else {
-            const closest = wOpts.reduce((prev, curr) => {
-                return (Math.abs(curr - this.state.active.inputW) < Math.abs(prev - this.state.active.inputW) ? curr : prev);
-            });
+        if(wOpts.includes(this.state.active.inputW)) selW.value = this.state.active.inputW;
+        else {
+            const closest = wOpts.reduce((prev, curr) => (Math.abs(curr - this.state.active.inputW) < Math.abs(prev - this.state.active.inputW) ? curr : prev));
             selW.value = closest;
             this.state.active.inputW = closest;
         }
         
         selW.onchange = (e) => this.state.active.inputW = Number(e.target.value);
 
-        let rOpts = [];
+        let rOpts =[];
         const maxReps = exDef.cat === 'core' ? 50 : 30;
         for(let i=1; i<=maxReps; i++) rOpts.push(i);
 
@@ -429,29 +508,41 @@ const app = {
 
     toggleStopwatch: function() {
         const btn = document.getElementById('btn-sw-toggle');
-        if (this.state.active.timerInterval) {
+        if (this.state.active.swIsRunning) {
+            // Pause
             clearInterval(this.state.active.timerInterval);
             this.state.active.timerInterval = null;
+            this.state.active.swIsRunning = false;
             btn.classList.remove('running');
             btn.innerText = "▶";
+            this.state.active.swAccumulated += Date.now() - this.state.active.swStartTime;
+            this.state.active.swStartTime = 0;
         } else {
+            // Start
             this.stopRestTimer();
-            const start = Date.now() - (this.state.active.stopwatchVal * 1000);
             btn.classList.add('running');
             btn.innerText = "⏹";
-            this.state.active.timerInterval = setInterval(() => {
-                const diff = Math.floor((Date.now() - start) / 1000);
-                this.state.active.stopwatchVal = diff;
-                let m = Math.floor(diff / 60);
-                let s = diff % 60;
-                document.getElementById('sw-display').innerText = `${m<10?'0'+m:m}:${s<10?'0'+s:s}`;
-            }, 100);
+            this.state.active.swIsRunning = true;
+            this.state.active.swStartTime = Date.now();
+            if(!this.state.active.swAccumulated) this.state.active.swAccumulated = 0;
+            
+            this.state.active.timerInterval = setInterval(() => this.tickStopwatch(), 100);
         }
+    },
+    
+    tickStopwatch: function() {
+        const diffMs = this.state.active.swAccumulated + (Date.now() - this.state.active.swStartTime);
+        const diffSec = Math.floor(diffMs / 1000);
+        this.state.active.stopwatchVal = diffSec;
+        let m = Math.floor(diffSec / 60);
+        let s = diffSec % 60;
+        document.getElementById('sw-display').innerText = `${m<10?'0'+m:m}:${s<10?'0'+s:s}`;
     },
 
     stopStopwatch: function() {
         if(this.state.active.timerInterval) clearInterval(this.state.active.timerInterval);
         this.state.active.timerInterval = null;
+        this.state.active.swIsRunning = false;
     },
 
     selectFeel: function(f) {
@@ -469,21 +560,17 @@ const app = {
     finishSet: function() {
         let w, r;
         if (this.state.active.isStopwatch) {
-            if(this.state.active.timerInterval) this.toggleStopwatch(); 
-            w = 0; 
-            r = this.state.active.stopwatchVal; 
+            if(this.state.active.swIsRunning) this.toggleStopwatch(); 
+            w = 0; r = this.state.active.stopwatchVal; 
             if (r === 0) { alert("לא נמדד זמן"); return; }
         } else {
-            w = this.state.active.inputW;
-            r = this.state.active.inputR;
+            w = this.state.active.inputW; r = this.state.active.inputR;
         }
 
-        // Use sessionExercises
         const exInst = this.state.active.sessionExercises[this.state.active.exIdx];
-        
         let exLog = this.state.active.log.find(l => l.id === exInst.id);
         if(!exLog) {
-            exLog = { id: exInst.id, name: exInst.name, sets: [] };
+            exLog = { id: exInst.id, name: exInst.name, sets:[] };
             this.state.active.log.push(exLog);
         }
         exLog.sets.push({ w, r, feel: this.state.active.feel });
@@ -495,41 +582,42 @@ const app = {
             this.state.active.setIdx++;
             document.getElementById('set-badge').innerText = `סט ${this.state.active.setIdx} / ${this.state.active.totalSets}`;
             
-            // Hide swap button if it was visible (only for set 1)
-            document.getElementById('btn-swap-ex').style.display = 'none';
+            document.getElementById('btn-reorder').style.display = 'none';
             
             this.state.active.feel = 'good';
             this.updateFeelUI();
             if(this.state.active.isStopwatch) {
                 this.state.active.stopwatchVal = 0;
+                this.state.active.swAccumulated = 0;
+                this.state.active.swStartTime = 0;
                 document.getElementById('sw-display').innerText = "00:00";
             }
         } else {
-            // Hide swap button just in case
-            document.getElementById('btn-swap-ex').style.display = 'none';
-            
+            document.getElementById('btn-reorder').style.display = 'none';
             document.getElementById('btn-finish').style.display = 'none';
             document.getElementById('decision-buttons').style.display = 'flex';
-            document.getElementById('rest-timer-area').style.display = 'none';
+            
+            // Note: Rest timer continues to be visible and count
 
             const nextEx = this.state.active.sessionExercises[this.state.active.exIdx + 1];
             const nextEl = document.getElementById('next-ex-preview');
             nextEl.innerText = nextEx ? `הבא בתור: ${nextEx.name}` : "הבא בתור: סיום אימון";
             nextEl.style.display = 'block';
 
-            // Check Add Button Logic
             const exDef = this.getExerciseDef(exInst.id);
             const addBtn = document.getElementById('btn-add-core');
-            if (exDef.cat === 'core') {
-                addBtn.style.display = 'block';
-            } else {
-                addBtn.style.display = 'none';
-            }
+            if (exDef.cat === 'core') addBtn.style.display = 'block';
+            else addBtn.style.display = 'none';
         }
+        
+        this.saveActiveState();
     },
 
-    startRestTimer: function(durationSec) {
-        this.stopRestTimer();
+    // Fixed Endless Timer
+    startRestTimer: function(durationSec, isResume = false) {
+        if (!isResume) this.stopRestTimer();
+        else if (this.state.active.restInterval) clearInterval(this.state.active.restInterval); // Clear old interval if exists
+
         const area = document.getElementById('rest-timer-area');
         const disp = document.getElementById('rest-timer-val');
         const ring = document.getElementById('rest-ring-prog');
@@ -537,33 +625,35 @@ const app = {
         area.style.display = 'flex';
         area.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
-        let sec = 0;
-        disp.innerText = "00:00";
+        this.state.active.restDuration = durationSec;
+        if (!this.state.active.restStartTime || this.state.active.restStartTime === 0) {
+            this.state.active.restStartTime = Date.now();
+        }
+        
         const MAX_OFFSET = 408; 
-        ring.style.strokeDashoffset = MAX_OFFSET; 
         
         this.state.active.restInterval = setInterval(() => {
-            sec++;
-            let m = Math.floor(sec / 60);
-            let s = sec % 60;
+            const elapsed = Math.floor((Date.now() - this.state.active.restStartTime) / 1000);
+            
+            let m = Math.floor(elapsed / 60);
+            let s = elapsed % 60;
             disp.innerText = `${m<10?'0'+m:m}:${s<10?'0'+s:s}`;
             
-            if (sec <= durationSec) {
-                const ratio = sec / durationSec;
-                const offset = MAX_OFFSET - (MAX_OFFSET * ratio);
-                ring.style.strokeDashoffset = offset;
-            } else {
-                ring.style.strokeDashoffset = 0; 
-            }
+            // Ring visually stops filling at 100%, timer continues endlessly
+            let ratio = elapsed / durationSec;
+            if (ratio > 1) ratio = 1; 
+            const offset = MAX_OFFSET - (MAX_OFFSET * ratio); 
+            ring.style.strokeDashoffset = offset;
 
-            if (sec === durationSec && navigator.vibrate) navigator.vibrate([200,100,200]);
-        }, 1000);
+        }, 100);
+        this.saveActiveState();
     },
 
     stopRestTimer: function() {
         if(this.state.active.restInterval) clearInterval(this.state.active.restInterval);
         this.state.active.restInterval = null;
         document.getElementById('rest-timer-area').style.display = 'none';
+        this.state.active.restStartTime = 0;
     },
 
     stopAllTimers: function() {
@@ -573,22 +663,27 @@ const app = {
 
     addSet: function() {
         this.state.active.totalSets++;
-        this.state.active.setIdx++;
+        
+        // Fixed Bug: AddSet UI alignment
         document.getElementById('set-badge').innerText = `סט ${this.state.active.setIdx} / ${this.state.active.totalSets}`;
-        
-        // Ensure swap button is hidden (added sets are never set 1)
-        document.getElementById('btn-swap-ex').style.display = 'none';
-        
+        document.getElementById('btn-reorder').style.display = 'none';
         document.getElementById('decision-buttons').style.display = 'none';
         document.getElementById('next-ex-preview').style.display = 'none';
         document.getElementById('btn-finish').style.display = 'flex';
-        document.getElementById('rest-timer-area').style.display = 'flex';
-        document.getElementById('rest-timer-area').scrollIntoView({ behavior: 'smooth', block: 'center' });
-
+        
+        // Ensure rest timer stays visible if it was running
+        if(this.state.active.restStartTime > 0) {
+             document.getElementById('rest-timer-area').style.display = 'flex';
+             document.getElementById('rest-timer-area').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        
         if(this.state.active.isStopwatch) {
             this.state.active.stopwatchVal = 0;
+            this.state.active.swAccumulated = 0;
+            this.state.active.swStartTime = 0;
             document.getElementById('sw-display').innerText = "00:00";
         }
+        this.saveActiveState();
     },
 
     deleteLastSet: function() {
@@ -599,33 +694,35 @@ const app = {
             exLog.sets.pop();
             this.stopRestTimer();
 
-            if (this.state.active.setIdx > 1) {
-                this.state.active.setIdx--;
-                document.getElementById('set-badge').innerText = `סט ${this.state.active.setIdx} / ${this.state.active.totalSets}`;
-                
-                // If we went back to set 1, AND it is a core exercise, show swap button again
-                const exDef = this.getExerciseDef(exInst.id);
-                if (exDef.cat === 'core' && this.state.active.setIdx === 1) {
-                     document.getElementById('btn-swap-ex').style.display = 'block';
-                }
-
-                document.getElementById('decision-buttons').style.display = 'none';
-                document.getElementById('next-ex-preview').style.display = 'none';
-                document.getElementById('btn-finish').style.display = 'flex';
+            // Always revert UI to active input mode
+            document.getElementById('decision-buttons').style.display = 'none';
+            document.getElementById('next-ex-preview').style.display = 'none';
+            document.getElementById('btn-finish').style.display = 'flex';
+            
+            // Set index is strictly the number of completed sets + 1
+            this.state.active.setIdx = exLog.sets.length + 1;
+            document.getElementById('set-badge').innerText = `סט ${this.state.active.setIdx} / ${this.state.active.totalSets}`;
+            
+            if(this.state.active.setIdx === 1) {
+                 document.getElementById('btn-reorder').style.display = 'block';
             }
         }
+        this.saveActiveState();
     },
 
-    skipExercise: function() {
-        this.nextExercise();
-    },
+    skipExercise: function() { this.nextExercise(); },
 
-    nextExercise: function() {
-        this.stopAllTimers();
-        // Use sessionExercises
+    nextExercise: function(preserveRestTimer = false) {
+        if (!preserveRestTimer) {
+            this.stopAllTimers();
+        } else {
+            this.stopStopwatch();
+        }
+
         if (this.state.active.exIdx < this.state.active.sessionExercises.length - 1) {
             this.state.active.exIdx++;
             this.state.active.setIdx = 1;
+            this.saveActiveState();
             this.loadActiveExercise();
         } else {
             this.finishWorkout();
@@ -633,12 +730,16 @@ const app = {
     },
 
     finishWorkout: function() {
-        const endTime = Date.now();
-        const durationMin = Math.round((endTime - this.state.active.startTime) / 60000);
+        this.stopAllTimers();
+        
+        const currentSessionDur = Date.now() - this.state.active.startTime;
+        const totalDurMs = this.state.active.accumulatedTime + currentSessionDur;
+        const durationMin = Math.round(totalDurMs / 60000);
+        
         const dateStr = new Date().toLocaleDateString('he-IL');
-        const progTitle = this.state.routines[this.state.currentProgId].title;
+        const progTitle = this.state.routines[this.state.currentProgId]?.title || "אימון מזדמן";
 
-        const tempItem = {
+        this.state.active.summary = {
             program: this.state.currentProgId,
             programTitle: progTitle, 
             date: dateStr,
@@ -649,7 +750,8 @@ const app = {
         const meta = document.getElementById('summary-meta');
         meta.innerText = `${dateStr} | ${durationMin} דקות`;
         const textBox = document.getElementById('summary-text');
-        textBox.innerText = this.generateLogText(tempItem);
+        textBox.innerText = this.generateLogText(this.state.active.summary);
+        
         this.nav('screen-summary');
     },
 
@@ -662,7 +764,7 @@ const app = {
             if(ex.sets.length > 0) {
                 txt += `✅ ${ex.name}\n`;
                 const exDef = this.getExerciseDef(ex.id);
-                const isTime = (ex.id.includes('plank') || exDef.settings.unit === 'bodyweight' && ex.sets[0].w === 0);
+                const isTime = (parseFloat(exDef.settings.step) === 0 || ex.id.includes('plank') || (exDef.settings.unit === 'bodyweight' && ex.sets[0].w === 0));
                 const isSingleSide = exDef.settings.isUnilateral;
 
                 ex.sets.forEach((s, i) => {
@@ -689,34 +791,81 @@ const app = {
 
     copySummaryToClipboard: function() {
         const txt = document.getElementById('summary-text').innerText;
-        this.copyText(txt);
+        return this.copyText(txt); // Now returns a promise
     },
 
-    saveAndHome: function() {
-        if (this.state.active.log.length > 0) {
-            const progTitle = this.state.routines[this.state.currentProgId].title;
+    finishAndCopy: function() {
+        const summary = this.state.active.summary;
+        if (summary) {
             this.state.history.push({
-                date: new Date().toLocaleDateString('he-IL'),
+                date: summary.date,
                 timestamp: Date.now(),
-                program: this.state.currentProgId,
-                programTitle: progTitle, 
-                data: this.state.active.log,
-                duration: Math.round((Date.now() - this.state.active.startTime) / 60000)
+                program: summary.program,
+                programTitle: summary.programTitle, 
+                data: summary.data,
+                duration: summary.duration
             });
             this.saveData();
+            localStorage.removeItem(CONFIG.KEYS.ACTIVE_WORKOUT);
+            
+            // Fixed Bug: Wait for alert before reloading
+            this.copySummaryToClipboard().then(() => {
+                window.location.reload(); 
+            });
         }
-        window.location.reload();
     },
 
-    /* --- USER SELECTOR (SWAP/ADD) --- */
+    /* --- REORDER / SWAP LOGIC --- */
     
-    openSwapExercise: function() {
-        this.state.userSelector.mode = 'swap';
-        this.renderUserSelector('core');
-        document.getElementById('user-sel-title').innerText = "החליפי תרגיל";
-        document.getElementById('user-selector-modal').style.display = 'flex';
+    openReorder: function() {
+        const exInst = this.state.active.sessionExercises[this.state.active.exIdx];
+        const exDef = this.getExerciseDef(exInst.id);
+        
+        if (exDef.cat === 'core') {
+            this.state.userSelector.mode = 'swap';
+            this.renderUserSelector('core');
+            document.getElementById('user-sel-title').innerText = "החליפי תרגיל";
+            document.getElementById('user-selector-modal').style.display = 'flex';
+        } else {
+            this.renderReorderList();
+            document.getElementById('reorder-modal').style.display = 'flex';
+        }
     },
 
+    renderReorderList: function() {
+        const list = document.getElementById('reorder-list');
+        list.innerHTML = '';
+        const futureExercises = this.state.active.sessionExercises.slice(this.state.active.exIdx + 1);
+        
+        if (futureExercises.length === 0) {
+            list.innerHTML = '<div style="text-align:center; padding:20px;">אין תרגילים נוספים להחלפה</div>';
+            return;
+        }
+
+        futureExercises.forEach((ex, idx) => {
+             const realIndex = this.state.active.exIdx + 1 + idx;
+             list.innerHTML += `
+             <div class="list-item" onclick="app.selectReorderExercise(${realIndex})">
+                <span style="font-weight:700">${ex.name}</span>
+                <span style="color:var(--primary)">בחר</span>
+             </div>`;
+        });
+    },
+
+    selectReorderExercise: function(targetIndex) {
+        const chosenEx = this.state.active.sessionExercises.splice(targetIndex, 1)[0];
+        this.state.active.sessionExercises.splice(this.state.active.exIdx, 0, chosenEx);
+        this.closeReorder();
+        this.saveActiveState();
+        this.loadActiveExercise();
+    },
+
+    closeReorder: function() {
+        document.getElementById('reorder-modal').style.display = 'none';
+    },
+
+    /* --- USER SELECTOR (Core Swap/Add) --- */
+    
     openAddCoreExercise: function() {
         this.state.userSelector.mode = 'add';
         this.renderUserSelector('core');
@@ -732,10 +881,7 @@ const app = {
         const list = document.getElementById('user-sel-list');
         list.innerHTML = '';
         
-        // Filter by category
         let candidates = this.state.exercises.filter(e => e.cat === cat);
-
-        // If 'Add' mode, filter out exercises already done in session
         if (this.state.userSelector.mode === 'add') {
              const currentIds = this.state.active.sessionExercises.map(e => e.id);
              candidates = candidates.filter(e => !currentIds.includes(e.id));
@@ -752,45 +898,37 @@ const app = {
 
     userSelectExercise: function(exId) {
         const newExDef = this.getExerciseDef(exId);
+        const currentEx = this.state.active.sessionExercises[this.state.active.exIdx];
         
         if (this.state.userSelector.mode === 'swap') {
-            // REPLACE current exercise
+            // Fixed Bug: Preserve sets and rest settings when swapping
             this.state.active.sessionExercises[this.state.active.exIdx] = {
-                id: exId,
-                name: newExDef.name,
-                sets: 3, // Reset to default sets
-                rest: 60
+                id: exId, name: newExDef.name, 
+                sets: currentEx.sets || 3, 
+                rest: currentEx.rest || 60,
+                note: currentEx.note || ''
             };
             this.loadActiveExercise();
         } else if (this.state.userSelector.mode === 'add') {
-            // INSERT after current exercise
-            const newExInst = {
-                id: exId,
-                name: newExDef.name,
-                sets: 3,
-                rest: 60
-            };
+            const newExInst = { id: exId, name: newExDef.name, sets: 3, rest: 60 };
             this.state.active.sessionExercises.splice(this.state.active.exIdx + 1, 0, newExInst);
-            // Move to it immediately
-            this.nextExercise();
+            // Fixed Bug: Pass true to preserve user's rest timer after adding exercise
+            this.nextExercise(true);
         }
-
+        this.saveActiveState();
         this.closeUserSelector();
     },
 
-    /* --- ADMIN: VIEWS & NAVIGATION --- */
+    /* --- ADMIN --- */
 
     openAdminHome: function() { 
         if (this.state.active.on) { alert("לא ניתן להיכנס לניהול בזמן אימון פעיל."); return; }
-        
         document.getElementById('admin-modal').style.display = 'flex';
-        // Reset Views
         document.getElementById('admin-view-home').style.display = 'flex';
         document.getElementById('admin-view-edit').style.display = 'none';
         document.getElementById('admin-view-selector').style.display = 'none';
         document.getElementById('admin-view-ex-manager').style.display = 'none';
         document.getElementById('admin-view-ex-edit').style.display = 'none';
-        
         this.renderAdminList();
     },
 
@@ -809,7 +947,6 @@ const app = {
 
         ids.forEach(pid => {
             const prog = this.state.routines[pid];
-            // No "Edit" button, click card to edit.
             list.innerHTML += `
             <div class="manager-item" onclick="app.openAdminEdit('${pid}')">
                 <div class="manager-info">
@@ -826,7 +963,7 @@ const app = {
 
     createNewProgram: function() {
         const id = 'prog_' + Date.now();
-        this.state.routines[id] = { title: 'תוכנית חדשה', exercises: [] };
+        this.state.routines[id] = { title: 'תוכנית חדשה', exercises:[] };
         this.openAdminEdit(id);
     },
 
@@ -849,11 +986,9 @@ const app = {
     openAdminEdit: function(pid) {
         this.state.admin.viewProgId = pid;
         this.state.admin.tempExercises = JSON.parse(JSON.stringify(this.state.routines[pid].exercises));
-        
         document.getElementById('admin-view-home').style.display = 'none';
         document.getElementById('admin-view-edit').style.display = 'flex';
         document.getElementById('edit-prog-title').value = this.state.routines[pid].title;
-        
         this.renderEditorList();
     },
 
@@ -886,7 +1021,6 @@ const app = {
                 </div>
                 <div class="row-btm">
                     <button class="tip-btn ${hasTip}" onclick="app.openTipModal(${i})">💡 טיפ</button>
-                    
                     <div class="stepper">
                         <div class="step-label" style="padding-right:5px;">סטים</div>
                         <button class="step-btn" onclick="app.updateTempEx(${i}, 'sets', -1)">-</button>
@@ -926,7 +1060,7 @@ const app = {
         this.renderEditorList();
     },
 
-    /* --- ADMIN: EXERCISE MANAGER (NEW) --- */
+    /* --- EXERCISE MANAGER --- */
     
     openExerciseManager: function() {
         document.getElementById('admin-view-home').style.display = 'none';
@@ -972,12 +1106,8 @@ const app = {
     createNewExerciseInBank: function() {
         const newId = 'custom_' + Date.now();
         this.state.admin.editingExId = newId;
-        // Default Template
         this.fillExerciseEditor({
-            id: newId,
-            name: 'תרגיל חדש',
-            cat: 'other',
-            videoUrl: '',
+            id: newId, name: 'תרגיל חדש', cat: 'other', videoUrl: '',
             settings: { unit: 'kg', step: 2.5, min: 0, max: 100, isUnilateral: false }
         });
     },
@@ -991,7 +1121,6 @@ const app = {
     fillExerciseEditor: function(ex) {
         document.getElementById('admin-view-ex-manager').style.display = 'none';
         document.getElementById('admin-view-ex-edit').style.display = 'flex';
-
         document.getElementById('edit-ex-name').value = ex.name;
         document.getElementById('edit-ex-cat').value = ex.cat;
         document.getElementById('edit-ex-video').value = ex.videoUrl || '';
@@ -1014,20 +1143,15 @@ const app = {
                 step: Number(document.getElementById('edit-ex-step').value),
                 min: Number(document.getElementById('edit-ex-min').value),
                 max: Number(document.getElementById('edit-ex-max').value),
-                // Note: Keeping key as 'isUnilateral' for compatibility, but UI label says "Single Side Weight"
                 isUnilateral: document.getElementById('edit-ex-unilateral').checked
             }
         };
 
         const existingIdx = this.state.exercises.findIndex(e => e.id === exId);
-        if (existingIdx > -1) {
-            this.state.exercises[existingIdx] = newEx;
-        } else {
-            this.state.exercises.push(newEx);
-        }
+        if (existingIdx > -1) this.state.exercises[existingIdx] = newEx;
+        else this.state.exercises.push(newEx);
         
         this.saveData();
-        // Go back to list
         document.getElementById('admin-view-ex-edit').style.display = 'none';
         document.getElementById('admin-view-ex-manager').style.display = 'flex';
         this.renderExerciseManagerList();
@@ -1038,7 +1162,7 @@ const app = {
         document.getElementById('admin-view-ex-manager').style.display = 'flex';
     },
 
-    /* --- SELECTOR (Uses Dynamic Bank) --- */
+    /* --- SELECTOR --- */
     openAdminSelector: function() {
         document.getElementById('admin-view-edit').style.display = 'none';
         document.getElementById('admin-view-selector').style.display = 'flex';
@@ -1074,7 +1198,6 @@ const app = {
         const search = document.getElementById('selector-search').value.toLowerCase();
         const cat = this.state.admin.selectorFilter;
 
-        // Use Dynamic Bank
         this.state.exercises.filter(e => {
             const matchName = e.name.toLowerCase().includes(search);
             const matchCat = cat === 'all' || e.cat === cat;
@@ -1091,14 +1214,8 @@ const app = {
     addExerciseFromSelector: function(exId) {
         const bankEx = this.getExerciseDef(exId);
         const newEx = {
-            id: bankEx.id,
-            name: bankEx.name,
-            sets: 3,
-            rest: 60,
-            note: '',
-            target: {w:10, r:12}
+            id: bankEx.id, name: bankEx.name, sets: 3, rest: 60, note: '', target: {w:10, r:12}
         };
-
         this.state.admin.tempExercises.push(newEx);
         this.closeSelector();
         this.renderEditorList();
@@ -1116,9 +1233,7 @@ const app = {
         document.getElementById('tip-input').value = ex.note || '';
         document.getElementById('tip-modal').style.display = 'flex';
     },
-
     closeTipModal: function() { document.getElementById('tip-modal').style.display = 'none'; },
-    
     saveTip: function() {
         const idx = this.state.admin.editTipEx;
         if(idx !== null) {
@@ -1130,14 +1245,7 @@ const app = {
 
     /* --- BACKUP & RESTORE --- */
     exportConfig: function() {
-        // Now includes Custom Exercises!
-        const data = { 
-            type: 'config', 
-            ver: CONFIG.VERSION, 
-            date: new Date().toLocaleDateString(), 
-            routines: this.state.routines,
-            exercises: this.state.exercises 
-        };
+        const data = { type: 'config', ver: CONFIG.VERSION, date: new Date().toLocaleDateString(), routines: this.state.routines, exercises: this.state.exercises };
         this.downloadJSON(data, `gymstart_config_v${CONFIG.VERSION}_${Date.now()}.json`);
     },
 
@@ -1150,9 +1258,7 @@ const app = {
                 if (json.type !== 'config') { alert("קובץ שגוי."); return; }
                 if(confirm("עדכון תוכניות יחליף את ההגדרות ואת מאגר התרגילים. להמשיך?")) {
                     app.state.routines = json.routines;
-                    // Import Exercises if exist, otherwise keep current
                     if(json.exercises) app.state.exercises = json.exercises;
-                    
                     app.saveData();
                     alert("ההגדרות עודכנו בהצלחה!");
                     location.reload();
@@ -1176,7 +1282,6 @@ const app = {
                 const json = JSON.parse(e.target.result);
                 let newHist = Array.isArray(json) ? json : json.history;
                 if (!newHist) throw new Error();
-
                 if(confirm(`נמצאו ${newHist.length} רשומות. למזג?`)) {
                     app.state.history = [...app.state.history, ...newHist];
                     app.state.history.sort((a,b) => (a.timestamp || 0) - (b.timestamp || 0));
@@ -1205,14 +1310,13 @@ const app = {
 
     /* --- HISTORY VIEW --- */
     showHistory: function() {
-        this.state.historySelection = [];
+        this.state.historySelection =[];
         this.updateHistoryActions(); 
         const list = document.getElementById('history-list');
         list.innerHTML = '';
         [...this.state.history].reverse().forEach((h, i) => {
             const realIdx = this.state.history.length - 1 - i;
             const pName = h.programTitle || h.program;
-            
             list.innerHTML += `
                 <div class="hist-item-row">
                     <div style="display:flex; align-items:center">
@@ -1227,8 +1331,7 @@ const app = {
                             ${h.data.length} תרגילים • ${h.duration||'?'} דק'
                         </div>
                     </div>
-                </div>
-            `;
+                </div>`;
         });
         this.nav('screen-history');
     },
@@ -1246,10 +1349,11 @@ const app = {
     },
 
     selectAllHistory: function() {
-        const inputs = document.querySelectorAll('.custom-chk');
+        // Fixed Bug: Scope selector to avoid grabbing admin checkboxes
+        const inputs = document.querySelectorAll('#history-list .custom-chk');
         const allSelected = this.state.historySelection.length === this.state.history.length && this.state.history.length > 0;
         if (allSelected) {
-            this.state.historySelection = [];
+            this.state.historySelection =[];
             inputs.forEach(i => i.checked = false);
         } else {
             this.state.historySelection = this.state.history.map((_, i) => i);
@@ -1269,7 +1373,7 @@ const app = {
     copySelectedHistory: function() {
         if(this.state.historySelection.length === 0) { alert("לא נבחר אימון"); return; }
         let fullTxt = "";
-        const sortedSel = [...this.state.historySelection].sort((a,b) => a-b);
+        const sortedSel =[...this.state.historySelection].sort((a,b) => a-b);
         sortedSel.forEach((idx, i) => {
             const h = this.state.history[idx];
             fullTxt += this.generateLogText(h);
@@ -1284,7 +1388,8 @@ const app = {
         const pName = item.programTitle || item.program;
         
         const header = document.getElementById('hist-meta-header');
-        header.innerHTML = `<h3>${pName}</h3><p>${item.date} | ${item.duration} דק'</p>`;
+        // Fixed Bug: Fallback for undefined duration
+        header.innerHTML = `<h3>${pName}</h3><p>${item.date} | ${item.duration || '?'} דק'</p>`;
 
         const content = document.getElementById('hist-detail-content');
         let html = '';
@@ -1292,18 +1397,16 @@ const app = {
             html += `<div style="background:var(--bg-card); padding:15px; border-radius:12px; margin-bottom:10px; border:1px solid #222;">
                 <div style="font-weight:700; color:var(--primary)">${ex.name}</div>`;
             const exDef = this.getExerciseDef(ex.id);
-            const isTime = (ex.id.includes('plank') || (exDef.settings.unit === 'bodyweight' && ex.sets[0].w === 0));
+            const isTime = (parseFloat(exDef.settings.step) === 0 || ex.id.includes('plank') || (exDef.settings.unit === 'bodyweight' && ex.sets[0].w === 0));
             const isSingleSide = exDef.settings.isUnilateral;
             
             ex.sets.forEach((s, si) => {
                 let valStr;
-                if(isTime && s.w === 0) {
-                     valStr = `${s.r} שנ׳`;
-                } else {
+                if(isTime && s.w === 0) valStr = `${s.r} שנ׳`;
+                else {
                      valStr = `${s.w} ק״ג`;
                      if(isSingleSide) valStr += ' (לצד)';
                      valStr += ` | ${s.r} חזרות`;
-                     
                      if(exDef.settings.unit === 'plates') valStr = `${s.w} פלטות | ${s.r} חזרות`;
                      if(s.w === 0) valStr = `משקל גוף | ${s.r} חזרות`;
                 }
@@ -1336,18 +1439,27 @@ const app = {
         }
     },
 
+    // Fixed Bug: Promise-based copyText to prevent alerts from being eaten by reload
     copyText: function(txt) {
-        if (navigator.clipboard) {
-            navigator.clipboard.writeText(txt).then(() => alert("הועתק!"));
-        } else {
-            const ta = document.createElement('textarea');
-            ta.value = txt;
-            document.body.appendChild(ta);
-            ta.select();
-            document.execCommand('copy');
-            document.body.removeChild(ta);
-            alert("הועתק!");
-        }
+        return new Promise((resolve) => {
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(txt).then(() => {
+                    alert("הועתק!");
+                    resolve();
+                }).catch(() => {
+                    resolve();
+                });
+            } else {
+                const ta = document.createElement('textarea');
+                ta.value = txt;
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                alert("הועתק!");
+                resolve();
+            }
+        });
     }
 };
 
