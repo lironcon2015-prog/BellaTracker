@@ -1,10 +1,12 @@
 /**
- * GYMSTART V1.8.0 (Bug Fixes & Timer Upgrades)
+ * GYMSTART V1.8.0 (Bug Fixes & Timer Upgrades + Stats Strip & Win Card)
  * - Endless Rest Timer (Counts up seamlessly, visually stops at 100%).
  * - Fixed Workout duration gap (Page refresh & screen-off persistence).
  * - Fixed "Undo Set" UI state when totalSets === 1.
  * - Current Program ID preserved safely in State to avoid "Casual Workout" bug.
  * - Added support for Custom Time/Stopwatch exercises.
+ * - NEW: Win Card on Summary Screen.
+ * - NEW: Enhanced Stats Strip with Sparkline.
  */
 
 const CONFIG = {
@@ -436,21 +438,102 @@ const app = {
 
     renderStatsStrip: function(exId, unit) {
         const strip = document.getElementById('last-stat-strip');
-        let lastLog = null;
-        for(let i=this.state.history.length-1; i>=0; i--) {
+        strip.innerHTML = '';
+
+        // אוספים את כל ההיסטוריה של התרגיל הזה
+        const exHistory =[];
+        for (let i = 0; i < this.state.history.length; i++) {
             const sess = this.state.history[i];
             const found = sess.data.find(e => e.id === exId);
-            if(found && found.sets.length > 0) { lastLog = found.sets[found.sets.length-1]; break; }
+            if (found && found.sets.length > 0) {
+                exHistory.push(found);
+            }
         }
-        if (!lastLog) { strip.innerText = "אין הישג קודם"; return; }
 
+        if (exHistory.length === 0) {
+            strip.innerHTML = '<div class="strip-no-data">אין הישג קודם</div>';
+            return;
+        }
+
+        const exDef = this.getExerciseDef(exId);
+        const isBodyweight = exDef.settings.unit === 'bodyweight';
         const isTime = this.state.active.isStopwatch;
-        const isBody = (unit === 'bodyweight' && !isTime);
-        let wStr = isBody ? 'משקל גוף' : `${lastLog.w} ק״ג`;
-        if (unit === 'plates') wStr = `${lastLog.w} פלטות`;
-        let rStr = isTime ? `${lastLog.r} שניות` : `${lastLog.r} חזרות`;
-        
-        strip.innerText = (isTime && unit === 'bodyweight') ? `${rStr} (אימון קודם)` : `${wStr} | ${rStr}`;
+
+        // פונקציה שמחזירה את המדד הכי גבוה מרשומת תרגיל
+        const getBest = (exRecord) => {
+            if (isTime || isBodyweight) return Math.max(...exRecord.sets.map(s => s.r));
+            return Math.max(...exRecord.sets.map(s => s.w));
+        };
+
+        const getUnitLabel = () => {
+            if (isTime) return 'שנ\'';
+            if (isBodyweight) return 'חזר\'';
+            if (unit === 'plates') return 'פלטות';
+            return 'ק״ג';
+        };
+
+        const unitLabel = getUnitLabel();
+        const lastSession = exHistory[exHistory.length - 1];
+        const lastBest = getBest(lastSession);
+
+        // מגמה: השוואה לפני-אחרון
+        let trendHtml = '';
+        if (exHistory.length >= 2) {
+            const prevBest = getBest(exHistory[exHistory.length - 2]);
+            const diff = lastBest - prevBest;
+            if (diff > 0) {
+                trendHtml = `<div class="strip-trend up">▲ +${diff} ${unitLabel}</div>`;
+            } else if (diff < 0) {
+                trendHtml = `<div class="strip-trend down">▼ ${diff} ${unitLabel}</div>`;
+            } else {
+                trendHtml = `<div class="strip-trend neutral">ללא שינוי</div>`;
+            }
+        }
+
+        // ספארקליין מ-5 האימונים האחרונים
+        const sparkData = exHistory.slice(-5).map(e => getBest(e));
+        let sparkHtml = '';
+        if (sparkData.length >= 2) {
+            const minV = Math.min(...sparkData);
+            const maxV = Math.max(...sparkData);
+            const range = maxV - minV || 1;
+            const W = 64, H = 28, pad = 3;
+            const points = sparkData.map((v, i) => {
+                const x = pad + (i / (sparkData.length - 1)) * (W - pad * 2);
+                const y = H - pad - ((v - minV) / range) * (H - pad * 2);
+                return `${x.toFixed(1)},${y.toFixed(1)}`;
+            });
+            const lastPt = points[points.length - 1].split(',');
+            sparkHtml = `
+                <svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="display:block;overflow:visible;">
+                    <polyline points="${points.join(' ')}" fill="none" stroke="#00ffee" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.7"/>
+                    <circle cx="${lastPt[0]}" cy="${lastPt[1]}" r="2.5" fill="#00ffee"/>
+                </svg>`;
+        }
+
+        // שיא אישי
+        const allBests = exHistory.map(e => getBest(e));
+        const pr = Math.max(...allBests);
+        const prSessionIndex = allBests.lastIndexOf(pr);
+        const isCurrentPR = (prSessionIndex === exHistory.length - 1);
+        const prLabel = isCurrentPR ? '⭐ שיא!' : `${pr} ${unitLabel}`;
+        const prColor = isCurrentPR ? 'var(--primary)' : '#777';
+
+        // בונים את ה-HTML הסופי
+        strip.innerHTML = `
+            <div class="strip-section">
+                <div class="strip-lbl">אימון קודם</div>
+                <div class="strip-val">${lastBest} ${unitLabel}</div>
+                ${trendHtml}
+            </div>
+            <div class="strip-section">
+                <div class="strip-lbl">מגמה</div>
+                ${sparkHtml || '<div class="strip-no-data" style="font-size:0.75rem;">מעט נתונים</div>'}
+            </div>
+            <div class="strip-section">
+                <div class="strip-lbl">שיא אישי</div>
+                <div class="strip-val" style="color:${prColor}; font-size:${isCurrentPR ? '0.85rem' : '1rem'};">${prLabel}</div>
+            </div>`;
     },
 
     populateSelects: function(exDef) {
@@ -747,12 +830,101 @@ const app = {
             data: this.state.active.log
         };
 
-        const meta = document.getElementById('summary-meta');
-        meta.innerText = `${dateStr} | ${durationMin} דקות`;
         const textBox = document.getElementById('summary-text');
         textBox.innerText = this.generateLogText(this.state.active.summary);
         
+        this.renderSummaryStats(this.state.active.summary);
+        this.renderWinCard(this.state.active.summary);
+        
         this.nav('screen-summary');
+    },
+
+    renderSummaryStats: function(summary) {
+        const totalSets = summary.data.reduce((acc, ex) => acc + ex.sets.length, 0);
+        const exCount = summary.data.filter(ex => ex.sets.length > 0).length;
+        
+        const statsHtml = `
+            <div class="summary-stats-row">
+                <div class="summary-stat-item">
+                    <div class="summary-stat-val">${exCount}</div>
+                    <div class="summary-stat-lbl">תרגילים</div>
+                </div>
+                <div class="summary-stat-item">
+                    <div class="summary-stat-val">${totalSets}</div>
+                    <div class="summary-stat-lbl">סטים</div>
+                </div>
+                <div class="summary-stat-item">
+                    <div class="summary-stat-val">${summary.duration}</div>
+                    <div class="summary-stat-lbl">דקות</div>
+                </div>
+            </div>`;
+        
+        document.getElementById('summary-meta').innerHTML = 
+            `<div style="margin-bottom:4px;">${summary.date}</div>${statsHtml}`;
+    },
+
+    renderWinCard: function(summary) {
+        const winCard = document.getElementById('win-card');
+        const winList = document.getElementById('win-list');
+        winCard.style.display = 'none';
+        winList.innerHTML = '';
+
+        // מחפשים את האימון האחרון מאותה תוכנית בהיסטוריה
+        const prevSession = [...this.state.history]
+            .reverse()
+            .find(h => h.program === summary.program);
+
+        if (!prevSession) return;
+
+        let hasAnyWin = false;
+        let html = '';
+
+        summary.data.forEach(ex => {
+            if (ex.sets.length === 0) return;
+
+            const prevEx = prevSession.data.find(p => p.id === ex.id);
+            if (!prevEx || prevEx.sets.length === 0) return;
+
+            const exDef = this.getExerciseDef(ex.id);
+            const isBodyweight = exDef.settings.unit === 'bodyweight';
+
+            // מחשבים את המדד הרלוונטי לכל סט (משקל לרגיל, חזרות לגוף)
+            const getCurrentBest = (sets) => {
+                if (isBodyweight) return Math.max(...sets.map(s => s.r));
+                return Math.max(...sets.map(s => s.w));
+            };
+
+            const currentBest = getCurrentBest(ex.sets);
+            const prevBest = getCurrentBest(prevEx.sets);
+
+            const unit = isBodyweight ? 'חזר\'' : (exDef.settings.unit === 'plates' ? 'פלטות' : 'ק״ג');
+
+            if (currentBest > prevBest) {
+                hasAnyWin = true;
+                html += `
+                    <div class="win-row">
+                        <div class="win-row-name">
+                            <span class="win-badge">+</span>${ex.name}
+                        </div>
+                        <div>
+                            <span class="win-prev">${prevBest} ${unit}</span>
+                            <span class="win-arrow">←</span>
+                            <span class="win-new">${currentBest} ${unit}</span>
+                        </div>
+                    </div>`;
+            } else {
+                html += `
+                    <div class="win-row">
+                        <span class="win-row-name">${ex.name}</span>
+                        <span class="win-no-change">ללא שינוי</span>
+                    </div>`;
+            }
+        });
+
+        if (hasAnyWin) {
+            winList.innerHTML = html;
+            winCard.style.display = 'block';
+        }
     },
 
     generateLogText: function(historyItem) {
