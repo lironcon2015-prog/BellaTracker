@@ -1,12 +1,11 @@
 /**
- * GYMSTART V1.8.0 (Bug Fixes & Timer Upgrades + Stats Strip & Win Card)
+ * GYMSTART V1.8.1 (Ghost Resume Fix + Global Win Card + Tactile UI)
+ * - FIX: Ghost Resume bug resolved by turning off active state before clearing local storage.
+ * - FIX: Win Card now searches the entire history for the specific exercise, independent of program.
+ * - NEW: Added tactile visual feedback (CSS active states) across the UI.
  * - Endless Rest Timer (Counts up seamlessly, visually stops at 100%).
- * - Fixed Workout duration gap (Page refresh & screen-off persistence).
- * - Fixed "Undo Set" UI state when totalSets === 1.
  * - Current Program ID preserved safely in State to avoid "Casual Workout" bug.
- * - Added support for Custom Time/Stopwatch exercises.
- * - NEW: Win Card on Summary Screen.
- * - NEW: Enhanced Stats Strip with Sparkline.
+ * - Enhanced Stats Strip with Sparkline.
  */
 
 const CONFIG = {
@@ -16,7 +15,7 @@ const CONFIG = {
         EXERCISES: 'gymstart_v1_7_exercises_bank',
         ACTIVE_WORKOUT: 'gymstart_active_workout_state'
     },
-    VERSION: '1.8.0'
+    VERSION: '1.8.1'
 };
 
 const FEEL_MAP_TEXT = { 'easy': 'קל', 'good': 'בינוני', 'hard': 'קשה' };
@@ -61,7 +60,7 @@ const DEFAULT_ROUTINES_V17 = {
 const app = {
     state: {
         routines: {},
-        history: [],
+        history:[],
         exercises:[], 
         currentProgId: null,
         active: {
@@ -869,35 +868,42 @@ const app = {
         winCard.style.display = 'none';
         winList.innerHTML = '';
 
-        // מחפשים את האימון האחרון מאותה תוכנית בהיסטוריה
-        const prevSession = [...this.state.history]
-            .reverse()
-            .find(h => h.program === summary.program);
-
-        if (!prevSession) return;
-
         let hasAnyWin = false;
         let html = '';
 
         summary.data.forEach(ex => {
             if (ex.sets.length === 0) return;
 
-            const prevEx = prevSession.data.find(p => p.id === ex.id);
-            if (!prevEx || prevEx.sets.length === 0) return;
+            // Search entire history backwards for the last time this specific exercise was performed
+            let prevEx = null;
+            for (let i = this.state.history.length - 1; i >= 0; i--) {
+                const pastSession = this.state.history[i];
+                const found = pastSession.data.find(p => p.id === ex.id);
+                if (found && found.sets.length > 0) {
+                    prevEx = found;
+                    break;
+                }
+            }
+
+            if (!prevEx) return;
 
             const exDef = this.getExerciseDef(ex.id);
+            const isTime = (parseFloat(exDef.settings.step) === 0 || ex.id.includes('plank') || (exDef.settings.unit === 'bodyweight' && ex.sets[0].w === 0));
             const isBodyweight = exDef.settings.unit === 'bodyweight';
 
-            // מחשבים את המדד הרלוונטי לכל סט (משקל לרגיל, חזרות לגוף)
+            // Calculate the relevant metric for each set (reps for time/bodyweight, weight for regular)
             const getCurrentBest = (sets) => {
-                if (isBodyweight) return Math.max(...sets.map(s => s.r));
+                if (isTime || isBodyweight) return Math.max(...sets.map(s => s.r));
                 return Math.max(...sets.map(s => s.w));
             };
 
             const currentBest = getCurrentBest(ex.sets);
             const prevBest = getCurrentBest(prevEx.sets);
 
-            const unit = isBodyweight ? 'חזר\'' : (exDef.settings.unit === 'plates' ? 'פלטות' : 'ק״ג');
+            let unit = 'ק״ג';
+            if (isTime) unit = 'שנ\'';
+            else if (isBodyweight) unit = 'חזר\'';
+            else if (exDef.settings.unit === 'plates') unit = 'פלטות';
 
             if (currentBest > prevBest) {
                 hasAnyWin = true;
@@ -978,9 +984,13 @@ const app = {
                 duration: summary.duration
             });
             this.saveData();
+            
+            // Fix Ghost Resume: Disable active state before clearing LocalStorage 
+            // This prevents `handleVisibilityChange` from reviving the session when clipboard copies
+            this.state.active.on = false; 
             localStorage.removeItem(CONFIG.KEYS.ACTIVE_WORKOUT);
             
-            // Fixed Bug: Wait for alert before reloading
+            // Wait for alert before reloading
             this.copySummaryToClipboard().then(() => {
                 window.location.reload(); 
             });
