@@ -1,8 +1,8 @@
 /**
- * GYMSTART V1.8.3 (Static UI Restored + Deep History Match + Ghost Resume Fix)
- * - FIX: Reverted UI to static mode (removed haptics and touchstart layout shifts).
+ * GYMSTART V1.8.4 (Scroll Jump Fix + Deep History Match + Static UI)
+ * - FIX: Removed aggressive scrollIntoView() calls that caused violent screen jumps on Set Complete.
  * - FIX: isSameExercise() matching engine ensures past data is found by ID or Exact Name.
- * - FIX: Smart Defaults now correctly pulls both Weight and Reps from history.
+ * - FIX: Smart Defaults pulls BOTH Weight and Reps from previous history.
  * - FIX: Ghost Resume bug resolved by turning off active state before clearing local storage.
  * - Endless Rest Timer.
  * - Global Win Card & Enhanced Stats Strip with Sparkline.
@@ -15,7 +15,7 @@ const CONFIG = {
         EXERCISES: 'gymstart_v1_7_exercises_bank',
         ACTIVE_WORKOUT: 'gymstart_active_workout_state'
     },
-    VERSION: '1.8.3'
+    VERSION: '1.8.4'
 };
 
 const FEEL_MAP_TEXT = { 'easy': 'קל', 'good': 'בינוני', 'hard': 'קשה' };
@@ -65,7 +65,7 @@ const app = {
         currentProgId: null,
         active: {
             on: false,
-            programId: null, // Fixed Bug: Keep programId explicitly
+            programId: null,
             sessionExercises:[],
             exIdx: 0, setIdx: 1, totalSets: 3,
             log:[], 
@@ -192,7 +192,7 @@ const app = {
             this.state.active.timerInterval = null;
             this.state.active.restInterval = null;
             
-            // Fixed Bug: Reliable currentProgId recovery
+            // Reliable currentProgId recovery
             this.state.currentProgId = this.state.active.programId || Object.keys(this.state.routines)[0];
             
             // Resume Rest Timer if it was running (Continues counting endlessly)
@@ -317,7 +317,7 @@ const app = {
         };
     },
 
-    // NEW HELPER: Robust matching by ID OR Exact Name to prevent history loss
+    // Robust matching by ID OR Exact Name to prevent history loss
     isSameExercise: function(recordedEx, targetId, targetName) {
         if (recordedEx.id === targetId) return true;
         if (recordedEx.name && targetName && recordedEx.name.trim() === targetName.trim()) return true;
@@ -566,7 +566,6 @@ const app = {
             }
         }
         
-        // Fixed Bug: Fallback if min > max 
         if(wOpts.length === 0) wOpts = [parseFloat(s.min) || 0];
 
         selW.innerHTML = '';
@@ -710,17 +709,17 @@ const app = {
         this.saveActiveState();
     },
 
-    // Fixed Endless Timer
+    // Endless Timer with NO forced scroll
     startRestTimer: function(durationSec, isResume = false) {
         if (!isResume) this.stopRestTimer();
-        else if (this.state.active.restInterval) clearInterval(this.state.active.restInterval); // Clear old interval if exists
+        else if (this.state.active.restInterval) clearInterval(this.state.active.restInterval);
 
         const area = document.getElementById('rest-timer-area');
         const disp = document.getElementById('rest-timer-val');
         const ring = document.getElementById('rest-ring-prog');
         
         area.style.display = 'flex';
-        area.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // REMOVED: area.scrollIntoView({ behavior: 'smooth', block: 'center' }); to fix screen jumping
 
         this.state.active.restDuration = durationSec;
         if (!this.state.active.restStartTime || this.state.active.restStartTime === 0) {
@@ -736,7 +735,6 @@ const app = {
             let s = elapsed % 60;
             disp.innerText = `${m<10?'0'+m:m}:${s<10?'0'+s:s}`;
             
-            // Ring visually stops filling at 100%, timer continues endlessly
             let ratio = elapsed / durationSec;
             if (ratio > 1) ratio = 1; 
             const offset = MAX_OFFSET - (MAX_OFFSET * ratio); 
@@ -761,7 +759,6 @@ const app = {
     addSet: function() {
         this.state.active.totalSets++;
         
-        // Fixed Bug: AddSet UI alignment
         document.getElementById('set-badge').innerText = `סט ${this.state.active.setIdx} / ${this.state.active.totalSets}`;
         document.getElementById('btn-reorder').style.display = 'none';
         document.getElementById('decision-buttons').style.display = 'none';
@@ -771,7 +768,7 @@ const app = {
         // Ensure rest timer stays visible if it was running
         if(this.state.active.restStartTime > 0) {
              document.getElementById('rest-timer-area').style.display = 'flex';
-             document.getElementById('rest-timer-area').scrollIntoView({ behavior: 'smooth', block: 'center' });
+             // REMOVED: scrollIntoView here as well to maintain static UI
         }
         
         if(this.state.active.isStopwatch) {
@@ -907,7 +904,7 @@ const app = {
             const isTime = (parseFloat(exDef.settings.step) === 0 || ex.id.includes('plank') || (exDef.settings.unit === 'bodyweight' && ex.sets[0].w === 0));
             const isBodyweight = exDef.settings.unit === 'bodyweight';
 
-            // Calculate the relevant metric for each set (reps for time/bodyweight, weight for regular)
+            // Calculate the relevant metric for each set
             const getCurrentBest = (sets) => {
                 if (isTime || isBodyweight) return Math.max(...sets.map(s => s.r));
                 return Math.max(...sets.map(s => s.w));
@@ -985,7 +982,7 @@ const app = {
 
     copySummaryToClipboard: function() {
         const txt = document.getElementById('summary-text').innerText;
-        return this.copyText(txt); // Now returns a promise
+        return this.copyText(txt);
     },
 
     finishAndCopy: function() {
