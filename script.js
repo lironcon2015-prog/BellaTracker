@@ -561,7 +561,6 @@ const app = {
         const ring = document.getElementById('rest-ring-prog');
         
         area.style.display = 'flex';
-        area.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
         this.state.active.restDuration = durationSec;
         // If not resuming (fresh start), set start time
@@ -608,7 +607,6 @@ const app = {
         document.getElementById('next-ex-preview').style.display = 'none';
         document.getElementById('btn-finish').style.display = 'flex';
         document.getElementById('rest-timer-area').style.display = 'flex';
-        document.getElementById('rest-timer-area').scrollIntoView({ behavior: 'smooth', block: 'center' });
         
         if(this.state.active.isStopwatch) {
             this.state.active.stopwatchVal = 0;
