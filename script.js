@@ -1,11 +1,7 @@
 /**
- * GYMSTART V1.8.4 (Scroll Jump Fix + Deep History Match + Static UI)
- * - FIX: Removed aggressive scrollIntoView() calls that caused violent screen jumps on Set Complete.
- * - FIX: isSameExercise() matching engine ensures past data is found by ID or Exact Name.
- * - FIX: Smart Defaults pulls BOTH Weight and Reps from previous history.
- * - FIX: Ghost Resume bug resolved by turning off active state before clearing local storage.
- * - Endless Rest Timer.
- * - Global Win Card & Enhanced Stats Strip with Sparkline.
+ * GYMSTART V1.8.0 (Fixes Applied)
+ * - Timer Logic: Counts UP continuously, ring stops at 100%, never disappears automatically.
+ * - Core Logic: Improved detection to ensure Swap menu opens for Core exercises.
  */
 
 const CONFIG = {
@@ -15,7 +11,7 @@ const CONFIG = {
         EXERCISES: 'gymstart_v1_7_exercises_bank',
         ACTIVE_WORKOUT: 'gymstart_active_workout_state'
     },
-    VERSION: '1.8.4'
+    VERSION: '1.8.0'
 };
 
 const FEEL_MAP_TEXT = { 'easy': 'קל', 'good': 'בינוני', 'hard': 'קשה' };
@@ -65,7 +61,6 @@ const app = {
         currentProgId: null,
         active: {
             on: false,
-            programId: null,
             sessionExercises:[],
             exIdx: 0, setIdx: 1, totalSets: 3,
             log:[], 
@@ -74,11 +69,11 @@ const app = {
             timerInterval: null, restInterval: null, 
             restStartTime: 0, 
             restDuration: 60,
-            feel: 'good', 
-            isStopwatch: false, stopwatchVal: 0, swAccumulated: 0, swStartTime: 0, swIsRunning: false,
+            feel: 'good', isStopwatch: false, stopwatchVal: 0,
             inputW: 10, inputR: 12
         },
         tempActive: null,
+        
         admin: { 
             viewProgId: null, editTipEx: null, selectorFilter: 'all', exManagerFilter: 'all',
             tempExercises:[], editingExId: null 
@@ -95,10 +90,6 @@ const app = {
             this.renderHome();
             this.renderProgramSelect(); 
             if(!this.state.tempActive) this.nav('screen-home'); 
-            
-            // Handle App Pauses (Screen off / minimized) for precise timer drift recovery
-            document.addEventListener('visibilitychange', () => this.handleVisibilityChange());
-            
         } catch (e) {
             console.error(e);
             alert("שגיאה בטעינת נתונים.");
@@ -148,33 +139,13 @@ const app = {
         const currentSession = Date.now() - this.state.active.startTime;
         const stateToSave = { ...this.state.active };
         stateToSave.accumulatedTime = this.state.active.accumulatedTime + currentSession;
-        stateToSave.timerInterval = null; // Don't save live interval IDs
+        stateToSave.timerInterval = null;
         stateToSave.restInterval = null;
         
         localStorage.setItem(CONFIG.KEYS.ACTIVE_WORKOUT, JSON.stringify(stateToSave));
-        // Reset start time to now so we don't double count if we stay in the app
+        // Reset start time to now to prevent double counting
         this.state.active.accumulatedTime = stateToSave.accumulatedTime;
         this.state.active.startTime = Date.now();
-    },
-
-    handleVisibilityChange: function() {
-        if (!this.state.active.on) return;
-
-        if (document.visibilityState === 'hidden') {
-            this.saveActiveState();
-            // Pause Stopwatch correctly
-            if (this.state.active.isStopwatch && this.state.active.swIsRunning) {
-                this.state.active.swAccumulated += Date.now() - this.state.active.swStartTime;
-                clearInterval(this.state.active.timerInterval);
-            }
-        } else {
-            this.state.active.startTime = Date.now();
-            // Resume Stopwatch seamlessly
-            if (this.state.active.isStopwatch && this.state.active.swIsRunning) {
-                this.state.active.swStartTime = Date.now();
-                this.state.active.timerInterval = setInterval(() => this.tickStopwatch(), 100);
-            }
-        }
     },
 
     checkActiveWorkout: function() {
@@ -191,13 +162,11 @@ const app = {
             this.state.active.startTime = Date.now(); 
             this.state.active.timerInterval = null;
             this.state.active.restInterval = null;
+            this.state.currentProgId = this.state.active.log.length > 0 ? this.state.active.log[0].programId : Object.keys(this.state.routines)[0];
             
-            // Reliable currentProgId recovery
-            this.state.currentProgId = this.state.active.programId || Object.keys(this.state.routines)[0];
-            
-            // Resume Rest Timer if it was running (Continues counting endlessly)
+            // Resume Timer if it was running
             if (this.state.active.restStartTime > 0) {
-                 this.startRestTimer(this.state.active.restDuration, true);
+                 this.startRestTimer(this.state.active.restDuration || 60);
             }
 
             document.getElementById('resume-modal').style.display = 'none';
@@ -308,20 +277,13 @@ const app = {
         const found = this.state.exercises.find(e => e.id === exId);
         if (found) return found;
         
-        // Safety Fallback
+        // Safety Fallback for Core detection if Bank is missing
         let isCore = exId.includes('plank') || exId.includes('core') || exId.includes('situp') || exId.includes('crunch');
         return { 
             name: 'תרגיל לא ידוע', 
             cat: isCore ? 'core' : 'other', 
             settings: {unit:'kg', step:2.5, min:0, max:50} 
         };
-    },
-
-    // Robust matching by ID OR Exact Name to prevent history loss
-    isSameExercise: function(recordedEx, targetId, targetName) {
-        if (recordedEx.id === targetId) return true;
-        if (recordedEx.name && targetName && recordedEx.name.trim() === targetName.trim()) return true;
-        return false;
     },
 
     /* --- WORKOUT LOGIC --- */
@@ -335,7 +297,6 @@ const app = {
 
         this.state.active = {
             on: true,
-            programId: this.state.currentProgId, // Save for safe resume
             sessionExercises: JSON.parse(JSON.stringify(prog.exercises)),
             exIdx: 0, setIdx: 1, totalSets: 3,
             log:[], 
@@ -344,8 +305,7 @@ const app = {
             timerInterval: null, restInterval: null, 
             restStartTime: 0,
             restDuration: 60,
-            feel: 'good', 
-            isStopwatch: false, stopwatchVal: 0, swAccumulated: 0, swStartTime: 0, swIsRunning: false,
+            feel: 'good', isStopwatch: false, stopwatchVal: 0,
             inputW: 10, inputR: 12
         };
         
@@ -376,6 +336,7 @@ const app = {
             if (exDef.cat === 'core') reorderBtn.innerText = "החליפי תרגיל";
             else reorderBtn.innerText = "שינוי סדר";
             
+            // Hide if it's the last exercise and not core
             if (exDef.cat !== 'core' && this.state.active.exIdx >= this.state.active.sessionExercises.length - 1) {
                  reorderBtn.style.display = 'none';
             }
@@ -389,163 +350,64 @@ const app = {
             noteEl.style.display = 'block';
         } else noteEl.style.display = 'none';
 
-        // Custom time exercise support (step === 0 indicates time/static exercise)
-        const stepVal = parseFloat(exDef.settings.step);
-        const isTime = (stepVal === 0 || exInst.id.includes('plank') || exInst.id.includes('static'));
-        this.state.active.isStopwatch = isTime;
-
         this.renderStatsStrip(exInst.id, exDef.settings.unit);
+
+        const isTime = (exDef.settings.unit === 'bodyweight' && (exInst.id.includes('plank') || exInst.id.includes('static')));
+        this.state.active.isStopwatch = isTime;
 
         if (isTime) {
             document.getElementById('cards-container').style.display = 'none';
             document.getElementById('stopwatch-container').style.display = 'flex';
             this.state.active.stopwatchVal = 0;
-            this.state.active.swAccumulated = 0;
-            this.state.active.swStartTime = 0;
-            this.state.active.swIsRunning = false;
             this.stopStopwatch();
             document.getElementById('sw-display').innerText = "00:00";
             document.getElementById('btn-sw-toggle').classList.remove('running');
             document.getElementById('btn-sw-toggle').innerText = "▶";
+            document.getElementById('rest-timer-area').style.display = 'none';
         } else {
             document.getElementById('cards-container').style.display = 'flex';
             document.getElementById('stopwatch-container').style.display = 'none';
             document.getElementById('unit-label-card').innerText = exDef.settings.unit === 'plates' ? 'פלטות' : 'ק״ג';
             
-            // SMART DEFAULTS: Pulling both Weight and Reps from history
             let smartWeight = exInst.target?.w || 10;
-            let smartReps = exInst.target?.r || 12;
-            
             for(let i=this.state.history.length-1; i>=0; i--) {
                 const sess = this.state.history[i];
-                const found = sess.data.find(e => this.isSameExercise(e, exInst.id, exDef.name));
+                const found = sess.data.find(e => e.id === exInst.id);
                 if(found && found.sets.length > 0) {
-                    const lastSet = found.sets[found.sets.length-1];
-                    smartWeight = lastSet.w;
-                    smartReps = lastSet.r;
+                    smartWeight = found.sets[found.sets.length-1].w;
                     break;
                 }
             }
             this.state.active.inputW = smartWeight;
-            this.state.active.inputR = smartReps;
+            this.state.active.inputR = exInst.target?.r || 12;
             this.populateSelects(exDef);
         }
 
         this.state.active.feel = 'good';
         this.updateFeelUI();
-        
-        // UI reset for start of exercise
         document.getElementById('decision-buttons').style.display = 'none';
         document.getElementById('next-ex-preview').style.display = 'none';
         document.getElementById('btn-finish').style.display = 'flex';
-        
-        // Timer display (Only hide if it wasn't running)
-        if (!this.state.active.restStartTime) {
-             document.getElementById('rest-timer-area').style.display = 'none';
-        } else {
-             document.getElementById('rest-timer-area').style.display = 'flex';
-        }
+        document.getElementById('rest-timer-area').style.display = 'none';
     },
 
     renderStatsStrip: function(exId, unit) {
         const strip = document.getElementById('last-stat-strip');
-        strip.innerHTML = '';
-        
-        const exDef = this.getExerciseDef(exId);
-
-        // אוספים את כל ההיסטוריה של התרגיל הזה
-        const exHistory =[];
-        for (let i = 0; i < this.state.history.length; i++) {
+        let lastLog = null;
+        for(let i=this.state.history.length-1; i>=0; i--) {
             const sess = this.state.history[i];
-            const found = sess.data.find(e => this.isSameExercise(e, exId, exDef.name));
-            if (found && found.sets.length > 0) {
-                exHistory.push(found);
-            }
+            const found = sess.data.find(e => e.id === exId);
+            if(found && found.sets.length > 0) { lastLog = found.sets[found.sets.length-1]; break; }
         }
+        if (!lastLog) { strip.innerText = "אין הישג קודם"; return; }
 
-        if (exHistory.length === 0) {
-            strip.innerHTML = '<div class="strip-no-data">אין הישג קודם</div>';
-            return;
-        }
-
-        const isBodyweight = exDef.settings.unit === 'bodyweight';
         const isTime = this.state.active.isStopwatch;
-
-        // פונקציה שמחזירה את המדד הכי גבוה מרשומת תרגיל
-        const getBest = (exRecord) => {
-            if (isTime || isBodyweight) return Math.max(...exRecord.sets.map(s => s.r));
-            return Math.max(...exRecord.sets.map(s => s.w));
-        };
-
-        const getUnitLabel = () => {
-            if (isTime) return 'שנ\'';
-            if (isBodyweight) return 'חזר\'';
-            if (unit === 'plates') return 'פלטות';
-            return 'ק״ג';
-        };
-
-        const unitLabel = getUnitLabel();
-        const lastSession = exHistory[exHistory.length - 1];
-        const lastBest = getBest(lastSession);
-
-        // מגמה: השוואה לפני-אחרון
-        let trendHtml = '';
-        if (exHistory.length >= 2) {
-            const prevBest = getBest(exHistory[exHistory.length - 2]);
-            const diff = lastBest - prevBest;
-            if (diff > 0) {
-                trendHtml = `<div class="strip-trend up">▲ +${diff} ${unitLabel}</div>`;
-            } else if (diff < 0) {
-                trendHtml = `<div class="strip-trend down">▼ ${diff} ${unitLabel}</div>`;
-            } else {
-                trendHtml = `<div class="strip-trend neutral">ללא שינוי</div>`;
-            }
-        }
-
-        // ספארקליין מ-5 האימונים האחרונים
-        const sparkData = exHistory.slice(-5).map(e => getBest(e));
-        let sparkHtml = '';
-        if (sparkData.length >= 2) {
-            const minV = Math.min(...sparkData);
-            const maxV = Math.max(...sparkData);
-            const range = maxV - minV || 1;
-            const W = 64, H = 28, pad = 3;
-            const points = sparkData.map((v, i) => {
-                const x = pad + (i / (sparkData.length - 1)) * (W - pad * 2);
-                const y = H - pad - ((v - minV) / range) * (H - pad * 2);
-                return `${x.toFixed(1)},${y.toFixed(1)}`;
-            });
-            const lastPt = points[points.length - 1].split(',');
-            sparkHtml = `
-                <svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="display:block;overflow:visible;">
-                    <polyline points="${points.join(' ')}" fill="none" stroke="#00ffee" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.7"/>
-                    <circle cx="${lastPt[0]}" cy="${lastPt[1]}" r="2.5" fill="#00ffee"/>
-                </svg>`;
-        }
-
-        // שיא אישי
-        const allBests = exHistory.map(e => getBest(e));
-        const pr = Math.max(...allBests);
-        const prSessionIndex = allBests.lastIndexOf(pr);
-        const isCurrentPR = (prSessionIndex === exHistory.length - 1);
-        const prLabel = isCurrentPR ? '⭐ שיא!' : `${pr} ${unitLabel}`;
-        const prColor = isCurrentPR ? 'var(--primary)' : '#777';
-
-        // בונים את ה-HTML הסופי
-        strip.innerHTML = `
-            <div class="strip-section">
-                <div class="strip-lbl">אימון קודם</div>
-                <div class="strip-val">${lastBest} ${unitLabel}</div>
-                ${trendHtml}
-            </div>
-            <div class="strip-section">
-                <div class="strip-lbl">מגמה</div>
-                ${sparkHtml || '<div class="strip-no-data" style="font-size:0.75rem;">מעט נתונים</div>'}
-            </div>
-            <div class="strip-section">
-                <div class="strip-lbl">שיא אישי</div>
-                <div class="strip-val" style="color:${prColor}; font-size:${isCurrentPR ? '0.85rem' : '1rem'};">${prLabel}</div>
-            </div>`;
+        const isBody = (unit === 'bodyweight' && !isTime);
+        let wStr = isBody ? 'משקל גוף' : `${lastLog.w} ק״ג`;
+        if (unit === 'plates') wStr = `${lastLog.w} פלטות`;
+        let rStr = isTime ? `${lastLog.r} שניות` : `${lastLog.r} חזרות`;
+        
+        strip.innerText = (isTime && unit === 'bodyweight') ? `${rStr} (אימון קודם)` : `${wStr} | ${rStr}`;
     },
 
     populateSelects: function(exDef) {
@@ -565,8 +427,6 @@ const app = {
                 wOpts.push(cleanV);
             }
         }
-        
-        if(wOpts.length === 0) wOpts = [parseFloat(s.min) || 0];
 
         selW.innerHTML = '';
         wOpts.forEach(val => {
@@ -596,49 +456,35 @@ const app = {
             opt.text = val;
             selR.appendChild(opt);
         });
-        
-        // Use smart reps
         selR.value = this.state.active.inputR;
         selR.onchange = (e) => this.state.active.inputR = Number(e.target.value);
     },
 
     toggleStopwatch: function() {
         const btn = document.getElementById('btn-sw-toggle');
-        if (this.state.active.swIsRunning) {
-            // Pause
+        if (this.state.active.timerInterval) {
             clearInterval(this.state.active.timerInterval);
             this.state.active.timerInterval = null;
-            this.state.active.swIsRunning = false;
             btn.classList.remove('running');
             btn.innerText = "▶";
-            this.state.active.swAccumulated += Date.now() - this.state.active.swStartTime;
-            this.state.active.swStartTime = 0;
         } else {
-            // Start
             this.stopRestTimer();
+            const start = Date.now() - (this.state.active.stopwatchVal * 1000);
             btn.classList.add('running');
             btn.innerText = "⏹";
-            this.state.active.swIsRunning = true;
-            this.state.active.swStartTime = Date.now();
-            if(!this.state.active.swAccumulated) this.state.active.swAccumulated = 0;
-            
-            this.state.active.timerInterval = setInterval(() => this.tickStopwatch(), 100);
+            this.state.active.timerInterval = setInterval(() => {
+                const diff = Math.floor((Date.now() - start) / 1000);
+                this.state.active.stopwatchVal = diff;
+                let m = Math.floor(diff / 60);
+                let s = diff % 60;
+                document.getElementById('sw-display').innerText = `${m<10?'0'+m:m}:${s<10?'0'+s:s}`;
+            }, 100);
         }
-    },
-    
-    tickStopwatch: function() {
-        const diffMs = this.state.active.swAccumulated + (Date.now() - this.state.active.swStartTime);
-        const diffSec = Math.floor(diffMs / 1000);
-        this.state.active.stopwatchVal = diffSec;
-        let m = Math.floor(diffSec / 60);
-        let s = diffSec % 60;
-        document.getElementById('sw-display').innerText = `${m<10?'0'+m:m}:${s<10?'0'+s:s}`;
     },
 
     stopStopwatch: function() {
         if(this.state.active.timerInterval) clearInterval(this.state.active.timerInterval);
         this.state.active.timerInterval = null;
-        this.state.active.swIsRunning = false;
     },
 
     selectFeel: function(f) {
@@ -656,7 +502,7 @@ const app = {
     finishSet: function() {
         let w, r;
         if (this.state.active.isStopwatch) {
-            if(this.state.active.swIsRunning) this.toggleStopwatch(); 
+            if(this.state.active.timerInterval) this.toggleStopwatch(); 
             w = 0; r = this.state.active.stopwatchVal; 
             if (r === 0) { alert("לא נמדד זמן"); return; }
         } else {
@@ -678,22 +524,20 @@ const app = {
             this.state.active.setIdx++;
             document.getElementById('set-badge').innerText = `סט ${this.state.active.setIdx} / ${this.state.active.totalSets}`;
             
+            // Hide Reorder/Swap on Set > 1
             document.getElementById('btn-reorder').style.display = 'none';
             
             this.state.active.feel = 'good';
             this.updateFeelUI();
             if(this.state.active.isStopwatch) {
                 this.state.active.stopwatchVal = 0;
-                this.state.active.swAccumulated = 0;
-                this.state.active.swStartTime = 0;
                 document.getElementById('sw-display').innerText = "00:00";
             }
         } else {
             document.getElementById('btn-reorder').style.display = 'none';
             document.getElementById('btn-finish').style.display = 'none';
             document.getElementById('decision-buttons').style.display = 'flex';
-            
-            // Note: Rest timer continues to be visible and count
+            document.getElementById('rest-timer-area').style.display = 'none';
 
             const nextEx = this.state.active.sessionExercises[this.state.active.exIdx + 1];
             const nextEl = document.getElementById('next-ex-preview');
@@ -709,19 +553,18 @@ const app = {
         this.saveActiveState();
     },
 
-    // Endless Timer with NO forced scroll
-    startRestTimer: function(durationSec, isResume = false) {
-        if (!isResume) this.stopRestTimer();
-        else if (this.state.active.restInterval) clearInterval(this.state.active.restInterval);
-
+    // Fixed Timer to Count UP with persistence and no auto-stop
+    startRestTimer: function(durationSec) {
+        this.stopRestTimer();
         const area = document.getElementById('rest-timer-area');
         const disp = document.getElementById('rest-timer-val');
         const ring = document.getElementById('rest-ring-prog');
         
         area.style.display = 'flex';
-        // REMOVED: area.scrollIntoView({ behavior: 'smooth', block: 'center' }); to fix screen jumping
+        area.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
         this.state.active.restDuration = durationSec;
+        // If not resuming (fresh start), set start time
         if (!this.state.active.restStartTime || this.state.active.restStartTime === 0) {
             this.state.active.restStartTime = Date.now();
         }
@@ -730,18 +573,18 @@ const app = {
         
         this.state.active.restInterval = setInterval(() => {
             const elapsed = Math.floor((Date.now() - this.state.active.restStartTime) / 1000);
-            
+
             let m = Math.floor(elapsed / 60);
             let s = elapsed % 60;
             disp.innerText = `${m<10?'0'+m:m}:${s<10?'0'+s:s}`;
             
-            let ratio = elapsed / durationSec;
-            if (ratio > 1) ratio = 1; 
+            // Ring fills up (Count Up), constrained to a maximum of 1 (100%)
+            const ratio = Math.min(elapsed / durationSec, 1);
             const offset = MAX_OFFSET - (MAX_OFFSET * ratio); 
             ring.style.strokeDashoffset = offset;
 
         }, 100);
-        this.saveActiveState();
+        this.saveActiveState(); // Save timer state
     },
 
     stopRestTimer: function() {
@@ -758,23 +601,17 @@ const app = {
 
     addSet: function() {
         this.state.active.totalSets++;
-        
+        this.state.active.setIdx++;
         document.getElementById('set-badge').innerText = `סט ${this.state.active.setIdx} / ${this.state.active.totalSets}`;
         document.getElementById('btn-reorder').style.display = 'none';
         document.getElementById('decision-buttons').style.display = 'none';
         document.getElementById('next-ex-preview').style.display = 'none';
         document.getElementById('btn-finish').style.display = 'flex';
-        
-        // Ensure rest timer stays visible if it was running
-        if(this.state.active.restStartTime > 0) {
-             document.getElementById('rest-timer-area').style.display = 'flex';
-             // REMOVED: scrollIntoView here as well to maintain static UI
-        }
+        document.getElementById('rest-timer-area').style.display = 'flex';
+        document.getElementById('rest-timer-area').scrollIntoView({ behavior: 'smooth', block: 'center' });
         
         if(this.state.active.isStopwatch) {
             this.state.active.stopwatchVal = 0;
-            this.state.active.swAccumulated = 0;
-            this.state.active.swStartTime = 0;
             document.getElementById('sw-display').innerText = "00:00";
         }
         this.saveActiveState();
@@ -788,17 +625,18 @@ const app = {
             exLog.sets.pop();
             this.stopRestTimer();
 
-            // Always revert UI to active input mode
-            document.getElementById('decision-buttons').style.display = 'none';
-            document.getElementById('next-ex-preview').style.display = 'none';
-            document.getElementById('btn-finish').style.display = 'flex';
-            
-            // Set index is strictly the number of completed sets + 1
-            this.state.active.setIdx = exLog.sets.length + 1;
-            document.getElementById('set-badge').innerText = `סט ${this.state.active.setIdx} / ${this.state.active.totalSets}`;
-            
-            if(this.state.active.setIdx === 1) {
-                 document.getElementById('btn-reorder').style.display = 'block';
+            if (this.state.active.setIdx > 1) {
+                this.state.active.setIdx--;
+                document.getElementById('set-badge').innerText = `סט ${this.state.active.setIdx} / ${this.state.active.totalSets}`;
+                
+                // Show reorder again if back to set 1
+                if(this.state.active.setIdx === 1) {
+                     document.getElementById('btn-reorder').style.display = 'block';
+                }
+
+                document.getElementById('decision-buttons').style.display = 'none';
+                document.getElementById('next-ex-preview').style.display = 'none';
+                document.getElementById('btn-finish').style.display = 'flex';
             }
         }
         this.saveActiveState();
@@ -806,13 +644,8 @@ const app = {
 
     skipExercise: function() { this.nextExercise(); },
 
-    nextExercise: function(preserveRestTimer = false) {
-        if (!preserveRestTimer) {
-            this.stopAllTimers();
-        } else {
-            this.stopStopwatch();
-        }
-
+    nextExercise: function() {
+        this.stopAllTimers();
         if (this.state.active.exIdx < this.state.active.sessionExercises.length - 1) {
             this.state.active.exIdx++;
             this.state.active.setIdx = 1;
@@ -826,6 +659,7 @@ const app = {
     finishWorkout: function() {
         this.stopAllTimers();
         
+        // Net Duration Calculation
         const currentSessionDur = Date.now() - this.state.active.startTime;
         const totalDurMs = this.state.active.accumulatedTime + currentSessionDur;
         const durationMin = Math.round(totalDurMs / 60000);
@@ -841,109 +675,12 @@ const app = {
             data: this.state.active.log
         };
 
+        const meta = document.getElementById('summary-meta');
+        meta.innerText = `${dateStr} | ${durationMin} דקות`;
         const textBox = document.getElementById('summary-text');
         textBox.innerText = this.generateLogText(this.state.active.summary);
         
-        this.renderSummaryStats(this.state.active.summary);
-        this.renderWinCard(this.state.active.summary);
-        
         this.nav('screen-summary');
-    },
-
-    renderSummaryStats: function(summary) {
-        const totalSets = summary.data.reduce((acc, ex) => acc + ex.sets.length, 0);
-        const exCount = summary.data.filter(ex => ex.sets.length > 0).length;
-        
-        const statsHtml = `
-            <div class="summary-stats-row">
-                <div class="summary-stat-item">
-                    <div class="summary-stat-val">${exCount}</div>
-                    <div class="summary-stat-lbl">תרגילים</div>
-                </div>
-                <div class="summary-stat-item">
-                    <div class="summary-stat-val">${totalSets}</div>
-                    <div class="summary-stat-lbl">סטים</div>
-                </div>
-                <div class="summary-stat-item">
-                    <div class="summary-stat-val">${summary.duration}</div>
-                    <div class="summary-stat-lbl">דקות</div>
-                </div>
-            </div>`;
-        
-        document.getElementById('summary-meta').innerHTML = 
-            `<div style="margin-bottom:4px;">${summary.date}</div>${statsHtml}`;
-    },
-
-    renderWinCard: function(summary) {
-        const winCard = document.getElementById('win-card');
-        const winList = document.getElementById('win-list');
-        winCard.style.display = 'none';
-        winList.innerHTML = '';
-
-        let hasAnyWin = false;
-        let html = '';
-
-        summary.data.forEach(ex => {
-            if (ex.sets.length === 0) return;
-
-            const exDef = this.getExerciseDef(ex.id);
-
-            // Search entire history backwards for the last time this specific exercise was performed
-            let prevEx = null;
-            for (let i = this.state.history.length - 1; i >= 0; i--) {
-                const pastSession = this.state.history[i];
-                const found = pastSession.data.find(p => this.isSameExercise(p, ex.id, exDef.name));
-                if (found && found.sets.length > 0) {
-                    prevEx = found;
-                    break;
-                }
-            }
-
-            if (!prevEx) return;
-
-            const isTime = (parseFloat(exDef.settings.step) === 0 || ex.id.includes('plank') || (exDef.settings.unit === 'bodyweight' && ex.sets[0].w === 0));
-            const isBodyweight = exDef.settings.unit === 'bodyweight';
-
-            // Calculate the relevant metric for each set
-            const getCurrentBest = (sets) => {
-                if (isTime || isBodyweight) return Math.max(...sets.map(s => s.r));
-                return Math.max(...sets.map(s => s.w));
-            };
-
-            const currentBest = getCurrentBest(ex.sets);
-            const prevBest = getCurrentBest(prevEx.sets);
-
-            let unit = 'ק״ג';
-            if (isTime) unit = 'שנ\'';
-            else if (isBodyweight) unit = 'חזר\'';
-            else if (exDef.settings.unit === 'plates') unit = 'פלטות';
-
-            if (currentBest > prevBest) {
-                hasAnyWin = true;
-                html += `
-                    <div class="win-row">
-                        <div class="win-row-name">
-                            <span class="win-badge">+</span>${ex.name}
-                        </div>
-                        <div>
-                            <span class="win-prev">${prevBest} ${unit}</span>
-                            <span class="win-arrow">←</span>
-                            <span class="win-new">${currentBest} ${unit}</span>
-                        </div>
-                    </div>`;
-            } else {
-                html += `
-                    <div class="win-row">
-                        <span class="win-row-name">${ex.name}</span>
-                        <span class="win-no-change">ללא שינוי</span>
-                    </div>`;
-            }
-        });
-
-        if (hasAnyWin) {
-            winList.innerHTML = html;
-            winCard.style.display = 'block';
-        }
     },
 
     generateLogText: function(historyItem) {
@@ -955,7 +692,7 @@ const app = {
             if(ex.sets.length > 0) {
                 txt += `✅ ${ex.name}\n`;
                 const exDef = this.getExerciseDef(ex.id);
-                const isTime = (parseFloat(exDef.settings.step) === 0 || ex.id.includes('plank') || (exDef.settings.unit === 'bodyweight' && ex.sets[0].w === 0));
+                const isTime = (ex.id.includes('plank') || exDef.settings.unit === 'bodyweight' && ex.sets[0].w === 0);
                 const isSingleSide = exDef.settings.isUnilateral;
 
                 ex.sets.forEach((s, i) => {
@@ -982,12 +719,13 @@ const app = {
 
     copySummaryToClipboard: function() {
         const txt = document.getElementById('summary-text').innerText;
-        return this.copyText(txt);
+        this.copyText(txt);
     },
 
     finishAndCopy: function() {
         const summary = this.state.active.summary;
         if (summary) {
+            this.copySummaryToClipboard();
             this.state.history.push({
                 date: summary.date,
                 timestamp: Date.now(),
@@ -997,15 +735,8 @@ const app = {
                 duration: summary.duration
             });
             this.saveData();
-            
-            // Fix Ghost Resume: Disable active state before clearing LocalStorage
-            this.state.active.on = false; 
             localStorage.removeItem(CONFIG.KEYS.ACTIVE_WORKOUT);
-            
-            // Wait for alert before reloading
-            this.copySummaryToClipboard().then(() => {
-                window.location.reload(); 
-            });
+            window.location.reload(); 
         }
     },
 
@@ -1092,20 +823,16 @@ const app = {
 
     userSelectExercise: function(exId) {
         const newExDef = this.getExerciseDef(exId);
-        const currentEx = this.state.active.sessionExercises[this.state.active.exIdx];
         
         if (this.state.userSelector.mode === 'swap') {
             this.state.active.sessionExercises[this.state.active.exIdx] = {
-                id: exId, name: newExDef.name, 
-                sets: currentEx.sets || 3, 
-                rest: currentEx.rest || 60,
-                note: currentEx.note || ''
+                id: exId, name: newExDef.name, sets: 3, rest: 60
             };
             this.loadActiveExercise();
         } else if (this.state.userSelector.mode === 'add') {
             const newExInst = { id: exId, name: newExDef.name, sets: 3, rest: 60 };
             this.state.active.sessionExercises.splice(this.state.active.exIdx + 1, 0, newExInst);
-            this.nextExercise(true);
+            this.nextExercise();
         }
         this.saveActiveState();
         this.closeUserSelector();
@@ -1475,7 +1202,7 @@ const app = {
                 let newHist = Array.isArray(json) ? json : json.history;
                 if (!newHist) throw new Error();
                 if(confirm(`נמצאו ${newHist.length} רשומות. למזג?`)) {
-                    app.state.history =[...app.state.history, ...newHist];
+                    app.state.history = [...app.state.history, ...newHist];
                     app.state.history.sort((a,b) => (a.timestamp || 0) - (b.timestamp || 0));
                     app.saveData();
                     app.showHistory();
@@ -1505,7 +1232,8 @@ const app = {
         this.state.historySelection =[];
         this.updateHistoryActions(); 
         const list = document.getElementById('history-list');
-        list.innerHTML = '';[...this.state.history].reverse().forEach((h, i) => {
+        list.innerHTML = '';
+        [...this.state.history].reverse().forEach((h, i) => {
             const realIdx = this.state.history.length - 1 - i;
             const pName = h.programTitle || h.program;
             list.innerHTML += `
@@ -1540,8 +1268,7 @@ const app = {
     },
 
     selectAllHistory: function() {
-        // Fixed Bug: Scope selector to avoid grabbing admin checkboxes
-        const inputs = document.querySelectorAll('#history-list .custom-chk');
+        const inputs = document.querySelectorAll('.custom-chk');
         const allSelected = this.state.historySelection.length === this.state.history.length && this.state.history.length > 0;
         if (allSelected) {
             this.state.historySelection =[];
@@ -1564,7 +1291,7 @@ const app = {
     copySelectedHistory: function() {
         if(this.state.historySelection.length === 0) { alert("לא נבחר אימון"); return; }
         let fullTxt = "";
-        const sortedSel =[...this.state.historySelection].sort((a,b) => a-b);
+        const sortedSel = [...this.state.historySelection].sort((a,b) => a-b);
         sortedSel.forEach((idx, i) => {
             const h = this.state.history[idx];
             fullTxt += this.generateLogText(h);
@@ -1579,8 +1306,7 @@ const app = {
         const pName = item.programTitle || item.program;
         
         const header = document.getElementById('hist-meta-header');
-        // Fixed Bug: Fallback for undefined duration
-        header.innerHTML = `<h3>${pName}</h3><p>${item.date} | ${item.duration || '?'} דק'</p>`;
+        header.innerHTML = `<h3>${pName}</h3><p>${item.date} | ${item.duration} דק'</p>`;
 
         const content = document.getElementById('hist-detail-content');
         let html = '';
@@ -1588,7 +1314,7 @@ const app = {
             html += `<div style="background:var(--bg-card); padding:15px; border-radius:12px; margin-bottom:10px; border:1px solid #222;">
                 <div style="font-weight:700; color:var(--primary)">${ex.name}</div>`;
             const exDef = this.getExerciseDef(ex.id);
-            const isTime = (parseFloat(exDef.settings.step) === 0 || ex.id.includes('plank') || (exDef.settings.unit === 'bodyweight' && ex.sets[0].w === 0));
+            const isTime = (ex.id.includes('plank') || (exDef.settings.unit === 'bodyweight' && ex.sets[0].w === 0));
             const isSingleSide = exDef.settings.isUnilateral;
             
             ex.sets.forEach((s, si) => {
@@ -1630,27 +1356,18 @@ const app = {
         }
     },
 
-    // Fixed Bug: Promise-based copyText to prevent alerts from being eaten by reload
     copyText: function(txt) {
-        return new Promise((resolve) => {
-            if (navigator.clipboard && window.isSecureContext) {
-                navigator.clipboard.writeText(txt).then(() => {
-                    alert("הועתק!");
-                    resolve();
-                }).catch(() => {
-                    resolve();
-                });
-            } else {
-                const ta = document.createElement('textarea');
-                ta.value = txt;
-                document.body.appendChild(ta);
-                ta.select();
-                document.execCommand('copy');
-                document.body.removeChild(ta);
-                alert("הועתק!");
-                resolve();
-            }
-        });
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(txt).then(() => alert("הועתק!"));
+        } else {
+            const ta = document.createElement('textarea');
+            ta.value = txt;
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+            alert("הועתק!");
+        }
     }
 };
 
