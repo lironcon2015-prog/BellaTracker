@@ -1,5 +1,5 @@
 /**
- * GYMSTART V1.8.0 (Fixes Applied)
+ * GYMSTART V1.8.1 (Fixes Applied)
  * - Timer Logic: Counts UP continuously, ring stops at 100%, never disappears automatically.
  * - Core Logic: Improved detection to ensure Swap menu opens for Core exercises.
  */
@@ -11,7 +11,7 @@ const CONFIG = {
         EXERCISES: 'gymstart_v1_7_exercises_bank',
         ACTIVE_WORKOUT: 'gymstart_active_workout_state'
     },
-    VERSION: '1.8.0'
+    VERSION: '1.8.1'
 };
 
 const FEEL_MAP_TEXT = { 'easy': 'קל', 'good': 'בינוני', 'hard': 'קשה' };
