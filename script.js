@@ -1,14 +1,11 @@
 /**
- * GYMSTART V1.8.2 (History Match Fix + Smart Defaults + Static UI & Haptics)
- * - FIX: History matching now uses both ID and exact Name to prevent data loss on recreation.
- * - FIX: Smart Defaults pulls BOTH Weight and Reps from previous history.
- * - FIX: iOS Safari :active CSS unlocked via touchstart listener.
- * - NEW: Haptic feedback added for main actions.
+ * GYMSTART V1.8.3 (Static UI Restored + Deep History Match + Ghost Resume Fix)
+ * - FIX: Reverted UI to static mode (removed haptics and touchstart layout shifts).
+ * - FIX: isSameExercise() matching engine ensures past data is found by ID or Exact Name.
+ * - FIX: Smart Defaults now correctly pulls both Weight and Reps from history.
  * - FIX: Ghost Resume bug resolved by turning off active state before clearing local storage.
- * - FIX: Win Card searches the entire history for the specific exercise.
  * - Endless Rest Timer.
- * - Current Program ID preserved safely in State.
- * - Enhanced Stats Strip with Sparkline.
+ * - Global Win Card & Enhanced Stats Strip with Sparkline.
  */
 
 const CONFIG = {
@@ -18,7 +15,7 @@ const CONFIG = {
         EXERCISES: 'gymstart_v1_7_exercises_bank',
         ACTIVE_WORKOUT: 'gymstart_active_workout_state'
     },
-    VERSION: '1.8.2'
+    VERSION: '1.8.3'
 };
 
 const FEEL_MAP_TEXT = { 'easy': 'קל', 'good': 'בינוני', 'hard': 'קשה' };
@@ -93,9 +90,6 @@ const app = {
 
     init: function() {
         try {
-            // iOS Safari Hack to unlock :active CSS pseudo-classes
-            document.body.addEventListener('touchstart', function() {}, {passive: true});
-
             this.loadData();
             this.checkActiveWorkout();
             this.renderHome();
@@ -108,13 +102,6 @@ const app = {
         } catch (e) {
             console.error(e);
             alert("שגיאה בטעינת נתונים.");
-        }
-    },
-
-    // Optional Haptic Feedback helper
-    vibrate: function(ms = 15) {
-        if (navigator.vibrate) {
-            try { navigator.vibrate(ms); } catch(e) {}
         }
     },
 
@@ -330,6 +317,13 @@ const app = {
         };
     },
 
+    // NEW HELPER: Robust matching by ID OR Exact Name to prevent history loss
+    isSameExercise: function(recordedEx, targetId, targetName) {
+        if (recordedEx.id === targetId) return true;
+        if (recordedEx.name && targetName && recordedEx.name.trim() === targetName.trim()) return true;
+        return false;
+    },
+
     /* --- WORKOUT LOGIC --- */
     startWorkout: function() {
         if (!this.state.routines[this.state.currentProgId] || 
@@ -418,14 +412,13 @@ const app = {
             document.getElementById('stopwatch-container').style.display = 'none';
             document.getElementById('unit-label-card').innerText = exDef.settings.unit === 'plates' ? 'פלטות' : 'ק״ג';
             
-            // SMART DEFAULTS (Pulling both Weight and Reps from previous history)
+            // SMART DEFAULTS: Pulling both Weight and Reps from history
             let smartWeight = exInst.target?.w || 10;
             let smartReps = exInst.target?.r || 12;
             
             for(let i=this.state.history.length-1; i>=0; i--) {
                 const sess = this.state.history[i];
-                // Match by ID OR Exact Name to prevent loss on recreation
-                const found = sess.data.find(e => e.id === exInst.id || e.name === exDef.name);
+                const found = sess.data.find(e => this.isSameExercise(e, exInst.id, exDef.name));
                 if(found && found.sets.length > 0) {
                     const lastSet = found.sets[found.sets.length-1];
                     smartWeight = lastSet.w;
@@ -460,11 +453,11 @@ const app = {
         
         const exDef = this.getExerciseDef(exId);
 
-        // אוספים את כל ההיסטוריה של התרגיל הזה (לפי ID או שם)
+        // אוספים את כל ההיסטוריה של התרגיל הזה
         const exHistory =[];
         for (let i = 0; i < this.state.history.length; i++) {
             const sess = this.state.history[i];
-            const found = sess.data.find(e => e.id === exId || e.name === exDef.name);
+            const found = sess.data.find(e => this.isSameExercise(e, exId, exDef.name));
             if (found && found.sets.length > 0) {
                 exHistory.push(found);
             }
@@ -574,7 +567,7 @@ const app = {
         }
         
         // Fixed Bug: Fallback if min > max 
-        if(wOpts.length === 0) wOpts =[parseFloat(s.min) || 0];
+        if(wOpts.length === 0) wOpts = [parseFloat(s.min) || 0];
 
         selW.innerHTML = '';
         wOpts.forEach(val => {
@@ -605,13 +598,12 @@ const app = {
             selR.appendChild(opt);
         });
         
-        // Set Default Reps
+        // Use smart reps
         selR.value = this.state.active.inputR;
         selR.onchange = (e) => this.state.active.inputR = Number(e.target.value);
     },
 
     toggleStopwatch: function() {
-        this.vibrate(15);
         const btn = document.getElementById('btn-sw-toggle');
         if (this.state.active.swIsRunning) {
             // Pause
@@ -663,8 +655,6 @@ const app = {
     },
 
     finishSet: function() {
-        this.vibrate(25);
-        
         let w, r;
         if (this.state.active.isStopwatch) {
             if(this.state.active.swIsRunning) this.toggleStopwatch(); 
@@ -769,7 +759,6 @@ const app = {
     },
 
     addSet: function() {
-        this.vibrate(15);
         this.state.active.totalSets++;
         
         // Fixed Bug: AddSet UI alignment
@@ -795,7 +784,6 @@ const app = {
     },
 
     deleteLastSet: function() {
-        this.vibrate(15);
         const exInst = this.state.active.sessionExercises[this.state.active.exIdx];
         let exLog = this.state.active.log.find(l => l.id === exInst.id);
         
@@ -903,11 +891,11 @@ const app = {
 
             const exDef = this.getExerciseDef(ex.id);
 
-            // Search entire history backwards for the last time this specific exercise was performed (by ID or exact Name)
+            // Search entire history backwards for the last time this specific exercise was performed
             let prevEx = null;
             for (let i = this.state.history.length - 1; i >= 0; i--) {
                 const pastSession = this.state.history[i];
-                const found = pastSession.data.find(p => p.id === ex.id || p.name === exDef.name);
+                const found = pastSession.data.find(p => this.isSameExercise(p, ex.id, exDef.name));
                 if (found && found.sets.length > 0) {
                     prevEx = found;
                     break;
@@ -1013,8 +1001,7 @@ const app = {
             });
             this.saveData();
             
-            // Fix Ghost Resume: Disable active state before clearing LocalStorage 
-            // This prevents `handleVisibilityChange` from reviving the session when clipboard copies
+            // Fix Ghost Resume: Disable active state before clearing LocalStorage
             this.state.active.on = false; 
             localStorage.removeItem(CONFIG.KEYS.ACTIVE_WORKOUT);
             
@@ -1111,7 +1098,6 @@ const app = {
         const currentEx = this.state.active.sessionExercises[this.state.active.exIdx];
         
         if (this.state.userSelector.mode === 'swap') {
-            // Fixed Bug: Preserve sets and rest settings when swapping
             this.state.active.sessionExercises[this.state.active.exIdx] = {
                 id: exId, name: newExDef.name, 
                 sets: currentEx.sets || 3, 
@@ -1122,7 +1108,6 @@ const app = {
         } else if (this.state.userSelector.mode === 'add') {
             const newExInst = { id: exId, name: newExDef.name, sets: 3, rest: 60 };
             this.state.active.sessionExercises.splice(this.state.active.exIdx + 1, 0, newExInst);
-            // Fixed Bug: Pass true to preserve user's rest timer after adding exercise
             this.nextExercise(true);
         }
         this.saveActiveState();
