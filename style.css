@@ -489,73 +489,12 @@ body, html {
 .summary-stat-val { font-size: 1.4rem; font-weight: 700; color: #fff; }
 .summary-stat-lbl { font-size: 0.72rem; color: #555; margin-top: 2px; }
 
-/* ===================== HISTORY GROUPS ===================== */
-.month-group-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px 14px;
-    background: #0d0d0d;
-    border: 1px solid #2a2a2a;
-    border-radius: 10px;
-    margin-bottom: 6px;
-    cursor: pointer;
-    font-weight: 700;
-    font-size: 0.95rem;
-    color: var(--primary);
-    user-select: none;
-}
-.month-group-header:active { background: #1a1a1a; }
-.month-arrow { font-size: 0.8rem; color: #555; }
-
-.week-separator {
-    padding: 5px 4px;
-    margin: 8px 0 4px 0;
-    font-size: 0.78rem;
-    color: #444;
-    border-bottom: 1px solid #1e1e1e;
-    font-weight: 600;
-}
-
-/* ===================== COPY RANGE ROW ===================== */
-.copy-range-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 14px;
-    flex-wrap: wrap;
-}
-.range-stepper {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    background: #111;
-    border: 1px solid #2a2a2a;
-    border-radius: 8px;
-    padding: 4px 8px;
-}
-.step-btn-sm {
-    width: 26px; height: 26px;
-    background: none; border: none;
-    color: #888; font-size: 1.1rem;
-    cursor: pointer; display: flex;
-    align-items: center; justify-content: center;
-    border-radius: 6px;
-}
-.step-btn-sm:active { background: #222; color: white; }
-.btn-range {
-    background: transparent;
-    border: 1px solid #333;
-    color: #aaa;
-    padding: 6px 12px;
-    border-radius: 8px;
-    font-size: 0.85rem;
-    cursor: pointer;
-    font-family: inherit;
-}
-.btn-range:active { border-color: var(--primary); color: var(--primary); background: var(--primary-dim); }
-
-/* ===================== LOGIN MODAL ===================== */
-#login-modal .oled-modal {
-    text-align: center;
+/* ── Cloud Admin View ──────────────────────────────────────────────────────── */
+.subtitle-label {
+    font-size: 0.8rem;
+    color: var(--text-sec);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+    margin-top: 5px;
 }
