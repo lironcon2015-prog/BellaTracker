@@ -117,9 +117,10 @@ const sync = {
     async migrateHistory(historyArr) {
         if (!this.db || !historyArr.length) return;
         const updates = {};
-        historyArr.forEach(item => {
-            if (item.timestamp)
-                updates[`gymstart-app/athletes/${this.athleteId}/history/${item.timestamp}`] = item;
+        historyArr.forEach((item, idx) => {
+            // Assign timestamp if missing (old history records)
+            if (!item.timestamp) item.timestamp = Date.now() - ((historyArr.length - idx) * 1000);
+            updates[`gymstart-app/athletes/${this.athleteId}/history/${item.timestamp}`] = item;
         });
         try { await this.db.ref().update(updates); } catch(e) { console.warn('migrateHistory error:', e); }
     },
@@ -280,6 +281,11 @@ const app = {
 
         const migrated = localStorage.getItem('gymstart_migrated');
         if (!migrated && this.state.history.length > 0) {
+            // Ensure timestamps exist before migrating
+            this.state.history.forEach((item, idx) => {
+                if (!item.timestamp) item.timestamp = Date.now() - ((this.state.history.length - idx) * 1000);
+            });
+            this.saveData();
             await sync.migrateHistory(this.state.history);
             localStorage.setItem('gymstart_migrated', '1');
         }
@@ -1581,9 +1587,17 @@ const app = {
                 let newHist = Array.isArray(json) ? json : json.history;
                 if (!newHist) throw new Error();
                 if (confirm(`נמצאו ${newHist.length} רשומות. למזג?`)) {
+                    // Ensure all items have timestamps before merging
+                    newHist.forEach((item, idx) => {
+                        if (!item.timestamp) item.timestamp = Date.now() - ((newHist.length - idx) * 1000);
+                    });
                     app.state.history = [...app.state.history, ...newHist];
                     app.state.history.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
                     app.saveData();
+                    // Push all imported items to Firebase
+                    sync.migrateHistory(newHist);
+                    // Reset migration flag so full re-sync runs on next load
+                    localStorage.removeItem('gymstart_migrated');
                     app.showHistory();
                     alert("ההיסטוריה עודכנה.");
                 }
