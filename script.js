@@ -275,7 +275,8 @@ const app = {
 
     initWithAthlete: async function(id, name) {
         sync.init(id);
-        if (name) await sync.registerAthlete(id, name);
+        const storedName = name || localStorage.getItem('gymstart_athlete_name');
+        if (storedName) await sync.registerAthlete(id, storedName);
 
         const migrated = localStorage.getItem('gymstart_migrated');
         if (!migrated && this.state.history.length > 0) {
