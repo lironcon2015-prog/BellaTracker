@@ -279,15 +279,25 @@ const app = {
         const storedName = name || localStorage.getItem('gymstart_athlete_name');
         if (storedName) await sync.registerAthlete(id, storedName);
 
-        const migrated = localStorage.getItem('gymstart_migrated');
-        if (!migrated && this.state.history.length > 0) {
-            // Ensure timestamps exist before migrating
-            this.state.history.forEach((item, idx) => {
-                if (!item.timestamp) item.timestamp = Date.now() - ((this.state.history.length - idx) * 1000);
-            });
-            this.saveData();
-            await sync.migrateHistory(this.state.history);
-            localStorage.setItem('gymstart_migrated', '1');
+        // Always check Firebase — if empty but localStorage has history, migrate
+        if (this.state.history.length > 0) {
+            try {
+                const remoteHist = await sync.db
+                    ? sync.db.ref(`gymstart-app/athletes/${id}/history`).get()
+                    : null;
+                const firebaseEmpty = !remoteHist || !remoteHist.exists();
+                if (firebaseEmpty) {
+                    // Ensure timestamps exist
+                    this.state.history.forEach((item, idx) => {
+                        if (!item.timestamp) item.timestamp = Date.now() - ((this.state.history.length - idx) * 1000);
+                    });
+                    this.saveData();
+                    await sync.migrateHistory(this.state.history);
+                }
+                localStorage.setItem('gymstart_migrated', '1');
+            } catch(e) {
+                console.warn('Migration check error:', e);
+            }
         }
 
         try {
