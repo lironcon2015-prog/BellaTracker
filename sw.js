@@ -7,11 +7,13 @@
 const CACHE_NAME = 'gymstart-cache';
 const VERSION_URL = '/version.json';
 const FILES_TO_CACHE = [
-    '/',
-    '/index.html',
-    '/script.js',
-    '/style.css',
-    '/version.json'
+    './',
+    './index.html',
+    './script.js',
+    './style.css',
+    './sw.js',
+    './version.json',
+    './icon.svg'
 ];
 
 // ── Install: cache all static files ──────────────────────────────────────────

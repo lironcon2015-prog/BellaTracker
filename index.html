@@ -14,8 +14,10 @@
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' })
-                    .then(() => {
+                navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' })
+                    .then(reg => {
+                        const sw = reg.installing || reg.waiting || reg.active;
+                        if (sw) sw.postMessage('CHECK_VERSION');
                         if (navigator.serviceWorker.controller) {
                             navigator.serviceWorker.controller.postMessage('CHECK_VERSION');
                         }
