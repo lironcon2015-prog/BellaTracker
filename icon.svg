@@ -1,6 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="112" fill="#000000"/>
-  <text x="256" y="210" text-anchor="middle" font-family="Arial, sans-serif" font-weight="700" font-size="96" fill="#00ffee" letter-spacing="-4">GYM</text>
-  <text x="256" y="300" text-anchor="middle" font-family="Arial, sans-serif" font-weight="300" font-size="58" fill="#00ffee" letter-spacing="18">START</text>
-  <rect x="112" y="328" width="288" height="8" rx="4" fill="#00ffee" opacity="0.35"/>
-</svg>
