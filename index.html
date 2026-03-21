@@ -15,6 +15,89 @@
     <input type="file" id="file-import-history" hidden accept=".json" onchange="app.importHistory(this)">
     <input type="file" id="file-import-config" hidden accept=".json" onchange="app.importConfig(this)">
 
+    <!-- ===================== LOGIN MODAL ===================== -->
+    <div id="login-modal" class="modal-wrapper" style="display:none; z-index:500;">
+        <div class="oled-modal" style="max-width:320px; text-align:center;">
+            <div style="font-size:2.5rem; margin-bottom:10px;">💪</div>
+            <h2 style="margin:0 0 8px 0;">ברוכה הבאה ל-GymStart</h2>
+            <p style="color:var(--text-sec); margin-bottom:20px;">איך קוראים לך?</p>
+            <input type="text" id="login-name-input" class="oled-input" placeholder="שם פרטי" style="margin-bottom:15px;" onkeydown="if(event.key==='Enter') app.submitLogin()">
+            <button class="btn-primary" onclick="app.submitLogin()">התחלי 🚀</button>
+        </div>
+    </div>
+
+    <!-- ===================== COACH LOGIN MODAL ===================== -->
+    <div id="coach-login-modal" class="modal-wrapper" style="display:none; z-index:400;">
+        <div class="oled-modal" style="max-width:320px;">
+            <div class="modal-header">
+                <h3>🔑 כניסת מאמן</h3>
+                <button class="text-close-btn" onclick="document.getElementById('coach-login-modal').style.display='none'">סגור ×</button>
+            </div>
+            <input type="password" id="coach-password-input" class="oled-input" placeholder="סיסמה" style="margin-bottom:15px;" onkeydown="if(event.key==='Enter') app.verifyCoachPassword(document.getElementById('coach-password-input').value)">
+            <button class="btn-primary" onclick="app.verifyCoachPassword(document.getElementById('coach-password-input').value)">כניסה</button>
+        </div>
+    </div>
+
+    <!-- ===================== COACH ATHLETES MODAL ===================== -->
+    <div id="coach-athletes-modal" class="modal-wrapper" style="display:none; z-index:400;">
+        <div class="oled-modal">
+            <div class="modal-header">
+                <h3>👥 מתאמנות</h3>
+                <button class="text-close-btn" onclick="document.getElementById('coach-athletes-modal').style.display='none'">סגור ×</button>
+            </div>
+            <div id="coach-athletes-list" class="vertical-stack scroll-y" style="margin-bottom:15px;"></div>
+            <div style="display:flex; gap:10px; flex-shrink:0;">
+                <button class="btn-outline" style="border-color:var(--primary);color:var(--primary);" onclick="app.pushConfigAsCoach()">📤 שמור קונפיג</button>
+                <button class="btn-outline" onclick="document.getElementById('coach-athletes-modal').style.display='none'">סגור</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================== COACH ATHLETE HISTORY MODAL ===================== -->
+    <div id="coach-athlete-history-modal" class="modal-wrapper" style="display:none; z-index:410;">
+        <div class="oled-modal">
+            <div class="modal-header">
+                <h3 id="coach-athlete-name-title">היסטוריה</h3>
+                <button class="text-close-btn" onclick="document.getElementById('coach-athlete-history-modal').style.display='none'; document.getElementById('coach-athletes-modal').style.display='flex';">חזרה</button>
+            </div>
+            <div id="coach-athlete-history-list" class="scroll-y vertical-stack"></div>
+        </div>
+    </div>
+
+    <!-- ===================== PASTE IMPORT MODAL (Step 1) ===================== -->
+    <div id="paste-import-modal" class="modal-wrapper" style="display:none; z-index:400;">
+        <div class="oled-modal">
+            <div class="modal-header">
+                <h3>📋 ייבוא מוואטסאפ</h3>
+                <button class="text-close-btn" onclick="app.closePasteImport()">סגור ×</button>
+            </div>
+            <p style="color:#888; font-size:0.9rem; margin-bottom:10px; flex-shrink:0;">הדבקי סיכום אימון שהועתק מהאפליקציה</p>
+            <textarea id="paste-import-textarea" class="oled-textarea scroll-y" rows="10" style="flex:1; min-height:200px;" placeholder="סיכום אימון: ...
+תאריך: DD.M.YYYY | משך: N דק'
+✅ שם תרגיל
+   סט 1: 10 ק״ג | 12 חזרות (בינוני)"></textarea>
+            <div class="modal-footer" style="margin-top:15px; flex-shrink:0;">
+                <button class="btn-primary" onclick="app.parsePasteInput()">המשך ←</button>
+                <button class="btn-outline" onclick="app.closePasteImport()">ביטול</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================== PASTE CONFIRM MODAL (Step 2) ===================== -->
+    <div id="paste-confirm-modal" class="modal-wrapper" style="display:none; z-index:410;">
+        <div class="oled-modal">
+            <div class="modal-header">
+                <h3>✅ אישור ייבוא</h3>
+                <button class="text-close-btn" onclick="document.getElementById('paste-confirm-modal').style.display='none'; document.getElementById('paste-import-modal').style.display='flex';">חזרה</button>
+            </div>
+            <div id="paste-confirm-content" class="scroll-y" style="flex:1; min-height:0;"></div>
+            <div class="modal-footer" style="flex-shrink:0;">
+                <button class="btn-primary" onclick="app.savePasteImport()">שמור אימון</button>
+                <button class="btn-outline" onclick="document.getElementById('paste-confirm-modal').style.display='none'">ביטול</button>
+            </div>
+        </div>
+    </div>
+
     <!-- RESUME WORKOUT MODAL -->
     <div id="resume-modal" class="modal-wrapper" style="z-index: 200;">
         <div class="oled-modal" style="text-align: center;">
@@ -38,7 +121,7 @@
         </div>
     </div>
 
-    <!-- USER SELECTOR MODAL (ADDED: Fixes Core Swap/Add) -->
+    <!-- USER SELECTOR MODAL -->
     <div id="user-selector-modal" class="modal-wrapper">
         <div class="oled-modal" style="max-height: 80vh;">
             <div class="modal-header">
@@ -53,22 +136,18 @@
     <div id="admin-modal" class="modal-wrapper">
         <div class="oled-modal admin-layout">
             
-            <!-- VIEW 1: ADMIN HOME (Program List) -->
+            <!-- VIEW 1: ADMIN HOME -->
             <div id="admin-view-home" class="admin-view">
                 <div class="modal-header">
                     <h3>ניהול תוכניות</h3>
                     <button class="text-close-btn" onclick="app.closeAdmin()">סגור ×</button>
                 </div>
-                
                 <div class="admin-nav-row">
                      <button class="btn-tool-outline" onclick="app.openExerciseManager()">📚 ניהול מאגר תרגילים</button>
                 </div>
-
                 <div id="admin-prog-list" class="vertical-stack scroll-y" style="margin-top:15px;"></div>
-                
                 <div class="modal-footer-column">
                     <button class="btn-primary" onclick="app.createNewProgram()">+ צור תוכנית חדשה</button>
-                    
                     <div class="backup-area">
                         <label>ניהול נתונים</label>
                         <div class="tools-row">
@@ -84,15 +163,12 @@
                 <div class="modal-header">
                     <h3>עריכת תוכנית</h3>
                 </div>
-                
                 <div class="oled-card compact" style="margin-bottom: 15px;">
                     <label class="input-label-small">שם התוכנית</label>
                     <input type="text" id="edit-prog-title" class="minimal-input" placeholder="שם התוכנית" oninput="app.updateProgramTitle()">
                 </div>
-
                 <div class="subtitle-label">רשימת תרגילים</div>
                 <div id="admin-ex-list" class="vertical-stack scroll-y"></div>
-                
                 <div class="modal-footer-column">
                     <button class="btn-dashed" onclick="app.openAdminSelector()">+ הוסף תרגיל</button>
                     <div style="display:flex; gap:10px; margin-top: 15px;">
@@ -102,15 +178,13 @@
                 </div>
             </div>
 
-            <!-- VIEW 3: EXERCISE SELECTOR (Smart Picker) -->
+            <!-- VIEW 3: EXERCISE SELECTOR -->
             <div id="admin-view-selector" class="admin-view" style="display:none;">
                 <div class="modal-header">
                     <h3>בחר תרגיל</h3>
                     <button class="text-close-btn" onclick="app.closeSelector()">ביטול</button>
                 </div>
-
                 <input type="text" id="selector-search" class="search-input" placeholder="חפש תרגיל..." onkeyup="app.filterSelector()">
-                
                 <div class="chip-container">
                     <button class="chip active" onclick="app.setSelectorFilter('all', this)">הכל</button>
                     <button class="chip" onclick="app.setSelectorFilter('legs', this)">רגליים</button>
@@ -120,7 +194,6 @@
                     <button class="chip" onclick="app.setSelectorFilter('arms', this)">ידיים</button>
                     <button class="chip" onclick="app.setSelectorFilter('core', this)">בטן</button>
                 </div>
-
                 <div id="selector-list" class="vertical-stack scroll-y" style="margin-top:10px;"></div>
             </div>
 
@@ -130,9 +203,7 @@
                     <h3>מאגר תרגילים</h3>
                     <button class="text-close-btn" onclick="app.openAdminHome()">חזרה</button>
                 </div>
-                
                 <input type="text" id="ex-mgr-search" class="search-input" placeholder="חפש במאגר..." onkeyup="app.renderExerciseManagerList()">
-                
                 <div class="chip-container">
                     <button class="chip active" onclick="app.setExManagerFilter('all', this)">הכל</button>
                     <button class="chip" onclick="app.setExManagerFilter('legs', this)">רגליים</button>
@@ -142,7 +213,6 @@
                     <button class="chip" onclick="app.setExManagerFilter('arms', this)">ידיים</button>
                     <button class="chip" onclick="app.setExManagerFilter('core', this)">בטן</button>
                 </div>
-
                 <div id="ex-mgr-list" class="vertical-stack scroll-y" style="margin-top:10px;"></div>
                 <div class="modal-footer-column">
                     <button class="btn-primary" onclick="app.createNewExerciseInBank()">+ תרגיל חדש</button>
@@ -159,7 +229,6 @@
                         <label class="input-label-small">שם התרגיל</label>
                         <input type="text" id="edit-ex-name" class="minimal-input">
                     </div>
-                    
                     <div class="oled-card compact">
                         <label class="input-label-small">קטגוריה</label>
                         <select id="edit-ex-cat" class="oled-select">
@@ -172,12 +241,10 @@
                             <option value="other">אחר</option>
                         </select>
                     </div>
-
                     <div class="oled-card compact">
                         <label class="input-label-small">קישור להדגמה (Youtube)</label>
                         <input type="text" id="edit-ex-video" class="minimal-input" placeholder="https://...">
                     </div>
-
                     <div class="oled-card compact">
                         <label class="input-label-small">הגדרות משקל</label>
                         <div class="inputs-row" style="margin-top:10px;">
@@ -222,7 +289,6 @@
                     </div>
                 </div>
             </div>
-
         </div>
     </div>
 
@@ -263,8 +329,18 @@
                 <button id="btn-admin-home" class="icon-btn" onclick="app.openAdminHome()" style="display:none;">
                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 5 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
                 </button>
+                <button id="btn-paste-import" class="icon-btn" onclick="app.openPasteImport()" style="display:none; font-size:1.1rem;">📋</button>
             </div>
-            <div class="logo">GYM<span class="highlight">START</span></div>
+            <div class="logo"
+                 ontouchstart="app.startCoachPress(event)" 
+                 ontouchend="app.cancelCoachPress()" 
+                 ontouchcancel="app.cancelCoachPress()"
+                 onmousedown="app.startCoachPress(event)" 
+                 onmouseup="app.cancelCoachPress()"
+                 onmouseleave="app.cancelCoachPress()">
+                GYM<span class="highlight">START</span>
+                <div id="coach-indicator" style="display:none; font-size:0.65rem; color:#888; font-weight:400; letter-spacing:0; margin-top:1px;"></div>
+            </div>
             <div class="nav-right">
                 <button id="nav-back" class="icon-btn" onclick="app.goBack()" style="visibility: hidden;">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
@@ -302,8 +378,8 @@
                     היסטוריה
                 </button>
                 <div style="height: 25px;"></div>
-                <button class="btn-ghost" onclick="document.getElementById('file-import-config').click()">
-                    קבלת עדכון מאמן
+                <button class="btn-ghost" onclick="app.manualPullConfig()">
+                    קבלת עדכון ממאמן
                 </button>
             </div>
         </div>
@@ -340,7 +416,7 @@
                     </div>
                     
                     <div id="coach-note" class="note-pill"></div>
-                    <div id="last-stat-strip" class="stats-strip">--</div>
+                    <div id="last-stat-strip" class="stats-strip-enhanced"></div>
                 </div>
 
                 <div class="workspace">
@@ -377,7 +453,6 @@
                             סיום סט
                         </button>
                         
-                        <!-- Unified Button for Reorder/Swap -->
                         <button id="btn-reorder" class="btn-quiet" onclick="app.openReorder()" style="display:none;">
                             שינוי סדר
                         </button>
@@ -386,10 +461,9 @@
 
                         <div id="decision-buttons" style="display:none; flex-direction:column; gap:10px; width:100%;">
                             <div style="display:flex; gap:10px; width:100%;">
-                                <button class="btn-outline" onclick="app.addSet()" style="flex:1">עוד סט</button>
-                                <button class="btn-primary" onclick="app.nextExercise()" style="flex:1">תרגיל הבא</button>
+                                <button id="btn-add-set" class="btn-outline" onclick="app.addSet()" style="flex:1">עוד סט</button>
+                                <button id="btn-next-ex" class="btn-primary" onclick="app.nextExercise()" style="flex:1">תרגיל הבא</button>
                             </div>
-                            <!-- Add Core Button -->
                             <button id="btn-add-core" class="btn-outline" onclick="app.openAddCoreExercise()" style="display:none; border-color:var(--primary); color:var(--primary);">
                                 + הוסיפי תרגיל בטן
                             </button>
@@ -423,6 +497,16 @@
                     <p>האימון הושלם בהצלחה</p>
                     <div id="summary-meta" class="meta-tag"></div>
                 </div>
+                <div id="win-card" style="display:none;" class="win-card">
+                    <div class="win-card-header">
+                        <div class="win-trophy">🏆</div>
+                        <div>
+                            <div class="win-card-title">שיפור ביצועים!</div>
+                            <div id="win-card-subtitle" class="win-card-subtitle"></div>
+                        </div>
+                    </div>
+                    <div id="win-list"></div>
+                </div>
                 <div id="summary-text" class="summary-box"></div>
             </div>
             
@@ -442,12 +526,25 @@
                     </div>
                 </div>
                 
+                <!-- Bulk selection tools -->
                 <div class="bulk-tools">
                      <button class="btn-tool-outline" onclick="app.selectAllHistory()">בחר הכל</button>
-                     <div style="display:flex; gap:10px;">
-                        <button class="btn-tool-outline" onclick="app.copySelectedHistory()">העתק</button>
+                     <div style="display:flex; gap:8px;">
+                        <button class="btn-tool-outline" onclick="app.copySelectedHistory()">העתק נבחר</button>
                         <button id="btn-del-selected" class="btn-tool-danger" onclick="app.deleteSelectedHistory()" disabled>מחק</button>
                      </div>
+                </div>
+
+                <!-- Copy range row -->
+                <div class="copy-range-row">
+                    <div class="range-stepper">
+                        <button class="step-btn-sm" onclick="app.changeWeeks(-1)">−</button>
+                        <span id="weeks-display" style="min-width:14px;text-align:center;font-weight:700;font-size:0.9rem;">1</span>
+                        <button class="step-btn-sm" onclick="app.changeWeeks(1)">+</button>
+                        <button class="btn-range" onclick="app.copyRange('weeks')">שבועות</button>
+                    </div>
+                    <button class="btn-range" onclick="app.copyRange('month')">חודש</button>
+                    <button class="btn-range" onclick="app.copyRange('all')">הכל</button>
                 </div>
 
                 <div id="history-list" class="history-list-container"></div>
@@ -456,6 +553,8 @@
 
     </div>
 
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
