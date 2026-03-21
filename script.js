@@ -42,7 +42,10 @@ const sync = {
                 firebase.initializeApp(FIREBASE_CONFIG);
             }
             this.db    = firebase.firestore();
-            this.ready = true;
+            // Anonymous auth — must succeed before any Firestore read/write
+            firebase.auth().signInAnonymously()
+                .then(() => { this.ready = true; })
+                .catch(e => { console.warn('Auth failed:', e); this.ready = false; });
         } catch (e) {
             console.warn('Firebase init failed:', e);
             this.ready = false;
@@ -194,11 +197,29 @@ const app = {
             this.renderHome();
             this.renderProgramSelect();
             sync.init();
+            // Pull history after auth is ready (slight delay for auth to complete)
+            setTimeout(() => this.pullHistoryOnStartup(), 2000);
             if (!this.state.tempActive) this.nav('screen-home');
         } catch (e) {
             console.error(e);
             alert("שגיאה בטעינת נתונים.");
         }
+    },
+
+    pullHistoryOnStartup: async function() {
+        if (!sync.ready) return;
+        try {
+            const remoteHistory = await sync.pullHistory();
+            if (!remoteHistory.length) return;
+            const localTs  = new Set(this.state.history.map(h => h.timestamp));
+            const newItems = remoteHistory.filter(h => h.timestamp && !localTs.has(h.timestamp));
+            if (newItems.length > 0) {
+                this.state.history = [...this.state.history, ...newItems]
+                    .sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+                this.saveData();
+                this.renderHome();
+            }
+        } catch (e) { console.warn('pullHistoryOnStartup failed:', e); }
     },
 
     loadData: function() {
@@ -1486,6 +1507,32 @@ const app = {
     },
 
     // ── Backup & Restore ──────────────────────────────────────────────────────
+
+    pullConfigFromCloud: async function() {
+        if (!sync.ready) {
+            alert('אין חיבור לענן — נסה שוב בעוד רגע');
+            return;
+        }
+        try {
+            const remote = await sync.pullConfig();
+            if (!remote) { alert('לא נמצא קונפיג בענן'); return; }
+            if (remote.lastUpdated <= (this.state.lastUpdated || 0)) {
+                alert('התוכנית כבר עדכנית ✓');
+                return;
+            }
+            if (confirm('נמצא עדכון מהמאמן. לטעון?')) {
+                this.state.routines    = remote.routines;
+                this.state.exercises   = remote.exercises;
+                this.state.lastUpdated = remote.lastUpdated;
+                this.saveData();
+                this.renderProgramSelect();
+                alert('עודכן בהצלחה ✓');
+            }
+        } catch (e) {
+            console.warn('pullConfigFromCloud failed:', e);
+            alert('שגיאה בטעינת עדכון');
+        }
+    },
 
     exportConfig: function() {
         const data = {

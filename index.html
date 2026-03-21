@@ -8,6 +8,9 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/svg+xml" href="icon.svg">
+    <link rel="apple-touch-icon" href="icon.svg">
+    <meta name="theme-color" content="#000000">
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
@@ -356,7 +359,7 @@
                     היסטוריה
                 </button>
                 <div style="height: 25px;"></div>
-                <button class="btn-ghost" onclick="document.getElementById('file-import-config').click()">
+                <button class="btn-ghost" onclick="app.pullConfigFromCloud()">
                     קבלת עדכון מאמן
                 </button>
             </div>
@@ -521,6 +524,7 @@
     <!-- Firebase SDK (loaded after DOM, before script.js) -->
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
