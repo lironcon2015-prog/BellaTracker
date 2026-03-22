@@ -846,12 +846,12 @@ const app = {
                 duration: summary.duration
             });
             this.saveData();
-            // גיבוי אוטומטי לענן — fire and forget
-            if (typeof FirebaseManager !== 'undefined' && FirebaseManager.isConfigured()) {
-                FirebaseManager.saveArchiveToCloud();
-            }
             localStorage.removeItem(CONFIG.KEYS.ACTIVE_WORKOUT);
-            window.location.reload();
+            if (typeof FirebaseManager !== 'undefined' && FirebaseManager.isConfigured()) {
+                FirebaseManager.saveArchiveToCloud().then(() => window.location.reload());
+            } else {
+                window.location.reload();
+            }
         };
         const txt = document.getElementById('summary-text').innerText;
         if (navigator.clipboard) {
@@ -1437,9 +1437,9 @@ const app = {
         this.state.history = this.state.history.filter((_, index) => !this.state.historySelection.includes(index));
         this.saveData();
         if (typeof FirebaseManager !== 'undefined' && FirebaseManager.isConfigured()) {
-            FirebaseManager.saveArchiveToCloud().then(() => this.showHistory());
+            FirebaseManager.saveArchiveToCloud().then(() => window.location.reload());
         } else {
-            this.showHistory();
+            window.location.reload();
         }
     },
 
@@ -1489,9 +1489,9 @@ const app = {
             this.saveData();
             this.closeHistoryModal();
             if (typeof FirebaseManager !== 'undefined' && FirebaseManager.isConfigured()) {
-                FirebaseManager.saveArchiveToCloud().then(() => this.showHistory());
+                FirebaseManager.saveArchiveToCloud().then(() => window.location.reload());
             } else {
-                this.showHistory();
+                window.location.reload();
             }
         }
     },
