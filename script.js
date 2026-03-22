@@ -284,9 +284,19 @@ const app = {
         document.getElementById('overview-title').innerText = `סקירה: ${prog.title}`;
         list.innerHTML = '';
         prog.exercises.forEach((ex, i) => {
+            const exDef = this.getExerciseDef(ex.id);
+            const unitLabel = exDef.settings.unit === 'time' ? 'זמן' :
+                              exDef.settings.unit === 'bodyweight' ? 'משקל גוף' :
+                              exDef.settings.unit === 'plates' ? 'פלטות' : 'ק״ג';
             list.innerHTML += `<div class="list-item">
-                <span>${i+1}. ${ex.name}</span>
-                <span style="color:var(--primary); font-size:0.9rem">${ex.sets} סטים</span>
+                <div style="display:flex;align-items:center;gap:12px;flex:1;">
+                    <span class="overview-num">${i+1}</span>
+                    <div>
+                        <div class="overview-ex-name">${ex.name}</div>
+                        <div class="overview-ex-sub">${ex.sets} סטים • ${unitLabel}</div>
+                    </div>
+                </div>
+                <span class="overview-sets-tag">${ex.sets}×</span>
             </div>`;
         });
     },
@@ -1370,12 +1380,12 @@ const app = {
             groupEl.innerHTML = `
                 <div class="month-header" onclick="app._toggleMonthGroup(this)">
                     <span class="month-header-title">${monthLabel}</span>
-                    <div style="display:flex;align-items:center;gap:8px;">
+                    <div class="month-meta">
                         <span class="month-count">${count} אימונים</span>
                         <span class="month-chevron">${isCurrentMonth ? '▲' : '▼'}</span>
                     </div>
                 </div>
-                <div class="month-content" style="display:${isCurrentMonth ? 'flex' : 'none'}; flex-direction:column; gap:10px;">
+                <div class="month-content" style="display:${isCurrentMonth ? 'flex' : 'none'}">
                     ${items.map(({h, realIdx}) => `
                         <div class="hist-item-row">
                             <div style="display:flex; align-items:center">
@@ -1545,7 +1555,7 @@ const app = {
             const [y, m] = mk.split('-');
             const label = `${heMonths[parseInt(m)-1]} ${y}`;
             const btn = document.createElement('button');
-            btn.className = 'range-chip';
+            btn.className = 'range-chip-gs';
             btn.innerText = label;
             btn.onclick = () => this._selectRangeMonth(mk, btn);
             container.appendChild(btn);
@@ -1554,7 +1564,7 @@ const app = {
 
     _selectRangeMonth: function(monthKey, el) {
         _rangeSelectedMonth = monthKey;
-        document.querySelectorAll('#range-month-chips .range-chip').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('#range-month-chips .range-chip-gs').forEach(b => b.classList.remove('active'));
         el.classList.add('active');
         const btn = document.getElementById('btn-range-copy');
         btn.disabled = false; btn.style.opacity = '1'; btn.innerText = 'העתק חודש';
@@ -1562,7 +1572,7 @@ const app = {
 
     selectRangeWeeks: function(n, el) {
         _rangeSelectedWeeks = n;
-        document.querySelectorAll('#range-panel-weeks .range-chip').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('#range-panel-weeks .range-chip-gs').forEach(b => b.classList.remove('active'));
         el.classList.add('active');
         const btn = document.getElementById('btn-range-copy');
         btn.disabled = false; btn.style.opacity = '1'; btn.innerText = `העתק ${n} שבועות`;

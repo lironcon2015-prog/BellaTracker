@@ -5,7 +5,7 @@
  * העלה את CACHE_VERSION בכל עדכון קוד.
  */
 
-const CACHE_VERSION = 'gymstart-v1.8.2-5';
+const CACHE_VERSION = 'gymstart-v1.8.2-6';
 
 const FILES_TO_CACHE = [
     './index.html',

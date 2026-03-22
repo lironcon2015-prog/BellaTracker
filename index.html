@@ -40,13 +40,13 @@
     </div>
 
     <!-- Coach Update Sheet -->
-    <div id="coach-update-overlay" class="modal-wrapper" style="display:none;align-items:flex-end;padding:0;" onclick="closeCoachUpdateSheet()"></div>
-    <div id="coach-update-sheet" style="display:none;position:fixed;bottom:0;left:0;right:0;background:#0a0a0a;border:1px solid #333;border-radius:20px 20px 0 0;padding:20px;padding-bottom:calc(env(safe-area-inset-bottom)+20px);z-index:201;flex-direction:column;">
-        <div style="width:32px;height:4px;background:#444;border-radius:2px;margin:0 auto 16px;"></div>
-        <h3 style="margin-bottom:6px;">קבלת עדכון מאמן</h3>
-        <p style="font-size:0.8rem;color:#666;margin-bottom:16px;">טען קונפיגורציה שנשלחה מהמאמן</p>
-        <button class="btn-primary" onclick="closeCoachUpdateSheet(); FirebaseManager.loadConfigFromCloud();" style="margin-bottom:10px;">☁️ טען מהענן</button>
-        <button class="btn-outline" onclick="closeCoachUpdateSheet(); document.getElementById('file-import-config').click();" style="margin-bottom:10px;">📂 טען מקובץ</button>
+    <div id="coach-update-overlay" class="bottom-sheet-overlay" onclick="closeCoachUpdateSheet()" style="display:none;"></div>
+    <div id="coach-update-sheet" class="bottom-sheet-gs" style="display:none;">
+        <div class="sheet-handle-gs"></div>
+        <h3 style="margin:0 0 6px;">קבלת עדכון מאמן</h3>
+        <p style="font-size:0.82rem;color:var(--text-sec);margin:0 0 18px;">טעני קונפיגורציה שנשלחה מהמאמן</p>
+        <button class="btn-primary" onclick="closeCoachUpdateSheet(); FirebaseManager.loadConfigFromCloud();" style="margin-bottom:10px;">☁️ טעני מהענן</button>
+        <button class="btn-outline" onclick="closeCoachUpdateSheet(); document.getElementById('file-import-config').click();" style="margin-bottom:10px;">📂 טעני מקובץ</button>
         <button class="btn-outline" onclick="closeCoachUpdateSheet()">ביטול</button>
     </div>
 
@@ -108,18 +108,18 @@
                         </div>
                     </div>
                     <!-- סנכרון ענן -->
-                    <div style="margin-top:14px;border-top:1px solid #1a1a1a;padding-top:14px;">
-                        <div style="font-size:0.7em;color:#444;text-transform:uppercase;letter-spacing:1.5px;font-weight:700;margin-bottom:10px;">סנכרון ענן</div>
-                        <div id="firebase-status-admin" style="font-size:0.8em;margin-bottom:10px;"></div>
-                        <button class="btn-tool-outline" onclick="openFirebaseModal()" style="width:100%;margin-bottom:8px;">⚙ הגדר חיבור Firebase</button>
-                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
-                            <button class="btn-tool-outline" onclick="FirebaseManager.saveArchiveToCloud().then(ok=>alert(ok?'היסטוריה גובתה!':'שגיאה'))">⬆ גבה היסטוריה</button>
-                            <button class="btn-tool-outline" onclick="FirebaseManager.loadArchiveFromCloud()" style="color:#00ff66;border-color:rgba(0,255,102,0.4);">⬇ שחזר היסטוריה</button>
-                            <button class="btn-tool-outline" onclick="FirebaseManager.saveConfigToCloud().then(ok=>alert(ok?'קונפיג גובה!':'שגיאה'))">⬆ גבה קונפיג</button>
-                            <button class="btn-tool-outline" onclick="FirebaseManager.loadConfigFromCloud()" style="color:#00ff66;border-color:rgba(0,255,102,0.4);">⬇ שחזר קונפיג</button>
+                        <div class="cloud-section">
+                            <div class="cloud-section-title">סנכרון ענן</div>
+                            <div id="firebase-status-admin" style="font-size:0.8em;margin-bottom:10px;"></div>
+                            <button class="btn-tool-outline" onclick="openFirebaseModal()" style="width:100%;margin-bottom:8px;">⚙ הגדר חיבור Firebase</button>
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+                                <button class="btn-tool-outline" onclick="FirebaseManager.saveArchiveToCloud().then(ok=>alert(ok?'היסטוריה גובתה!':'שגיאה'))">⬆ גבה היסטוריה</button>
+                                <button class="btn-tool-outline" onclick="FirebaseManager.loadArchiveFromCloud()" style="color:#00ff66;border-color:rgba(0,255,102,0.4);">⬇ שחזר היסטוריה</button>
+                                <button class="btn-tool-outline" onclick="FirebaseManager.saveConfigToCloud().then(ok=>alert(ok?'קונפיג גובה!':'שגיאה'))">⬆ גבה קונפיג</button>
+                                <button class="btn-tool-outline" onclick="FirebaseManager.loadConfigFromCloud()" style="color:#00ff66;border-color:rgba(0,255,102,0.4);">⬇ שחזר קונפיג</button>
+                            </div>
+                            <button class="btn-tool-outline" onclick="FirebaseManager.uploadAllToCloud()" style="width:100%;color:#00ffee;border-color:rgba(0,255,238,0.3);">⬆ העלה הכל לענן</button>
                         </div>
-                        <button class="btn-tool-outline" onclick="FirebaseManager.uploadAllToCloud()" style="width:100%;color:#00ffee;border-color:rgba(0,255,238,0.3);">⬆ העלה הכל לענן</button>
-                    </div>
                 </div>
             </div>
 
