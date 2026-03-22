@@ -443,3 +443,41 @@ body::before {
 .range-chip-gs.active { background: rgba(0,255,238,0.1); border-color: rgba(0,255,238,0.35); color: var(--primary); font-weight: 600; box-shadow: 0 0 8px rgba(0,255,238,0.15); }
 .btn-range-trigger { width: 100%; background: rgba(0,255,238,0.04); border: 1px solid rgba(0,255,238,0.15); border-radius: 12px; padding: 11px; color: var(--primary); font-family: inherit; font-size: 0.9rem; font-weight: 600; cursor: pointer; margin-bottom: 16px; transition: 0.15s; }
 .btn-range-trigger:active { background: rgba(0,255,238,0.08); }
+
+/* ── Dynamic HTML classes (replaces inline styles) ───────────────────────── */
+.gs-empty-msg {
+    text-align: center; color: rgba(255,255,255,0.25); padding: 24px 20px;
+}
+.gs-detail-ex {
+    background: var(--bg-card);
+    border: 1px solid var(--border-dim); border-top-color: var(--border-top);
+    padding: 14px; border-radius: 14px; margin-bottom: 10px;
+    backdrop-filter: blur(12px);
+}
+.gs-detail-ex-name {
+    font-weight: 700; color: var(--primary); margin-bottom: 6px;
+    filter: drop-shadow(0 0 4px rgba(0,255,238,0.3));
+}
+.gs-detail-set {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 0.9rem; margin-top: 5px;
+    border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 5px;
+}
+.gs-detail-set:last-child { border-bottom: none; padding-bottom: 0; }
+.gs-detail-set-feel { color: rgba(255,255,255,0.3); font-size: 0.8em; }
+.gs-summary-date { margin-bottom: 4px; color: rgba(255,255,255,0.7); font-size: 0.9rem; }
+.gs-prog-badge {
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: rgba(255,255,255,0.6);
+    border-radius: 8px; padding: 2px 8px; font-size: 0.72rem; font-weight: 500;
+    white-space: nowrap;
+}
+.gs-hist-row-inner {
+    flex: 1; display: flex; flex-direction: column; gap: 3px;
+}
+.gs-hist-row-top {
+    display: flex; justify-content: space-between; align-items: center;
+}
+.gs-hist-date-text { font-weight: 700; color: var(--text); font-size: 0.88rem; }
+.gs-hist-sub-text { font-size: 0.75rem; color: rgba(255,255,255,0.35); }

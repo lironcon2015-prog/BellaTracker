@@ -252,7 +252,7 @@ const app = {
         container.innerHTML = '';
         const ids = Object.keys(this.state.routines);
         if(ids.length === 0) {
-            container.innerHTML = '<div style="text-align:center; color:#666;">אין תוכניות זמינות.</div>';
+            container.innerHTML = '<div class="gs-empty-msg">אין תוכניות זמינות.</div>';
             return;
         }
         ids.forEach(pid => {
@@ -760,7 +760,7 @@ const app = {
                 <div class="summary-stat-item"><div class="summary-stat-val">${totalSets}</div><div class="summary-stat-lbl">סטים</div></div>
                 <div class="summary-stat-item"><div class="summary-stat-val">${summary.duration}</div><div class="summary-stat-lbl">דקות</div></div>
             </div>`;
-        document.getElementById('summary-meta').innerHTML = `<div style="margin-bottom:4px;">${summary.date}</div>${statsHtml}`;
+        document.getElementById('summary-meta').innerHTML = `<div class="gs-summary-date">${summary.date}</div>${statsHtml}`;
     },
 
     renderWinCard: function(summary) {
@@ -967,7 +967,7 @@ const app = {
         const list = document.getElementById('admin-prog-list');
         list.innerHTML = '';
         const ids = Object.keys(this.state.routines);
-        if(ids.length === 0) list.innerHTML = '<div style="text-align:center; color:#666; padding:20px;">אין תוכניות</div>';
+        if(ids.length === 0) list.innerHTML = '<div class="gs-empty-msg">אין תוכניות</div>';
         ids.forEach(pid => {
             const prog = this.state.routines[pid];
             list.innerHTML += `
@@ -1325,7 +1325,7 @@ const app = {
         list.innerHTML = '';
 
         if (this.state.history.length === 0) {
-            list.innerHTML = '<div style="text-align:center; color:#555; padding:30px;">אין היסטוריה</div>';
+            list.innerHTML = '<div class="gs-empty-msg">אין היסטוריה</div>';
             this.nav('screen-history');
             return;
         }
@@ -1381,14 +1381,12 @@ const app = {
                             <div style="display:flex; align-items:center">
                                 <input type="checkbox" class="custom-chk" onchange="app.toggleHistorySelection(${realIdx}, this)">
                             </div>
-                            <div style="flex:1" onclick="app.showHistoryDetail(${realIdx})">
-                                <div style="display:flex; justify-content:space-between">
-                                    <span style="font-weight:700; color:var(--text)">${h.date}</span>
-                                    <span class="badge" style="background:#333; color:white; font-weight:400; font-size:0.75rem">${h.programTitle || h.program}</span>
+                            <div class="gs-hist-row-inner" onclick="app.showHistoryDetail(${realIdx})">
+                                <div class="gs-hist-row-top">
+                                    <span class="gs-hist-date-text">${h.date}</span>
+                                    <span class="gs-prog-badge">${h.programTitle || h.program}</span>
                                 </div>
-                                <div style="font-size:0.85rem; color:var(--text-sec); margin-top:5px">
-                                    ${h.data.length} תרגילים • ${h.duration||'?'} דק'
-                                </div>
+                                <div class="gs-hist-sub-text">${h.data.length} תרגילים • ${h.duration||'?'} דק'</div>
                             </div>
                         </div>`).join('')}
                 </div>`;
@@ -1464,12 +1462,12 @@ const app = {
         const content = document.getElementById('hist-detail-content');
         let html = '';
         item.data.forEach(ex => {
-            html += `<div style="background:var(--bg-card); padding:15px; border-radius:12px; margin-bottom:10px; border:1px solid #222;">
-                <div style="font-weight:700; color:var(--primary)">${ex.name}</div>`;
+            html += `<div class="gs-detail-ex">
+                <div class="gs-detail-ex-name">${ex.name}</div>`;
             ex.sets.forEach((s, si) => {
                 const feelStr = FEEL_MAP_TEXT[s.feel] || 'טוב';
-                html += `<div style="display:flex; justify-content:space-between; font-size:0.9rem; margin-top:5px; border-bottom:1px dashed #333; padding-bottom:5px">
-                    <span>סט ${si+1} <small style="color:#777">(${feelStr})</small></span>
+                html += `<div class="gs-detail-set">
+                    <span>סט ${si+1} <small class="gs-detail-set-feel">(${feelStr})</small></span>
                     <span>${this._formatSetDisplay(ex.id, s)}</span>
                 </div>`;
             });
