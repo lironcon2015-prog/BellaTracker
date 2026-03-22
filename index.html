@@ -3,28 +3,52 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>GymStart</title>
+    <title>GymStart V1.8.2</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="GymStart">
-    <meta name="theme-color" content="#000000">
-    <link rel="manifest" href="./manifest.json">
+    <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="./icon.png">
-    <link rel="icon" type="image/png" href="./icon.png">
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <script>
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('./sw.js')
-                .catch(e => console.warn('SW registration failed:', e));
-        }
-    </script>
+    <script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js');</script>
+    <!-- Firebase SDK (Compat) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
 
     <!-- Hidden File Inputs -->
     <input type="file" id="file-import-history" hidden accept=".json" onchange="app.importHistory(this)">
     <input type="file" id="file-import-config" hidden accept=".json" onchange="app.importConfig(this)">
+
+    <!-- Firebase Config Modal -->
+    <div id="firebase-modal" class="modal-wrapper" style="display:none;">
+        <div class="oled-modal">
+            <div class="modal-header">
+                <h3>הגדרת Firebase</h3>
+                <button class="text-close-btn" onclick="closeFirebaseModal()">סגור ×</button>
+            </div>
+            <div id="firebase-status" style="font-size:0.82em;margin-bottom:14px;"></div>
+            <p style="font-size:0.78rem;color:#666;margin-bottom:12px;">הדבק את כל בלוק ה-firebaseConfig מ-Firebase Console</p>
+            <textarea id="fb-config-paste" class="oled-textarea" rows="8"
+                style="font-family:monospace;font-size:0.76rem;line-height:1.6;direction:ltr;text-align:left;"
+                placeholder="const firebaseConfig = {&#10;  apiKey: &quot;AIzaSy...&quot;,&#10;  projectId: &quot;...&quot;&#10;};"></textarea>
+            <button class="btn-primary" onclick="saveFirebaseConfig()" style="margin-top:12px;">שמור חיבור</button>
+            <button id="btn-clear-firebase" class="btn-danger-outline" style="display:none;margin-top:8px;" onclick="confirmClearFirebase()">נתק Firebase</button>
+        </div>
+    </div>
+
+    <!-- Coach Update Sheet -->
+    <div id="coach-update-overlay" class="modal-wrapper" style="display:none;align-items:flex-end;padding:0;" onclick="closeCoachUpdateSheet()"></div>
+    <div id="coach-update-sheet" style="display:none;position:fixed;bottom:0;left:0;right:0;background:#0a0a0a;border:1px solid #333;border-radius:20px 20px 0 0;padding:20px;padding-bottom:calc(env(safe-area-inset-bottom)+20px);z-index:201;flex-direction:column;">
+        <div style="width:32px;height:4px;background:#444;border-radius:2px;margin:0 auto 16px;"></div>
+        <h3 style="margin-bottom:6px;">קבלת עדכון מאמן</h3>
+        <p style="font-size:0.8rem;color:#666;margin-bottom:16px;">טען קונפיגורציה שנשלחה מהמאמן</p>
+        <button class="btn-primary" onclick="closeCoachUpdateSheet(); FirebaseManager.loadConfigFromCloud();" style="margin-bottom:10px;">☁️ טען מהענן</button>
+        <button class="btn-outline" onclick="closeCoachUpdateSheet(); document.getElementById('file-import-config').click();" style="margin-bottom:10px;">📂 טען מקובץ</button>
+        <button class="btn-outline" onclick="closeCoachUpdateSheet()">ביטול</button>
+    </div>
 
     <!-- RESUME WORKOUT MODAL -->
     <div id="resume-modal" class="modal-wrapper" style="z-index: 200;">
@@ -63,30 +87,38 @@
     <!-- ADMIN MODAL -->
     <div id="admin-modal" class="modal-wrapper">
         <div class="oled-modal admin-layout">
-            
+
             <!-- VIEW 1: ADMIN HOME -->
             <div id="admin-view-home" class="admin-view">
                 <div class="modal-header">
                     <h3>ניהול תוכניות</h3>
                     <button class="text-close-btn" onclick="app.closeAdmin()">סגור ×</button>
                 </div>
-                
                 <div class="admin-nav-row">
-                     <button class="btn-tool-outline" onclick="app.openExerciseManager()">📚 מאגר תרגילים</button>
-                     <button class="btn-tool-outline" onclick="app.openCloudView()">☁️ ענן</button>
+                    <button class="btn-tool-outline" onclick="app.openExerciseManager()">📚 ניהול מאגר תרגילים</button>
                 </div>
-
                 <div id="admin-prog-list" class="vertical-stack scroll-y" style="margin-top:15px;"></div>
-                
                 <div class="modal-footer-column">
                     <button class="btn-primary" onclick="app.createNewProgram()">+ צור תוכנית חדשה</button>
-                    
                     <div class="backup-area">
-                        <label>ניהול נתונים מקומי</label>
+                        <label>ניהול נתונים</label>
                         <div class="tools-row">
                             <button class="btn-tool-outline" onclick="app.exportConfig()">ייצוא תבנית (Config)</button>
                             <button class="btn-tool-danger" onclick="app.factoryReset()">איפוס מלא</button>
                         </div>
+                    </div>
+                    <!-- סנכרון ענן -->
+                    <div style="margin-top:14px;border-top:1px solid #1a1a1a;padding-top:14px;">
+                        <div style="font-size:0.7em;color:#444;text-transform:uppercase;letter-spacing:1.5px;font-weight:700;margin-bottom:10px;">סנכרון ענן</div>
+                        <div id="firebase-status-admin" style="font-size:0.8em;margin-bottom:10px;"></div>
+                        <button class="btn-tool-outline" onclick="openFirebaseModal()" style="width:100%;margin-bottom:8px;">⚙ הגדר חיבור Firebase</button>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+                            <button class="btn-tool-outline" onclick="FirebaseManager.saveArchiveToCloud().then(ok=>alert(ok?'היסטוריה גובתה!':'שגיאה'))">⬆ גבה היסטוריה</button>
+                            <button class="btn-tool-outline" onclick="FirebaseManager.loadArchiveFromCloud()" style="color:#00ff66;border-color:rgba(0,255,102,0.4);">⬇ שחזר היסטוריה</button>
+                            <button class="btn-tool-outline" onclick="FirebaseManager.saveConfigToCloud().then(ok=>alert(ok?'קונפיג גובה!':'שגיאה'))">⬆ גבה קונפיג</button>
+                            <button class="btn-tool-outline" onclick="FirebaseManager.loadConfigFromCloud()" style="color:#00ff66;border-color:rgba(0,255,102,0.4);">⬇ שחזר קונפיג</button>
+                        </div>
+                        <button class="btn-tool-outline" onclick="FirebaseManager.uploadAllToCloud()" style="width:100%;color:#00ffee;border-color:rgba(0,255,238,0.3);">⬆ העלה הכל לענן</button>
                     </div>
                 </div>
             </div>
@@ -96,15 +128,12 @@
                 <div class="modal-header">
                     <h3>עריכת תוכנית</h3>
                 </div>
-                
                 <div class="oled-card compact" style="margin-bottom: 15px;">
                     <label class="input-label-small">שם התוכנית</label>
                     <input type="text" id="edit-prog-title" class="minimal-input" placeholder="שם התוכנית" oninput="app.updateProgramTitle()">
                 </div>
-
                 <div class="subtitle-label">רשימת תרגילים</div>
                 <div id="admin-ex-list" class="vertical-stack scroll-y"></div>
-                
                 <div class="modal-footer-column">
                     <button class="btn-dashed" onclick="app.openAdminSelector()">+ הוסף תרגיל</button>
                     <div style="display:flex; gap:10px; margin-top: 15px;">
@@ -120,9 +149,7 @@
                     <h3>בחר תרגיל</h3>
                     <button class="text-close-btn" onclick="app.closeSelector()">ביטול</button>
                 </div>
-
                 <input type="text" id="selector-search" class="search-input" placeholder="חפש תרגיל..." onkeyup="app.filterSelector()">
-                
                 <div class="chip-container">
                     <button class="chip active" onclick="app.setSelectorFilter('all', this)">הכל</button>
                     <button class="chip" onclick="app.setSelectorFilter('legs', this)">רגליים</button>
@@ -132,7 +159,6 @@
                     <button class="chip" onclick="app.setSelectorFilter('arms', this)">ידיים</button>
                     <button class="chip" onclick="app.setSelectorFilter('core', this)">בטן</button>
                 </div>
-
                 <div id="selector-list" class="vertical-stack scroll-y" style="margin-top:10px;"></div>
             </div>
 
@@ -142,9 +168,7 @@
                     <h3>מאגר תרגילים</h3>
                     <button class="text-close-btn" onclick="app.openAdminHome()">חזרה</button>
                 </div>
-                
                 <input type="text" id="ex-mgr-search" class="search-input" placeholder="חפש במאגר..." onkeyup="app.renderExerciseManagerList()">
-                
                 <div class="chip-container">
                     <button class="chip active" onclick="app.setExManagerFilter('all', this)">הכל</button>
                     <button class="chip" onclick="app.setExManagerFilter('legs', this)">רגליים</button>
@@ -154,7 +178,6 @@
                     <button class="chip" onclick="app.setExManagerFilter('arms', this)">ידיים</button>
                     <button class="chip" onclick="app.setExManagerFilter('core', this)">בטן</button>
                 </div>
-
                 <div id="ex-mgr-list" class="vertical-stack scroll-y" style="margin-top:10px;"></div>
                 <div class="modal-footer-column">
                     <button class="btn-primary" onclick="app.createNewExerciseInBank()">+ תרגיל חדש</button>
@@ -171,7 +194,6 @@
                         <label class="input-label-small">שם התרגיל</label>
                         <input type="text" id="edit-ex-name" class="minimal-input">
                     </div>
-                    
                     <div class="oled-card compact">
                         <label class="input-label-small">קטגוריה</label>
                         <select id="edit-ex-cat" class="oled-select">
@@ -184,12 +206,10 @@
                             <option value="other">אחר</option>
                         </select>
                     </div>
-
                     <div class="oled-card compact">
                         <label class="input-label-small">קישור להדגמה (Youtube)</label>
                         <input type="text" id="edit-ex-video" class="minimal-input" placeholder="https://...">
                     </div>
-
                     <div class="oled-card compact">
                         <label class="input-label-small">הגדרות משקל</label>
                         <div class="inputs-row" style="margin-top:10px;">
@@ -199,6 +219,7 @@
                                     <option value="kg">ק״ג</option>
                                     <option value="plates">פלטות</option>
                                     <option value="bodyweight">גוף</option>
+                                    <option value="time">זמן (שנ׳)</option>
                                 </select>
                             </div>
                             <div style="flex:1">
@@ -235,48 +256,6 @@
                 </div>
             </div>
 
-            <!-- VIEW 6: CLOUD & UPDATES -->
-            <div id="admin-view-cloud" class="admin-view" style="display:none;">
-                <div class="modal-header">
-                    <h3>☁️ ענן וגרסאות</h3>
-                    <button class="text-close-btn" onclick="app.openAdminHome()">חזרה</button>
-                </div>
-
-                <div class="scroll-y vertical-stack">
-
-                    <div class="oled-card compact">
-                        <label class="input-label-small">סטטוס חיבור</label>
-                        <div id="cloud-status" style="margin-top:8px; font-size:0.95rem;">בודק...</div>
-                    </div>
-
-                    <div class="oled-card compact">
-                        <label class="input-label-small">הגדרת חיבור Firebase</label>
-                        <p style="font-size:0.8rem; color:var(--text-sec); margin:8px 0;">הדבק את ה-config מ-Firebase Console (פורמט JSON)</p>
-                        <textarea id="firebase-config-input" class="oled-textarea" rows="4" placeholder='{"apiKey":"...","projectId":"...","appId":"..."}'></textarea>
-                        <button class="btn-tool-outline" style="margin-top:10px; width:100%;" onclick="app.saveFirebaseConfig()">שמור חיבור</button>
-                        <button class="btn-tool-danger" style="margin-top:8px; width:100%; opacity:0.6;" onclick="app.clearFirebaseConfig()">נתק</button>
-                    </div>
-
-                    <div class="oled-card compact">
-                        <label class="input-label-small">סנכרון נתונים</label>
-                        <div class="vertical-stack" style="margin-top:12px; gap:10px;">
-                            <button class="btn-tool-outline" onclick="app.uploadAllToCloud()">⬆ העלה הכל לענן</button>
-                            <button class="btn-tool-outline" onclick="app.downloadFromCloud()">⬇ טען מהענן</button>
-                        </div>
-                        <div id="cloud-op-status" style="margin-top:10px; font-size:0.82rem; color:var(--text-sec); min-height:1.2em;"></div>
-                    </div>
-
-                    <div class="oled-card compact">
-                        <label class="input-label-small">גרסת אפליקציה</label>
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
-                            <span id="current-version-display" style="color:var(--text-sec); font-size:0.95rem;"></span>
-                            <button class="btn-tool-outline" onclick="app.checkForUpdates()">🔄 בדוק עדכונים</button>
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-
         </div>
     </div>
 
@@ -308,14 +287,41 @@
         </div>
     </div>
 
+    <!-- Range Copy Sheet -->
+    <div id="range-copy-overlay" class="bottom-sheet-overlay" onclick="app.closeRangeSheet()" style="display:none;"></div>
+    <div id="range-copy-sheet" class="bottom-sheet-gs" style="display:none;">
+        <div class="sheet-handle-gs"></div>
+        <h3 style="margin:0 0 14px;">העתק לפי טווח</h3>
+        <div class="segmented-control-gs" style="margin-bottom:14px;">
+            <button class="seg-btn-gs active" id="range-seg-month" onclick="app.switchRangeTab('month')">חודש</button>
+            <button class="seg-btn-gs" id="range-seg-weeks" onclick="app.switchRangeTab('weeks')">שבועות</button>
+        </div>
+        <div id="range-panel-month">
+            <div id="range-month-chips" class="range-chips-gs"></div>
+        </div>
+        <div id="range-panel-weeks" style="display:none;">
+            <div class="range-chips-gs" style="flex-wrap:wrap;gap:8px;margin-bottom:8px;">
+                <button class="range-chip-gs" onclick="app.selectRangeWeeks(1,this)">1</button>
+                <button class="range-chip-gs" onclick="app.selectRangeWeeks(2,this)">2</button>
+                <button class="range-chip-gs" onclick="app.selectRangeWeeks(3,this)">3</button>
+                <button class="range-chip-gs" onclick="app.selectRangeWeeks(4,this)">4</button>
+                <button class="range-chip-gs" onclick="app.selectRangeWeeks(6,this)">6</button>
+                <button class="range-chip-gs" onclick="app.selectRangeWeeks(8,this)">8</button>
+            </div>
+            <p style="color:#666; font-size:0.85rem; margin:0 0 4px;">שבועות אחורה — כולל השבוע הנוכחי (ראשון–שבת)</p>
+        </div>
+        <button class="btn-primary" id="btn-range-copy" onclick="app.executeCopyByRange()" disabled style="opacity:0.5;margin-top:16px;">בחר טווח</button>
+        <button class="btn-outline" onclick="app.closeRangeSheet()" style="margin-top:10px;">ביטול</button>
+    </div>
+
     <!-- Main App -->
     <div class="app-container">
-        
+
         <!-- Navbar -->
         <header class="navbar">
             <div class="nav-left">
                 <button id="btn-admin-home" class="icon-btn" onclick="app.openAdminHome()" style="display:none;">
-                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 5 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 5 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
                 </button>
             </div>
             <div class="logo">GYM<span class="highlight">START</span></div>
@@ -326,6 +332,8 @@
             </div>
         </header>
 
+        <!-- SCREENS -->
+
         <!-- SCREEN 1: HOME -->
         <div id="screen-home" class="screen active">
             <div class="scroll-content">
@@ -333,7 +341,6 @@
                     <h1 id="greeting">ברוכה הבאה</h1>
                     <p>מוכנה לאימון?</p>
                 </div>
-
                 <div class="oled-card info-card">
                     <div class="icon-box">📅</div>
                     <div>
@@ -341,22 +348,16 @@
                         <div id="last-workout-display" class="value">טוען...</div>
                     </div>
                 </div>
-                
                 <div class="version-tag">GymStart V1.8.2</div>
             </div>
-
             <div class="fixed-footer">
-                <button class="btn-primary big-btn" onclick="app.nav('screen-program-select')">
-                    התחילי אימון
-                </button>
+                <button class="btn-primary big-btn" onclick="app.nav('screen-program-select')">התחילי אימון</button>
                 <div style="height: 15px;"></div>
-                <button class="btn-outline" onclick="app.showHistory()">
-                    היסטוריה
-                </button>
+                <button class="btn-outline" onclick="app.showHistory()">היסטוריה</button>
                 <div style="height: 25px;"></div>
-                <button class="btn-ghost" onclick="app.pullConfigFromCloud()">
-                    קבלת עדכון מאמן
-                </button>
+                <button class="btn-ghost" onclick="openCoachUpdateSheet()">קבלת עדכון מאמן ☁️</button>
+                <div style="height: 10px;"></div>
+                <button class="btn-ghost" onclick="app.checkForUpdate()">בדוק עדכון</button>
             </div>
         </div>
 
@@ -382,19 +383,15 @@
         <!-- SCREEN 3: ACTIVE EXERCISE -->
         <div id="screen-active" class="screen">
             <div class="active-container">
-                
                 <div class="active-header-section">
                     <div id="set-badge" class="badge">סט 1</div>
-                    
                     <div style="display:flex; justify-content:center; align-items:center; gap:8px;">
-                         <h2 id="ex-name">שם התרגיל</h2>
-                         <a id="ex-video-link" href="#" target="_blank" class="video-icon" style="display:none;">▶</a>
+                        <h2 id="ex-name">שם התרגיל</h2>
+                        <a id="ex-video-link" href="#" target="_blank" class="video-icon" style="display:none;">▶</a>
                     </div>
-                    
                     <div id="coach-note" class="note-pill"></div>
                     <div id="last-stat-strip" class="stats-strip-enhanced"></div>
                 </div>
-
                 <div class="workspace">
                     <div id="cards-container" class="inputs-row">
                         <div class="input-card">
@@ -406,14 +403,12 @@
                             <select id="select-reps" class="native-select"></select>
                         </div>
                     </div>
-
                     <div id="stopwatch-container" class="stopwatch-box" style="display: none;">
                         <div class="sw-time" id="sw-display">00:00</div>
                         <button id="btn-sw-toggle" class="btn-neon-play" onclick="app.toggleStopwatch()">▶</button>
                         <div class="sw-hint">מדידת זמן לתרגיל</div>
                     </div>
                 </div>
-
                 <div class="active-controls-area">
                     <div class="feeling-section">
                         <div class="feeling-row">
@@ -423,29 +418,18 @@
                         </div>
                         <div class="feel-label" id="feel-text">בינוני (טוב)</div>
                     </div>
-
                     <div id="action-area" class="main-action-box">
-                        <button id="btn-finish" class="btn-primary" onclick="app.finishSet()">
-                            סיום סט
-                        </button>
-                        
-                        <button id="btn-reorder" class="btn-quiet" onclick="app.openReorder()" style="display:none;">
-                            שינוי סדר
-                        </button>
-                        
+                        <button id="btn-finish" class="btn-primary" onclick="app.finishSet()">סיום סט</button>
+                        <button id="btn-reorder" class="btn-quiet" onclick="app.openReorder()" style="display:none;">שינוי סדר</button>
                         <div id="next-ex-preview" class="next-preview-text" style="display: none;"></div>
-
                         <div id="decision-buttons" style="display:none; flex-direction:column; gap:10px; width:100%;">
                             <div style="display:flex; gap:10px; width:100%;">
                                 <button id="btn-add-set" class="btn-outline" onclick="app.addSet()" style="flex:1">עוד סט</button>
                                 <button id="btn-next-ex" class="btn-primary" onclick="app.nextExercise()" style="flex:1">תרגיל הבא</button>
                             </div>
-                            <button id="btn-add-core" class="btn-outline" onclick="app.openAddCoreExercise()" style="display:none; border-color:var(--primary); color:var(--primary);">
-                                + הוסיפי תרגיל בטן
-                            </button>
+                            <button id="btn-add-core" class="btn-outline" onclick="app.openAddCoreExercise()" style="display:none; border-color:var(--primary); color:var(--primary);">+ הוסיפי תרגיל בטן</button>
                         </div>
                     </div>
-
                     <div id="rest-timer-area" class="rest-box" style="display: none;">
                         <div class="circular-timer">
                             <svg viewBox="0 0 150 150">
@@ -457,7 +441,6 @@
                         <div class="rest-caption">זמן מנוחה</div>
                     </div>
                 </div>
-
                 <div class="sub-actions-footer">
                     <button class="text-link" onclick="app.deleteLastSet()">בטל סט אחרון</button>
                     <button class="text-link" onclick="app.skipExercise()">דלג תרגיל</button>
@@ -485,7 +468,6 @@
                 </div>
                 <div id="summary-text" class="summary-box"></div>
             </div>
-            
             <div class="fixed-footer">
                 <button class="btn-primary big-btn" onclick="app.finishAndCopy()">סיים, העתק ושמור</button>
             </div>
@@ -497,28 +479,25 @@
                 <div class="page-header">
                     <h2 class="page-title">היסטוריה</h2>
                     <div class="header-tools">
-                         <button class="btn-tool" onclick="app.exportHistory()">גיבוי</button>
-                         <button class="btn-tool" onclick="document.getElementById('file-import-history').click()">שחזור</button>
+                        <button class="btn-tool" onclick="app.exportHistory()">גיבוי</button>
+                        <button class="btn-tool" onclick="document.getElementById('file-import-history').click()">שחזור</button>
                     </div>
                 </div>
-                
                 <div class="bulk-tools">
-                     <button class="btn-tool-outline" onclick="app.selectAllHistory()">בחר הכל</button>
-                     <div style="display:flex; gap:10px;">
+                    <button class="btn-tool-outline" onclick="app.selectAllHistory()">בחר הכל</button>
+                    <div style="display:flex; gap:10px;">
                         <button class="btn-tool-outline" onclick="app.copySelectedHistory()">העתק</button>
                         <button id="btn-del-selected" class="btn-tool-danger" onclick="app.deleteSelectedHistory()" disabled>מחק</button>
-                     </div>
+                    </div>
                 </div>
-
+                <!-- כפתור העתקה לפי טווח -->
+                <button class="btn-range-trigger" onclick="app.openRangeSheet()">העתק לפי טווח</button>
                 <div id="history-list" class="history-list-container"></div>
             </div>
         </div>
 
     </div>
 
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
