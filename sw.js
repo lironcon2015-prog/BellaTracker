@@ -1,50 +1,55 @@
 /**
- * GymStart Service Worker
- * לעדכון גרסה: שנה את CACHE_VERSION ודחוף לגיטהאב.
- * הדפדפן מזהה שינוי ב-sw.js, מתקין גרסה חדשה, מוחק קאש ישן.
+ * GymStart — Service Worker
+ * Version: 1.8.2
+ * Cache First strategy — עבודה אופליין מלאה.
+ * העלה את CACHE_VERSION בכל עדכון קוד.
  */
 
-const CACHE_VERSION = 'gymstart-v1.8.2';
+const CACHE_VERSION = 'gymstart-v1.8.2-1';
 
 const FILES_TO_CACHE = [
-    './',
     './index.html',
-    './script.js',
     './style.css',
+    './script.js',
+    './version.json',
     './manifest.json',
     './icon.png'
 ];
 
 self.addEventListener('install', event => {
     event.waitUntil(
-        caches.open(CACHE_VERSION)
-            .then(cache => cache.addAll(FILES_TO_CACHE))
-            .then(() => self.skipWaiting())
+        caches.open(CACHE_VERSION).then(cache => {
+            return cache.addAll(FILES_TO_CACHE);
+        })
     );
+    self.skipWaiting();
 });
 
 self.addEventListener('activate', event => {
     event.waitUntil(
         caches.keys().then(keys =>
             Promise.all(
-                keys.filter(k => k !== CACHE_VERSION).map(k => caches.delete(k))
+                keys
+                    .filter(key => key !== CACHE_VERSION)
+                    .map(key => caches.delete(key))
             )
-        ).then(() => self.clients.claim())
+        )
     );
+    self.clients.claim();
 });
 
 self.addEventListener('fetch', event => {
-    if (event.request.method !== 'GET') return;
-    if (!event.request.url.startsWith(self.location.origin)) return;
+    // version.json — תמיד מהרשת (לצורך בדיקת עדכונים)
+    if (event.request.url.includes('version.json')) {
+        event.respondWith(
+            fetch(event.request).catch(() => caches.match(event.request))
+        );
+        return;
+    }
+    // שאר הקבצים — Cache First
     event.respondWith(
         caches.match(event.request).then(cached => {
-            return cached || fetch(event.request).then(response => {
-                if (response.ok) {
-                    const clone = response.clone();
-                    caches.open(CACHE_VERSION).then(cache => cache.put(event.request, clone));
-                }
-                return response;
-            });
+            return cached || fetch(event.request);
         })
     );
 });

@@ -1,177 +1,79 @@
 /**
  * GYMSTART V1.8.2
- * - Firebase Firestore sync (push/pull history + config)
- * - Cloud admin view (upload, download, version check)
- * - Service Worker version checking
- * - Bug fix: plank/static → שנ' (not חזר')
+ * - unit:'time' replaces plank/static name detection
+ * - Monthly history grouping
+ * - Copy by range (month/weeks)
+ * - checkForUpdate()
  */
-
-// ── Config ────────────────────────────────────────────────────────────────────
 
 const CONFIG = {
     KEYS: {
-        ROUTINES:       'gymstart_v1_7_routines',
-        HISTORY:        'gymstart_beta_02_history',
-        EXERCISES:      'gymstart_v1_7_exercises_bank',
-        ACTIVE_WORKOUT: 'gymstart_active_workout_state',
-        LAST_UPDATED:   'gymstart_last_updated'
+        ROUTINES: 'gymstart_v1_7_routines',
+        HISTORY: 'gymstart_beta_02_history',
+        EXERCISES: 'gymstart_v1_7_exercises_bank',
+        ACTIVE_WORKOUT: 'gymstart_active_workout_state'
     },
     VERSION: '1.8.2'
 };
 
-const FIREBASE_CONFIG_KEY = 'gymstart_firebase_config';
+const CURRENT_VERSION = '1.8.1-1'; // חייב להיות זהה ל-version.json
 
 const FEEL_MAP_TEXT = { 'easy': 'קל', 'good': 'בינוני', 'hard': 'קשה' };
 
-// ── Firebase Sync Module ──────────────────────────────────────────────────────
-
-const sync = {
-    db:    null,
-    ready: false,
-
-    getStoredConfig() {
-        try { return JSON.parse(localStorage.getItem(FIREBASE_CONFIG_KEY)); }
-        catch { return null; }
-    },
-
-    isConfigured() {
-        const cfg = this.getStoredConfig();
-        return !!(cfg && cfg.apiKey && cfg.projectId);
-    },
-
-    init() {
-        this.ready = false;
-        this.db    = null;
-        if (typeof firebase === 'undefined') return;
-        const cfg = this.getStoredConfig();
-        if (!cfg || !cfg.apiKey || !cfg.projectId) return;
-        try {
-            if (!firebase.apps.length) firebase.initializeApp(cfg);
-            this.db    = firebase.firestore();
-            this.ready = true;
-        } catch (e) {
-            console.warn('Firebase init failed:', e);
-        }
-    },
-
-    async pushHistory(item) {
-        if (!this.ready) return;
-        try {
-            await this.db.collection('history').doc(String(item.timestamp)).set(item);
-        } catch (e) { console.warn('pushHistory failed:', e); }
-    },
-
-    async deleteHistoryItem(timestamp) {
-        if (!this.ready) return;
-        try {
-            await this.db.collection('history').doc(String(timestamp)).delete();
-        } catch (e) { console.warn('deleteHistoryItem failed:', e); }
-    },
-
-    async pullHistory() {
-        if (!this.ready) return [];
-        try {
-            const snap = await this.db.collection('history').get();
-            return snap.docs.map(d => d.data());
-        } catch (e) { console.warn('pullHistory failed:', e); return []; }
-    },
-
-    async pushConfig() {
-        if (!this.ready) return;
-        try {
-            const cfg = {
-                routines:    app.state.routines,
-                exercises:   app.state.exercises,
-                lastUpdated: Date.now()
-            };
-            await this.db.collection('config').doc('data').set(cfg);
-            app.state.lastUpdated = cfg.lastUpdated;
-            localStorage.setItem(CONFIG.KEYS.LAST_UPDATED, cfg.lastUpdated);
-        } catch (e) { console.warn('pushConfig failed:', e); }
-    },
-
-    async pullConfig() {
-        if (!this.ready) return null;
-        try {
-            const snap = await this.db.collection('config').doc('data').get();
-            return snap.exists ? snap.data() : null;
-        } catch (e) { console.warn('pullConfig failed:', e); return null; }
-    },
-
-    // Batch-upload all history items (handles Firestore 500-doc limit)
-    async migrateHistory(historyArr) {
-        if (!this.ready || !historyArr.length) return;
-        try {
-            const BATCH_SIZE = 400;
-            for (let i = 0; i < historyArr.length; i += BATCH_SIZE) {
-                const batch = this.db.batch();
-                historyArr.slice(i, i + BATCH_SIZE).forEach(item => {
-                    const ref = this.db.collection('history').doc(String(item.timestamp));
-                    batch.set(ref, item);
-                });
-                await batch.commit();
-            }
-        } catch (e) { console.warn('migrateHistory failed:', e); }
-    }
-};
-
-// ── Base Data ─────────────────────────────────────────────────────────────────
-
+// BASE EXERCISES — plank/side_plank משודרגים ל-unit:'time'
 const BASE_BANK_INIT = [
-    { id: 'goblet',        name: 'גובלט סקוואט',             cat: 'legs',      settings: {unit:'kg',         step:2.5, min:2.5, max:60}  },
-    { id: 'leg_press',     name: 'לחיצת רגליים',             cat: 'legs',      settings: {unit:'kg',         step:5,   min:20,  max:200} },
-    { id: 'rdl',           name: 'דדליפט רומני',             cat: 'legs',      settings: {unit:'kg',         step:2.5, min:10,  max:100} },
-    { id: 'lunge',         name: 'מכרעים (Lunges)',          cat: 'legs',      settings: {unit:'kg',         step:1,   min:1,   max:30}  },
-    { id: 'hip_thrust',    name: 'גשר עכוז',                 cat: 'legs',      settings: {unit:'kg',         step:2.5, min:10,  max:120} },
-    { id: 'leg_ext',       name: 'פשיטת ברכיים',             cat: 'legs',      settings: {unit:'plates',     step:1,   min:1,   max:20}  },
-    { id: 'leg_curl',      name: 'כפיפת ברכיים',             cat: 'legs',      settings: {unit:'plates',     step:1,   min:1,   max:20}  },
-    { id: 'calf_raise',    name: 'הרמת עקבים',               cat: 'legs',      settings: {unit:'kg',         step:2.5, min:10,  max:80}  },
-    { id: 'chest_press',   name: 'לחיצת חזה משקולות',        cat: 'chest',     settings: {unit:'kg',         step:1,   min:2,   max:40}  },
-    { id: 'fly',           name: 'פרפר (Fly)',               cat: 'chest',     settings: {unit:'kg',         step:1,   min:2,   max:20}  },
-    { id: 'pushup',        name: 'שכיבות סמיכה',             cat: 'chest',     settings: {unit:'bodyweight', step:0,   min:0,   max:0}   },
-    { id: 'incline_bench', name: 'לחיצת חזה שיפוע עליון',   cat: 'chest',     settings: {unit:'kg',         step:1,   min:2,   max:40}  },
-    { id: 'lat_pull',      name: 'פולי עליון',               cat: 'back',      settings: {unit:'plates',     step:1,   min:1,   max:20}  },
-    { id: 'cable_row',     name: 'חתירה בכבל',               cat: 'back',      settings: {unit:'plates',     step:1,   min:1,   max:20}  },
-    { id: 'db_row',        name: 'חתירה במשקולת',            cat: 'back',      settings: {unit:'kg',         step:1,   min:4,   max:40}  },
-    { id: 'hyperext',      name: 'פשיטת גו (Hyper)',         cat: 'back',      settings: {unit:'bodyweight', step:0,   min:0,   max:0}   },
-    { id: 'shoulder_press',name: 'לחיצת כתפיים',             cat: 'shoulders', settings: {unit:'kg',         step:1,   min:2,   max:30}  },
-    { id: 'lat_raise',     name: 'הרחקה לצדדים',             cat: 'shoulders', settings: {unit:'kg',         step:1,   min:1,   max:15}  },
-    { id: 'face_pull',     name: 'פייס-פולס',                cat: 'shoulders', settings: {unit:'plates',     step:1,   min:1,   max:20}  },
-    { id: 'bicep_curl',    name: 'כפיפת מרפקים',             cat: 'arms',      settings: {unit:'kg',         step:1,   min:2,   max:25}  },
-    { id: 'tricep_pull',   name: 'פשיטת מרפקים',             cat: 'arms',      settings: {unit:'plates',     step:1,   min:1,   max:20}  },
-    { id: 'tricep_rope',   name: 'פשיטת מרפקים חבל',         cat: 'arms',      settings: {unit:'plates',     step:1,   min:1,   max:20}  },
-    { id: 'hammer_curl',   name: 'כפיפת פטישים',             cat: 'arms',      settings: {unit:'kg',         step:1,   min:2,   max:25}  },
-    { id: 'plank',         name: 'פלאנק (סטטי)',             cat: 'core',      settings: {unit:'bodyweight', step:0,   min:0,   max:0}   },
-    { id: 'side_plank',    name: 'פלאנק צידי',               cat: 'core',      settings: {unit:'bodyweight', step:0,   min:0,   max:0}   },
-    { id: 'bicycle',       name: 'בטן אופניים',              cat: 'core',      settings: {unit:'bodyweight', step:0,   min:0,   max:0}   },
-    { id: 'knee_raise',    name: 'הרמת ברכיים',              cat: 'core',      settings: {unit:'bodyweight', step:0,   min:0,   max:0}   },
-    { id: 'crunches',      name: 'כפיפות בטן',               cat: 'core',      settings: {unit:'bodyweight', step:0,   min:0,   max:0}   }
+    { id: 'goblet', name: 'גובלט סקוואט', cat: 'legs', settings: {unit:'kg', step:2.5, min:2.5, max:60} },
+    { id: 'leg_press', name: 'לחיצת רגליים', cat: 'legs', settings: {unit:'kg', step:5, min:20, max:200} },
+    { id: 'rdl', name: 'דדליפט רומני', cat: 'legs', settings: {unit:'kg', step:2.5, min:10, max:100} },
+    { id: 'lunge', name: 'מכרעים (Lunges)', cat: 'legs', settings: {unit:'kg', step:1, min:1, max:30} },
+    { id: 'hip_thrust', name: 'גשר עכוז', cat: 'legs', settings: {unit:'kg', step:2.5, min:10, max:120} },
+    { id: 'leg_ext', name: 'פשיטת ברכיים', cat: 'legs', settings: {unit:'plates', step:1, min:1, max:20} },
+    { id: 'leg_curl', name: 'כפיפת ברכיים', cat: 'legs', settings: {unit:'plates', step:1, min:1, max:20} },
+    { id: 'calf_raise', name: 'הרמת עקבים', cat: 'legs', settings: {unit:'kg', step:2.5, min:10, max:80} },
+    { id: 'chest_press', name: 'לחיצת חזה משקולות', cat: 'chest', settings: {unit:'kg', step:1, min:2, max:40} },
+    { id: 'fly', name: 'פרפר (Fly)', cat: 'chest', settings: {unit:'kg', step:1, min:2, max:20} },
+    { id: 'pushup', name: 'שכיבות סמיכה', cat: 'chest', settings: {unit:'bodyweight', step:0, min:0, max:0} },
+    { id: 'incline_bench', name: 'לחיצת חזה שיפוע עליון', cat: 'chest', settings: {unit:'kg', step:1, min:2, max:40} },
+    { id: 'lat_pull', name: 'פולי עליון', cat: 'back', settings: {unit:'plates', step:1, min:1, max:20} },
+    { id: 'cable_row', name: 'חתירה בכבל', cat: 'back', settings: {unit:'plates', step:1, min:1, max:20} },
+    { id: 'db_row', name: 'חתירה במשקולת', cat: 'back', settings: {unit:'kg', step:1, min:4, max:40} },
+    { id: 'hyperext', name: 'פשיטת גו (Hyper)', cat: 'back', settings: {unit:'bodyweight', step:0, min:0, max:0} },
+    { id: 'shoulder_press', name: 'לחיצת כתפיים', cat: 'shoulders', settings: {unit:'kg', step:1, min:2, max:30} },
+    { id: 'lat_raise', name: 'הרחקה לצדדים', cat: 'shoulders', settings: {unit:'kg', step:1, min:1, max:15} },
+    { id: 'face_pull', name: 'פייס-פולס', cat: 'shoulders', settings: {unit:'plates', step:1, min:1, max:20} },
+    { id: 'bicep_curl', name: 'כפיפת מרפקים', cat: 'arms', settings: {unit:'kg', step:1, min:2, max:25} },
+    { id: 'tricep_pull', name: 'פשיטת מרפקים', cat: 'arms', settings: {unit:'plates', step:1, min:1, max:20} },
+    { id: 'tricep_rope', name: 'פשיטת מרפקים חבל', cat: 'arms', settings: {unit:'plates', step:1, min:1, max:20} },
+    { id: 'hammer_curl', name: 'כפיפת פטישים', cat: 'arms', settings: {unit:'kg', step:1, min:2, max:25} },
+    // core — plank/side_plank = time, שאר = bodyweight
+    { id: 'plank', name: 'פלאנק (סטטי)', cat: 'core', settings: {unit:'time', step:0, min:0, max:0} },
+    { id: 'side_plank', name: 'פלאנק צידי', cat: 'core', settings: {unit:'time', step:0, min:0, max:0} },
+    { id: 'bicycle', name: 'בטן אופניים', cat: 'core', settings: {unit:'bodyweight', step:0, min:0, max:0} },
+    { id: 'knee_raise', name: 'הרמת ברכיים', cat: 'core', settings: {unit:'bodyweight', step:0, min:0, max:0} },
+    { id: 'crunches', name: 'כפיפות בטן', cat: 'core', settings: {unit:'bodyweight', step:0, min:0, max:0} }
 ];
 
 const DEFAULT_ROUTINES_V17 = {
-    'A': { title: 'רגליים וגב (A)',      exercises: [ {id:'goblet', sets:3, rest:90}, {id:'leg_press', sets:3}, {id:'lat_pull', sets:3} ] },
-    'B': { title: 'חזה וכתפיים (B)',     exercises: [ {id:'chest_press', sets:3}, {id:'shoulder_press', sets:3}, {id:'plank', sets:3} ] }
+    'A': { title: 'רגליים וגב (A)', exercises:[ {id:'goblet', sets:3, rest:90}, {id:'leg_press', sets:3}, {id:'lat_pull', sets:3} ] },
+    'B': { title: 'חזה וכתפיים (B)', exercises:[ {id:'chest_press', sets:3}, {id:'shoulder_press', sets:3}, {id:'plank', sets:3} ] }
 };
 
-// ── Helper: is this exercise a timed (stopwatch) exercise? ───────────────────
-function isTimedExercise(exId) {
-    return exId.includes('plank') || exId.includes('static');
-}
-
-// ── App Object ────────────────────────────────────────────────────────────────
+// ── Range Copy State ──────────────────────────────────────────────────────────
+let _rangeTab = 'month';
+let _rangeSelectedMonth = null;
+let _rangeSelectedWeeks = null;
 
 const app = {
     state: {
         routines: {},
-        history:  [],
-        exercises: [],
-        lastUpdated: 0,
+        history:[],
+        exercises:[],
         currentProgId: null,
         active: {
             on: false,
-            sessionExercises: [],
+            sessionExercises:[],
             exIdx: 0, setIdx: 1, totalSets: 3,
-            log: [],
+            log:[],
             startTime: 0,
             accumulatedTime: 0,
             timerInterval: null, restInterval: null,
@@ -183,14 +85,12 @@ const app = {
         tempActive: null,
         admin: {
             viewProgId: null, editTipEx: null, selectorFilter: 'all', exManagerFilter: 'all',
-            tempExercises: [], editingExId: null
+            tempExercises:[], editingExId: null
         },
         userSelector: { mode: null },
-        historySelection: [],
+        historySelection:[],
         viewHistoryIdx: null
     },
-
-    // ── Init ──────────────────────────────────────────────────────────────────
 
     init: function() {
         try {
@@ -198,47 +98,25 @@ const app = {
             this.checkActiveWorkout();
             this.renderHome();
             this.renderProgramSelect();
-            sync.init();
-            // Pull history after Firebase init (slight delay for Firestore to be ready)
-            setTimeout(() => this.pullHistoryOnStartup(), 2000);
-            if (!this.state.tempActive) this.nav('screen-home');
+            if(!this.state.tempActive) this.nav('screen-home');
         } catch (e) {
             console.error(e);
             alert("שגיאה בטעינת נתונים.");
         }
     },
 
-    pullHistoryOnStartup: async function() {
-        if (!sync.ready || !sync.isConfigured()) return;
-        try {
-            const remoteHistory = await sync.pullHistory();
-            if (!remoteHistory.length) return;
-            const localTs  = new Set(this.state.history.map(h => h.timestamp));
-            const newItems = remoteHistory.filter(h => h.timestamp && !localTs.has(h.timestamp));
-            if (newItems.length > 0) {
-                this.state.history = [...this.state.history, ...newItems]
-                    .sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
-                this.saveData();
-                this.renderHome();
-            }
-        } catch (e) { console.warn('pullHistoryOnStartup failed:', e); }
-    },
-
     loadData: function() {
         const h = localStorage.getItem(CONFIG.KEYS.HISTORY);
-        this.state.history = h ? JSON.parse(h) : [];
-
-        const lu = localStorage.getItem(CONFIG.KEYS.LAST_UPDATED);
-        this.state.lastUpdated = lu ? parseInt(lu) : 0;
+        this.state.history = h ? JSON.parse(h) :[];
 
         const r = localStorage.getItem(CONFIG.KEYS.ROUTINES);
         let loadedRoutines = r ? JSON.parse(r) : null;
         if (!loadedRoutines) {
             this.state.routines = JSON.parse(JSON.stringify(DEFAULT_ROUTINES_V17));
-            for (const pid in this.state.routines) {
+            for(const pid in this.state.routines) {
                 this.state.routines[pid].exercises.forEach(ex => {
                     const bankEx = BASE_BANK_INIT.find(b => b.id === ex.id);
-                    if (bankEx) { ex.name = bankEx.name; ex.unit = bankEx.settings.unit; ex.cat = bankEx.cat; }
+                    if(bankEx) { ex.name = bankEx.name; ex.unit = bankEx.settings.unit; ex.cat = bankEx.cat; }
                 });
             }
         } else {
@@ -246,7 +124,7 @@ const app = {
         }
 
         const e = localStorage.getItem(CONFIG.KEYS.EXERCISES);
-        if (e) {
+        if(e) {
             this.state.exercises = JSON.parse(e);
         } else {
             this.state.exercises = JSON.parse(JSON.stringify(BASE_BANK_INIT));
@@ -255,14 +133,40 @@ const app = {
     },
 
     saveData: function() {
-        localStorage.setItem(CONFIG.KEYS.ROUTINES,     JSON.stringify(this.state.routines));
-        localStorage.setItem(CONFIG.KEYS.HISTORY,      JSON.stringify(this.state.history));
-        localStorage.setItem(CONFIG.KEYS.EXERCISES,    JSON.stringify(this.state.exercises));
-        localStorage.setItem(CONFIG.KEYS.LAST_UPDATED, this.state.lastUpdated);
+        localStorage.setItem(CONFIG.KEYS.ROUTINES, JSON.stringify(this.state.routines));
+        localStorage.setItem(CONFIG.KEYS.HISTORY, JSON.stringify(this.state.history));
+        localStorage.setItem(CONFIG.KEYS.EXERCISES, JSON.stringify(this.state.exercises));
     },
 
-    // ── Persistence & Resume ──────────────────────────────────────────────────
+    // ── Helper: האם תרגיל הוא מדידת זמן ──────────────────────────────────────
+    _isTimeUnit: function(exId) {
+        const def = this.getExerciseDef(exId);
+        return def.settings.unit === 'time';
+    },
 
+    // ── Helper: פורמט תצוגת סט ────────────────────────────────────────────────
+    _formatSetDisplay: function(exId, set) {
+        const def = this.getExerciseDef(exId);
+        const unit = def.settings.unit;
+        const isSingleSide = def.settings.isUnilateral;
+
+        if (unit === 'time') {
+            return `${set.r} שנ׳`;
+        }
+        if (unit === 'bodyweight') {
+            return `משקל גוף | ${set.r} חזרות`;
+        }
+        if (unit === 'plates') {
+            return `${set.w} פלטות | ${set.r} חזרות`;
+        }
+        // kg
+        let str = `${set.w} ק״ג`;
+        if (isSingleSide) str += ' (לצד)';
+        str += ` | ${set.r} חזרות`;
+        return str;
+    },
+
+    /* --- PERSISTENCE & RESUME --- */
     saveActiveState: function() {
         if (!this.state.active.on) {
             localStorage.removeItem(CONFIG.KEYS.ACTIVE_WORKOUT);
@@ -272,7 +176,7 @@ const app = {
         const stateToSave = { ...this.state.active };
         stateToSave.accumulatedTime = this.state.active.accumulatedTime + currentSession;
         stateToSave.timerInterval = null;
-        stateToSave.restInterval  = null;
+        stateToSave.restInterval = null;
         localStorage.setItem(CONFIG.KEYS.ACTIVE_WORKOUT, JSON.stringify(stateToSave));
         this.state.active.accumulatedTime = stateToSave.accumulatedTime;
         this.state.active.startTime = Date.now();
@@ -289,9 +193,9 @@ const app = {
     resumeWorkout: function() {
         if (this.state.tempActive) {
             this.state.active = this.state.tempActive;
-            this.state.active.startTime    = Date.now();
+            this.state.active.startTime = Date.now();
             this.state.active.timerInterval = null;
-            this.state.active.restInterval  = null;
+            this.state.active.restInterval = null;
             this.state.currentProgId = this.state.active.progId || Object.keys(this.state.routines)[0];
             if (this.state.active.restStartTime > 0) {
                 this.startRestTimer(this.state.active.restDuration || 60);
@@ -309,23 +213,20 @@ const app = {
         this.nav('screen-home');
     },
 
-    // ── Navigation ────────────────────────────────────────────────────────────
-
+    /* --- NAVIGATION --- */
     nav: function(screenId) {
         document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
         document.getElementById(screenId).classList.add('active');
-
-        const backBtn  = document.getElementById('nav-back');
+        const backBtn = document.getElementById('nav-back');
         const adminBtn = document.getElementById('btn-admin-home');
-
         if (screenId === 'screen-home') {
             backBtn.style.visibility = 'hidden';
-            if (adminBtn) adminBtn.style.display = 'flex';
+            if(adminBtn) adminBtn.style.display = 'flex';
             this.stopAllTimers();
             this.state.active.on = false;
         } else {
             backBtn.style.visibility = 'visible';
-            if (adminBtn) adminBtn.style.display = 'none';
+            if(adminBtn) adminBtn.style.display = 'none';
         }
     },
 
@@ -345,18 +246,17 @@ const app = {
         }
     },
 
-    // ── Rendering ─────────────────────────────────────────────────────────────
-
+    /* --- RENDERING --- */
     renderProgramSelect: function() {
         const container = document.getElementById('prog-list-container');
         container.innerHTML = '';
         const ids = Object.keys(this.state.routines);
-        if (ids.length === 0) {
+        if(ids.length === 0) {
             container.innerHTML = '<div style="text-align:center; color:#666;">אין תוכניות זמינות.</div>';
             return;
         }
         ids.forEach(pid => {
-            const prog  = this.state.routines[pid];
+            const prog = this.state.routines[pid];
             const badge = pid.charAt(0).toUpperCase();
             const count = prog.exercises.length;
             let desc = `${count} תרגילים`;
@@ -405,16 +305,14 @@ const app = {
     getExerciseDef: function(exId) {
         const found = this.state.exercises.find(e => e.id === exId);
         if (found) return found;
-        const isCore = exId.includes('plank') || exId.includes('core') || exId.includes('situp') || exId.includes('crunch');
         return {
             name: 'תרגיל לא ידוע',
-            cat: isCore ? 'core' : 'other',
-            settings: {unit: 'kg', step: 2.5, min: 0, max: 50}
+            cat: 'other',
+            settings: {unit:'kg', step:2.5, min:0, max:50}
         };
     },
 
-    // ── Workout Logic ─────────────────────────────────────────────────────────
-
+    /* --- WORKOUT LOGIC --- */
     startWorkout: function() {
         if (!this.state.routines[this.state.currentProgId] ||
             this.state.routines[this.state.currentProgId].exercises.length === 0) {
@@ -426,7 +324,7 @@ const app = {
             progId: this.state.currentProgId,
             sessionExercises: JSON.parse(JSON.stringify(prog.exercises)),
             exIdx: 0, setIdx: 1, totalSets: 3,
-            log: [],
+            log:[],
             startTime: Date.now(),
             accumulatedTime: 0,
             timerInterval: null, restInterval: null,
@@ -442,10 +340,10 @@ const app = {
 
     loadActiveExercise: function() {
         const exInst = this.state.active.sessionExercises[this.state.active.exIdx];
-        const exDef  = this.getExerciseDef(exInst.id);
+        const exDef = this.getExerciseDef(exInst.id);
 
         this.state.active.totalSets = exInst.sets || 3;
-        document.getElementById('ex-name').innerText   = exInst.name;
+        document.getElementById('ex-name').innerText = exInst.name;
         document.getElementById('set-badge').innerText = `סט ${this.state.active.setIdx} / ${this.state.active.totalSets}`;
 
         const vidBtn = document.getElementById('ex-video-link');
@@ -474,12 +372,12 @@ const app = {
 
         this.renderStatsStrip(exInst.id, exDef.settings.unit);
 
-        // ── Bug fix: שנ' only for plank/static, not all bodyweight ──
-        const isTime = (exDef.settings.unit === 'bodyweight' && isTimedExercise(exInst.id));
+        // ── isStopwatch מבוסס unit:'time' בלבד ───────────────────────────────
+        const isTime = exDef.settings.unit === 'time';
         this.state.active.isStopwatch = isTime;
 
         if (isTime) {
-            document.getElementById('cards-container').style.display    = 'none';
+            document.getElementById('cards-container').style.display = 'none';
             document.getElementById('stopwatch-container').style.display = 'flex';
             this.state.active.stopwatchVal = 0;
             this.stopStopwatch();
@@ -488,17 +386,18 @@ const app = {
             document.getElementById('btn-sw-toggle').innerText = "▶";
             document.getElementById('rest-timer-area').style.display = 'none';
         } else {
-            document.getElementById('cards-container').style.display    = 'flex';
+            document.getElementById('cards-container').style.display = 'flex';
             document.getElementById('stopwatch-container').style.display = 'none';
             document.getElementById('unit-label-card').innerText =
-                exDef.settings.unit === 'plates' ? 'פלטות' : 'ק״ג';
+                exDef.settings.unit === 'plates' ? 'פלטות' :
+                exDef.settings.unit === 'bodyweight' ? 'גוף' : 'ק״ג';
 
             let smartWeight = exInst.target?.w || 10;
-            for (let i = this.state.history.length - 1; i >= 0; i--) {
-                const sess  = this.state.history[i];
+            for(let i=this.state.history.length-1; i>=0; i--) {
+                const sess = this.state.history[i];
                 const found = sess.data.find(e => e.id === exInst.id);
-                if (found && found.sets.length > 0) {
-                    smartWeight = found.sets[found.sets.length - 1].w;
+                if(found && found.sets.length > 0) {
+                    smartWeight = found.sets[found.sets.length-1].w;
                     break;
                 }
             }
@@ -509,31 +408,29 @@ const app = {
 
         this.state.active.feel = 'good';
         this.updateFeelUI();
-        document.getElementById('decision-buttons').style.display  = 'none';
-        document.getElementById('next-ex-preview').style.display   = 'none';
-        document.getElementById('btn-finish').style.display        = 'flex';
-        document.getElementById('rest-timer-area').style.display   = 'none';
+        document.getElementById('decision-buttons').style.display = 'none';
+        document.getElementById('next-ex-preview').style.display = 'none';
+        document.getElementById('btn-finish').style.display = 'flex';
+        document.getElementById('rest-timer-area').style.display = 'none';
     },
 
     renderStatsStrip: function(exId, unit) {
         const strip = document.getElementById('last-stat-strip');
         strip.innerHTML = '';
-
         const exHistory = [];
         for (let i = 0; i < this.state.history.length; i++) {
-            const sess  = this.state.history[i];
+            const sess = this.state.history[i];
             const found = sess.data.find(e => e.id === exId);
             if (found && found.sets.length > 0) exHistory.push(found);
         }
-
         if (exHistory.length === 0) {
             strip.innerHTML = '<div class="strip-no-data">אין הישג קודם</div>';
             return;
         }
 
-        const exDef        = this.getExerciseDef(exId);
+        const exDef = this.getExerciseDef(exId);
+        const isTime = exDef.settings.unit === 'time';
         const isBodyweight = exDef.settings.unit === 'bodyweight';
-        const isTime       = this.state.active.isStopwatch;
 
         const getBest = (exRecord) => {
             if (isTime || isBodyweight) return Math.max(...exRecord.sets.map(s => s.r));
@@ -541,23 +438,23 @@ const app = {
         };
 
         const getUnitLabel = () => {
-            if (isTime)              return 'שנ\'';
-            if (isBodyweight)        return 'חזר\'';
-            if (unit === 'plates')   return 'פלטות';
+            if (isTime) return 'שנ\'';
+            if (isBodyweight) return 'חזר\'';
+            if (unit === 'plates') return 'פלטות';
             return 'ק״ג';
         };
 
-        const unitLabel   = getUnitLabel();
+        const unitLabel = getUnitLabel();
         const lastSession = exHistory[exHistory.length - 1];
-        const lastBest    = getBest(lastSession);
+        const lastBest = getBest(lastSession);
 
         let trendHtml = '';
         if (exHistory.length >= 2) {
             const prevBest = getBest(exHistory[exHistory.length - 2]);
-            const diff     = lastBest - prevBest;
-            if (diff > 0)       trendHtml = `<div class="strip-trend up">▲ +${diff} ${unitLabel}</div>`;
-            else if (diff < 0)  trendHtml = `<div class="strip-trend down">▼ ${diff} ${unitLabel}</div>`;
-            else                trendHtml = `<div class="strip-trend neutral">ללא שינוי</div>`;
+            const diff = lastBest - prevBest;
+            if (diff > 0) trendHtml = `<div class="strip-trend up">▲ +${diff} ${unitLabel}</div>`;
+            else if (diff < 0) trendHtml = `<div class="strip-trend down">▼ ${diff} ${unitLabel}</div>`;
+            else trendHtml = `<div class="strip-trend neutral">ללא שינוי</div>`;
         }
 
         const sparkData = exHistory.slice(-5).map(e => getBest(e));
@@ -573,19 +470,18 @@ const app = {
                 return `${x.toFixed(1)},${y.toFixed(1)}`;
             });
             const lastPt = points[points.length - 1].split(',');
-            sparkHtml = `
-                <svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="display:block;overflow:visible;">
-                    <polyline points="${points.join(' ')}" fill="none" stroke="#00ffee" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.7"/>
-                    <circle cx="${lastPt[0]}" cy="${lastPt[1]}" r="2.5" fill="#00ffee"/>
-                </svg>`;
+            sparkHtml = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="display:block;overflow:visible;">
+                <polyline points="${points.join(' ')}" fill="none" stroke="#00ffee" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.7"/>
+                <circle cx="${lastPt[0]}" cy="${lastPt[1]}" r="2.5" fill="#00ffee"/>
+            </svg>`;
         }
 
-        const allBests        = exHistory.map(e => getBest(e));
-        const pr              = Math.max(...allBests);
-        const prSessionIndex  = allBests.lastIndexOf(pr);
-        const isCurrentPR     = (prSessionIndex === exHistory.length - 1);
-        const prLabel         = isCurrentPR ? '⭐ שיא!' : `${pr} ${unitLabel}`;
-        const prColor         = isCurrentPR ? 'var(--primary)' : '#777';
+        const allBests = exHistory.map(e => getBest(e));
+        const pr = Math.max(...allBests);
+        const prSessionIndex = allBests.lastIndexOf(pr);
+        const isCurrentPR = (prSessionIndex === exHistory.length - 1);
+        const prLabel = isCurrentPR ? '⭐ שיא!' : `${pr} ${unitLabel}`;
+        const prColor = isCurrentPR ? 'var(--primary)' : '#777';
 
         strip.innerHTML = `
             <div class="strip-section">
@@ -606,18 +502,17 @@ const app = {
     populateSelects: function(exDef) {
         const selW = document.getElementById('select-weight');
         const selR = document.getElementById('select-reps');
-        const s    = exDef.settings || {unit:'kg', step:2.5, min:0, max:50};
+        const s = exDef.settings || {unit:'kg', step:2.5, min:0, max:50};
 
         let wOpts = [];
-        if (s.unit === 'bodyweight') {
-            wOpts = [0];
-        } else {
-            const min  = parseFloat(s.min);
-            const max  = parseFloat(s.max);
+        if (s.unit === 'bodyweight' || s.unit === 'time') wOpts = [0];
+        else {
+            const min = parseFloat(s.min);
+            const max = parseFloat(s.max);
             const step = parseFloat(s.step) || 2.5;
-            for (let v = min; v <= max; v += step) {
+            for(let v = min; v <= max; v += step) {
                 let cleanV = parseFloat(v.toFixed(1));
-                if (cleanV % 1 === 0) cleanV = parseInt(cleanV);
+                if(cleanV % 1 === 0) cleanV = parseInt(cleanV);
                 wOpts.push(cleanV);
             }
         }
@@ -628,25 +523,24 @@ const app = {
             opt.value = val; opt.text = val;
             selW.appendChild(opt);
         });
-
-        if (wOpts.includes(this.state.active.inputW)) {
-            selW.value = this.state.active.inputW;
-        } else {
-            const closest = wOpts.reduce((prev, curr) =>
-                Math.abs(curr - this.state.active.inputW) < Math.abs(prev - this.state.active.inputW) ? curr : prev);
+        if(wOpts.includes(this.state.active.inputW)) selW.value = this.state.active.inputW;
+        else {
+            const closest = wOpts.reduce((prev, curr) => (Math.abs(curr - this.state.active.inputW) < Math.abs(prev - this.state.active.inputW) ? curr : prev));
             selW.value = closest;
             this.state.active.inputW = closest;
         }
         selW.onchange = (e) => this.state.active.inputW = Number(e.target.value);
 
+        let rOpts = [];
         const maxReps = exDef.cat === 'core' ? 50 : 30;
+        for(let i=1; i<=maxReps; i++) rOpts.push(i);
         selR.innerHTML = '';
-        for (let i = 1; i <= maxReps; i++) {
+        rOpts.forEach(val => {
             const opt = document.createElement('option');
-            opt.value = i; opt.text = i;
+            opt.value = val; opt.text = val;
             selR.appendChild(opt);
-        }
-        selR.value    = this.state.active.inputR;
+        });
+        selR.value = this.state.active.inputR;
         selR.onchange = (e) => this.state.active.inputR = Number(e.target.value);
     },
 
@@ -665,15 +559,15 @@ const app = {
             this.state.active.timerInterval = setInterval(() => {
                 const diff = Math.floor((Date.now() - start) / 1000);
                 this.state.active.stopwatchVal = diff;
-                let m = Math.floor(diff / 60), s = diff % 60;
-                document.getElementById('sw-display').innerText =
-                    `${m<10?'0'+m:m}:${s<10?'0'+s:s}`;
+                let m = Math.floor(diff / 60);
+                let s = diff % 60;
+                document.getElementById('sw-display').innerText = `${m<10?'0'+m:m}:${s<10?'0'+s:s}`;
             }, 100);
         }
     },
 
     stopStopwatch: function() {
-        if (this.state.active.timerInterval) clearInterval(this.state.active.timerInterval);
+        if(this.state.active.timerInterval) clearInterval(this.state.active.timerInterval);
         this.state.active.timerInterval = null;
     },
 
@@ -693,49 +587,49 @@ const app = {
         this.triggerPressEffect('btn-finish');
         let w, r;
         if (this.state.active.isStopwatch) {
-            if (this.state.active.timerInterval) this.toggleStopwatch();
+            if(this.state.active.timerInterval) this.toggleStopwatch();
             w = 0; r = this.state.active.stopwatchVal;
             if (r === 0) { alert("לא נמדד זמן"); return; }
         } else {
-            w = this.state.active.inputW;
-            r = this.state.active.inputR;
+            w = this.state.active.inputW; r = this.state.active.inputR;
         }
 
         const exInst = this.state.active.sessionExercises[this.state.active.exIdx];
         let exLog = this.state.active.log.find(l => l.id === exInst.id);
-        if (!exLog) {
-            exLog = { id: exInst.id, name: exInst.name, sets: [] };
+        if(!exLog) {
+            exLog = { id: exInst.id, name: exInst.name, sets:[] };
             this.state.active.log.push(exLog);
         }
         exLog.sets.push({ w, r, feel: this.state.active.feel });
 
-        this.startRestTimer(exInst.rest || 60);
+        const restTime = exInst.rest || 60;
+        this.startRestTimer(restTime);
 
         if (this.state.active.setIdx < this.state.active.totalSets) {
             this.state.active.setIdx++;
-            document.getElementById('set-badge').innerText =
-                `סט ${this.state.active.setIdx} / ${this.state.active.totalSets}`;
+            document.getElementById('set-badge').innerText = `סט ${this.state.active.setIdx} / ${this.state.active.totalSets}`;
             document.getElementById('btn-reorder').style.display = 'none';
             this.state.active.feel = 'good';
             this.updateFeelUI();
-            if (this.state.active.isStopwatch) {
+            if(this.state.active.isStopwatch) {
                 this.state.active.stopwatchVal = 0;
                 document.getElementById('sw-display').innerText = "00:00";
             }
         } else {
-            document.getElementById('btn-reorder').style.display    = 'none';
-            document.getElementById('btn-finish').style.display     = 'none';
+            document.getElementById('btn-reorder').style.display = 'none';
+            document.getElementById('btn-finish').style.display = 'none';
             document.getElementById('decision-buttons').style.display = 'flex';
-            document.getElementById('rest-timer-area').style.display  = 'none';
+            document.getElementById('rest-timer-area').style.display = 'none';
 
-            const nextEx  = this.state.active.sessionExercises[this.state.active.exIdx + 1];
-            const nextEl  = document.getElementById('next-ex-preview');
+            const nextEx = this.state.active.sessionExercises[this.state.active.exIdx + 1];
+            const nextEl = document.getElementById('next-ex-preview');
             nextEl.innerText = nextEx ? `הבא בתור: ${nextEx.name}` : "הבא בתור: סיום אימון";
             nextEl.style.display = 'block';
 
-            const exDef  = this.getExerciseDef(exInst.id);
+            const exDef = this.getExerciseDef(exInst.id);
             const addBtn = document.getElementById('btn-add-core');
-            addBtn.style.display = exDef.cat === 'core' ? 'block' : 'none';
+            if (exDef.cat === 'core') addBtn.style.display = 'block';
+            else addBtn.style.display = 'none';
         }
         this.saveActiveState();
     },
@@ -753,17 +647,19 @@ const app = {
         const MAX_OFFSET = 408;
         this.state.active.restInterval = setInterval(() => {
             const elapsed = Math.floor((Date.now() - this.state.active.restStartTime) / 1000);
-            let m = Math.floor(elapsed / 60), s = elapsed % 60;
+            let m = Math.floor(elapsed / 60);
+            let s = elapsed % 60;
             disp.innerText = `${m<10?'0'+m:m}:${s<10?'0'+s:s}`;
-            const ratio  = Math.min(elapsed / durationSec, 1);
-            ring.style.strokeDashoffset = MAX_OFFSET - (MAX_OFFSET * ratio);
+            const ratio = Math.min(elapsed / durationSec, 1);
+            const offset = MAX_OFFSET - (MAX_OFFSET * ratio);
+            ring.style.strokeDashoffset = offset;
         }, 100);
         this.saveActiveState();
     },
 
     stopRestTimer: function() {
-        if (this.state.active.restInterval) clearInterval(this.state.active.restInterval);
-        this.state.active.restInterval  = null;
+        if(this.state.active.restInterval) clearInterval(this.state.active.restInterval);
+        this.state.active.restInterval = null;
         document.getElementById('rest-timer-area').style.display = 'none';
         this.state.active.restStartTime = 0;
     },
@@ -777,14 +673,13 @@ const app = {
         this.triggerPressEffect('btn-add-set');
         this.state.active.totalSets++;
         this.state.active.setIdx++;
-        document.getElementById('set-badge').innerText =
-            `סט ${this.state.active.setIdx} / ${this.state.active.totalSets}`;
-        document.getElementById('btn-reorder').style.display    = 'none';
+        document.getElementById('set-badge').innerText = `סט ${this.state.active.setIdx} / ${this.state.active.totalSets}`;
+        document.getElementById('btn-reorder').style.display = 'none';
         document.getElementById('decision-buttons').style.display = 'none';
-        document.getElementById('next-ex-preview').style.display  = 'none';
-        document.getElementById('btn-finish').style.display       = 'flex';
-        document.getElementById('rest-timer-area').style.display  = 'flex';
-        if (this.state.active.isStopwatch) {
+        document.getElementById('next-ex-preview').style.display = 'none';
+        document.getElementById('btn-finish').style.display = 'flex';
+        document.getElementById('rest-timer-area').style.display = 'flex';
+        if(this.state.active.isStopwatch) {
             this.state.active.stopwatchVal = 0;
             document.getElementById('sw-display').innerText = "00:00";
         }
@@ -793,20 +688,19 @@ const app = {
 
     deleteLastSet: function() {
         const exInst = this.state.active.sessionExercises[this.state.active.exIdx];
-        let exLog    = this.state.active.log.find(l => l.id === exInst.id);
-        if (exLog && exLog.sets.length > 0) {
+        let exLog = this.state.active.log.find(l => l.id === exInst.id);
+        if(exLog && exLog.sets.length > 0) {
             exLog.sets.pop();
             this.stopRestTimer();
             if (this.state.active.setIdx > 1) {
                 this.state.active.setIdx--;
-                document.getElementById('set-badge').innerText =
-                    `סט ${this.state.active.setIdx} / ${this.state.active.totalSets}`;
-                if (this.state.active.setIdx === 1) {
+                document.getElementById('set-badge').innerText = `סט ${this.state.active.setIdx} / ${this.state.active.totalSets}`;
+                if(this.state.active.setIdx === 1) {
                     document.getElementById('btn-reorder').style.display = 'block';
                 }
                 document.getElementById('decision-buttons').style.display = 'none';
-                document.getElementById('next-ex-preview').style.display  = 'none';
-                document.getElementById('btn-finish').style.display       = 'flex';
+                document.getElementById('next-ex-preview').style.display = 'none';
+                document.getElementById('btn-finish').style.display = 'flex';
             }
         }
         this.saveActiveState();
@@ -830,21 +724,21 @@ const app = {
     finishWorkout: function() {
         this.stopAllTimers();
         const currentSessionDur = Date.now() - this.state.active.startTime;
-        const totalDurMs        = this.state.active.accumulatedTime + currentSessionDur;
-        const durationMin       = Math.round(totalDurMs / 60000);
-        const dateStr           = new Date().toLocaleDateString('he-IL');
-        const progTitle         = this.state.routines[this.state.currentProgId]?.title || "אימון מזדמן";
-
+        const totalDurMs = this.state.active.accumulatedTime + currentSessionDur;
+        const durationMin = Math.round(totalDurMs / 60000);
+        const dateStr = new Date().toLocaleDateString('he-IL');
+        const progTitle = this.state.routines[this.state.currentProgId]?.title || "אימון מזדמן";
         this.state.active.summary = {
-            program:      this.state.currentProgId,
+            program: this.state.currentProgId,
             programTitle: progTitle,
-            date:         dateStr,
-            duration:     durationMin,
-            data:         this.state.active.log
+            date: dateStr,
+            duration: durationMin,
+            data: this.state.active.log
         };
-
-        document.getElementById('summary-meta').innerText = `${dateStr} | ${durationMin} דקות`;
-        document.getElementById('summary-text').innerText  = this.generateLogText(this.state.active.summary);
+        const meta = document.getElementById('summary-meta');
+        meta.innerText = `${dateStr} | ${durationMin} דקות`;
+        const textBox = document.getElementById('summary-text');
+        textBox.innerText = this.generateLogText(this.state.active.summary);
         this.renderSummaryStats(this.state.active.summary);
         this.renderWinCard(this.state.active.summary);
         this.nav('screen-summary');
@@ -859,23 +753,14 @@ const app = {
 
     renderSummaryStats: function(summary) {
         const totalSets = summary.data.reduce((acc, ex) => acc + ex.sets.length, 0);
-        const exCount   = summary.data.filter(ex => ex.sets.length > 0).length;
-        document.getElementById('summary-meta').innerHTML = `
-            <div style="margin-bottom:4px;">${summary.date}</div>
+        const exCount = summary.data.filter(ex => ex.sets.length > 0).length;
+        const statsHtml = `
             <div class="summary-stats-row">
-                <div class="summary-stat-item">
-                    <div class="summary-stat-val">${exCount}</div>
-                    <div class="summary-stat-lbl">תרגילים</div>
-                </div>
-                <div class="summary-stat-item">
-                    <div class="summary-stat-val">${totalSets}</div>
-                    <div class="summary-stat-lbl">סטים</div>
-                </div>
-                <div class="summary-stat-item">
-                    <div class="summary-stat-val">${summary.duration}</div>
-                    <div class="summary-stat-lbl">דקות</div>
-                </div>
+                <div class="summary-stat-item"><div class="summary-stat-val">${exCount}</div><div class="summary-stat-lbl">תרגילים</div></div>
+                <div class="summary-stat-item"><div class="summary-stat-val">${totalSets}</div><div class="summary-stat-lbl">סטים</div></div>
+                <div class="summary-stat-item"><div class="summary-stat-val">${summary.duration}</div><div class="summary-stat-lbl">דקות</div></div>
             </div>`;
+        document.getElementById('summary-meta').innerHTML = `<div style="margin-bottom:4px;">${summary.date}</div>${statsHtml}`;
     },
 
     renderWinCard: function(summary) {
@@ -883,48 +768,45 @@ const app = {
         const winList = document.getElementById('win-list');
         winCard.style.display = 'none';
         winList.innerHTML = '';
-
-        const prevSession = [...this.state.history].reverse()
-            .find(h => h.program === summary.program);
+        const prevSession = [...this.state.history].reverse().find(h => h.program === summary.program);
         if (!prevSession) return;
 
-        let winCount = 0, html = '';
+        let winCount = 0;
+        let html = '';
         summary.data.forEach(ex => {
             if (ex.sets.length === 0) return;
             const prevEx = prevSession.data.find(p => p.id === ex.id);
             if (!prevEx || prevEx.sets.length === 0) return;
 
-            const exDef        = this.getExerciseDef(ex.id);
+            const exDef = this.getExerciseDef(ex.id);
+            const isTime = exDef.settings.unit === 'time';
             const isBodyweight = exDef.settings.unit === 'bodyweight';
-            // ── Bug fix: use isTimedExercise helper ──
-            const isTime       = isBodyweight && isTimedExercise(ex.id);
-            const getBest      = (sets) => (isTime || isBodyweight)
-                ? Math.max(...sets.map(s => s.r))
-                : Math.max(...sets.map(s => s.w));
-            const unit = isTime       ? 'שנ\''
-                       : isBodyweight ? 'חזר\''
-                       : (exDef.settings.unit === 'plates' ? 'פלטות' : 'ק״ג');
+
+            const getBest = (sets) => {
+                if (isTime || isBodyweight) return Math.max(...sets.map(s => s.r));
+                return Math.max(...sets.map(s => s.w));
+            };
 
             const currentBest = getBest(ex.sets);
-            const prevBest    = getBest(prevEx.sets);
+            const prevBest = getBest(prevEx.sets);
+            const unit = isTime ? 'שנ\'' : isBodyweight ? 'חזר\'' : (exDef.settings.unit === 'plates' ? 'פלטות' : 'ק״ג');
+
             if (currentBest > prevBest) {
                 winCount++;
-                html += `
-                    <div class="win-row">
-                        <span class="win-row-name">${ex.name}</span>
-                        <div class="win-delta">
-                            <span class="win-prev">${prevBest} ${unit}</span>
-                            <span class="win-arrow">→</span>
-                            <span class="win-new">${currentBest} ${unit}</span>
-                        </div>
-                    </div>`;
+                html += `<div class="win-row">
+                    <span class="win-row-name">${ex.name}</span>
+                    <div class="win-delta">
+                        <span class="win-prev">${prevBest} ${unit}</span>
+                        <span class="win-arrow">→</span>
+                        <span class="win-new">${currentBest} ${unit}</span>
+                    </div>
+                </div>`;
             }
         });
 
         if (winCount > 0) {
             const suffix = winCount === 1 ? 'תרגיל' : 'תרגילים';
-            document.getElementById('win-card-subtitle').innerText =
-                `שיפרת ב-${winCount} ${suffix} לעומת האימון הקודם`;
+            document.getElementById('win-card-subtitle').innerText = `שיפרת ב-${winCount} ${suffix} לעומת האימון הקודם`;
             winList.innerHTML = html;
             winCard.style.animation = 'none';
             winCard.offsetHeight;
@@ -933,36 +815,17 @@ const app = {
         }
     },
 
+    // ── generateLogText — משתמש ב-_formatSetDisplay ───────────────────────────
     generateLogText: function(historyItem) {
         const pName = historyItem.programTitle || historyItem.program;
         let txt = `סיכום אימון: ${pName}\n`;
         txt += `תאריך: ${historyItem.date} | משך: ${historyItem.duration} דק'\n\n`;
-
         historyItem.data.forEach(ex => {
-            if (ex.sets.length > 0) {
+            if(ex.sets.length > 0) {
                 txt += `✅ ${ex.name}\n`;
-                const exDef        = this.getExerciseDef(ex.id);
-                // ── Bug fix: use isTimedExercise helper ──
-                const isTime       = isTimedExercise(ex.id) && ex.sets[0].w === 0;
-                const isSingleSide = exDef.settings.isUnilateral;
-
                 ex.sets.forEach((s, i) => {
-                    let valStr;
-                    if (isTime) {
-                        valStr = `${s.r} שנ׳`;
-                    } else {
-                        if (exDef.settings.unit === 'plates') {
-                            valStr = `${s.w} פלטות | ${s.r} חזרות`;
-                        } else if (s.w === 0) {
-                            valStr = `משקל גוף | ${s.r} חזרות`;
-                        } else {
-                            valStr = `${s.w} ק״ג`;
-                            if (isSingleSide) valStr += ` (לצד)`;
-                            valStr += ` | ${s.r} חזרות`;
-                        }
-                    }
                     const feelStr = FEEL_MAP_TEXT[s.feel] || 'טוב';
-                    txt += `   סט ${i+1}: ${valStr} (${feelStr})\n`;
+                    txt += `   סט ${i+1}: ${this._formatSetDisplay(ex.id, s)} (${feelStr})\n`;
                 });
                 txt += "\n";
             }
@@ -973,43 +836,38 @@ const app = {
     finishAndCopy: function() {
         const summary = this.state.active.summary;
         if (!summary) return;
-
-        const historyItem = {
-            date:         summary.date,
-            timestamp:    Date.now(),
-            program:      summary.program,
-            programTitle: summary.programTitle,
-            data:         summary.data,
-            duration:     summary.duration
-        };
-
         const doSaveAndReload = () => {
-            this.state.history.push(historyItem);
+            this.state.history.push({
+                date: summary.date,
+                timestamp: Date.now(),
+                program: summary.program,
+                programTitle: summary.programTitle,
+                data: summary.data,
+                duration: summary.duration
+            });
             this.saveData();
-            sync.pushHistory(historyItem);  // ← sync to Firebase
+            // גיבוי אוטומטי לענן — fire and forget
+            if (typeof FirebaseManager !== 'undefined' && FirebaseManager.isConfigured()) {
+                FirebaseManager.saveArchiveToCloud();
+            }
             localStorage.removeItem(CONFIG.KEYS.ACTIVE_WORKOUT);
             window.location.reload();
         };
-
         const txt = document.getElementById('summary-text').innerText;
         if (navigator.clipboard) {
             navigator.clipboard.writeText(txt).then(doSaveAndReload).catch(doSaveAndReload);
         } else {
             const ta = document.createElement('textarea');
             ta.value = txt;
-            document.body.appendChild(ta);
-            ta.select();
-            document.execCommand('copy');
-            document.body.removeChild(ta);
+            document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
             doSaveAndReload();
         }
     },
 
-    // ── Reorder / Swap ────────────────────────────────────────────────────────
-
+    /* --- REORDER / SWAP --- */
     openReorder: function() {
         const exInst = this.state.active.sessionExercises[this.state.active.exIdx];
-        const exDef  = this.getExerciseDef(exInst.id);
+        const exDef = this.getExerciseDef(exInst.id);
         if (exDef.cat === 'core') {
             this.state.userSelector.mode = 'swap';
             this.renderUserSelector('core');
@@ -1022,17 +880,16 @@ const app = {
     },
 
     renderReorderList: function() {
-        const list           = document.getElementById('reorder-list');
-        list.innerHTML       = '';
+        const list = document.getElementById('reorder-list');
+        list.innerHTML = '';
         const futureExercises = this.state.active.sessionExercises.slice(this.state.active.exIdx + 1);
         if (futureExercises.length === 0) {
-            list.innerHTML = '<div style="text-align:center; padding:20px;">אין תרגילים נוספים</div>';
+            list.innerHTML = '<div style="text-align:center; padding:20px;">אין תרגילים נוספים להחלפה</div>';
             return;
         }
         futureExercises.forEach((ex, idx) => {
             const realIndex = this.state.active.exIdx + 1 + idx;
-            list.innerHTML += `
-            <div class="list-item" onclick="app.selectReorderExercise(${realIndex})">
+            list.innerHTML += `<div class="list-item" onclick="app.selectReorderExercise(${realIndex})">
                 <span style="font-weight:700">${ex.name}</span>
                 <span style="color:var(--primary)">בחר</span>
             </div>`;
@@ -1047,11 +904,7 @@ const app = {
         this.loadActiveExercise();
     },
 
-    closeReorder: function() {
-        document.getElementById('reorder-modal').style.display = 'none';
-    },
-
-    // ── User Selector (Core Swap/Add) ─────────────────────────────────────────
+    closeReorder: function() { document.getElementById('reorder-modal').style.display = 'none'; },
 
     openAddCoreExercise: function() {
         this.state.userSelector.mode = 'add';
@@ -1060,9 +913,7 @@ const app = {
         document.getElementById('user-selector-modal').style.display = 'flex';
     },
 
-    closeUserSelector: function() {
-        document.getElementById('user-selector-modal').style.display = 'none';
-    },
+    closeUserSelector: function() { document.getElementById('user-selector-modal').style.display = 'none'; },
 
     renderUserSelector: function(cat) {
         const list = document.getElementById('user-sel-list');
@@ -1073,8 +924,7 @@ const app = {
             candidates = candidates.filter(e => !currentIds.includes(e.id));
         }
         candidates.forEach(e => {
-            list.innerHTML += `
-            <div class="list-item" onclick="app.userSelectExercise('${e.id}')">
+            list.innerHTML += `<div class="list-item" onclick="app.userSelectExercise('${e.id}')">
                 <span style="font-weight:700">${e.name}</span>
                 <span style="color:var(--primary)">+</span>
             </div>`;
@@ -1084,8 +934,7 @@ const app = {
     userSelectExercise: function(exId) {
         const newExDef = this.getExerciseDef(exId);
         if (this.state.userSelector.mode === 'swap') {
-            this.state.active.sessionExercises[this.state.active.exIdx] =
-                { id: exId, name: newExDef.name, sets: 3, rest: 60 };
+            this.state.active.sessionExercises[this.state.active.exIdx] = { id: exId, name: newExDef.name, sets: 3, rest: 60 };
             this.loadActiveExercise();
         } else if (this.state.userSelector.mode === 'add') {
             const newExInst = { id: exId, name: newExDef.name, sets: 3, rest: 60 };
@@ -1096,16 +945,15 @@ const app = {
         this.closeUserSelector();
     },
 
-    // ── Admin ─────────────────────────────────────────────────────────────────
-
+    /* --- ADMIN --- */
     openAdminHome: function() {
         if (this.state.active.on) { alert("לא ניתן להיכנס לניהול בזמן אימון פעיל."); return; }
         document.getElementById('admin-modal').style.display = 'flex';
-        ['admin-view-edit','admin-view-selector','admin-view-ex-manager',
-         'admin-view-ex-edit','admin-view-cloud'].forEach(id => {
-            document.getElementById(id).style.display = 'none';
-        });
         document.getElementById('admin-view-home').style.display = 'flex';
+        document.getElementById('admin-view-edit').style.display = 'none';
+        document.getElementById('admin-view-selector').style.display = 'none';
+        document.getElementById('admin-view-ex-manager').style.display = 'none';
+        document.getElementById('admin-view-ex-edit').style.display = 'none';
         this.renderAdminList();
     },
 
@@ -1119,9 +967,7 @@ const app = {
         const list = document.getElementById('admin-prog-list');
         list.innerHTML = '';
         const ids = Object.keys(this.state.routines);
-        if (ids.length === 0) {
-            list.innerHTML = '<div style="text-align:center; color:#666; padding:20px;">אין תוכניות</div>';
-        }
+        if(ids.length === 0) list.innerHTML = '<div style="text-align:center; color:#666; padding:20px;">אין תוכניות</div>';
         ids.forEach(pid => {
             const prog = this.state.routines[pid];
             list.innerHTML += `
@@ -1140,27 +986,27 @@ const app = {
 
     createNewProgram: function() {
         const id = 'prog_' + Date.now();
-        this.state.routines[id] = { title: 'תוכנית חדשה', exercises: [] };
+        this.state.routines[id] = { title: 'תוכנית חדשה', exercises:[] };
         this.openAdminEdit(id);
     },
 
     duplicateProgram: function(pid) {
-        const newId  = 'prog_' + Date.now();
-        const copy   = JSON.parse(JSON.stringify(this.state.routines[pid]));
-        copy.title  += " (עותק)";
+        const newId = 'prog_' + Date.now();
+        const copy = JSON.parse(JSON.stringify(this.state.routines[pid]));
+        copy.title += " (עותק)";
         this.state.routines[newId] = copy;
         this.renderAdminList();
     },
 
     deleteProgram: function(pid) {
-        if (confirm("למחוק את התוכנית?")) {
+        if(confirm("למחוק את התוכנית?")) {
             delete this.state.routines[pid];
             this.renderAdminList();
         }
     },
 
     openAdminEdit: function(pid) {
-        this.state.admin.viewProgId    = pid;
+        this.state.admin.viewProgId = pid;
         this.state.admin.tempExercises = JSON.parse(JSON.stringify(this.state.routines[pid].exercises));
         document.getElementById('admin-view-home').style.display = 'none';
         document.getElementById('admin-view-edit').style.display = 'flex';
@@ -1171,20 +1017,17 @@ const app = {
     saveAndCloseEditor: function() {
         const pid = this.state.admin.viewProgId;
         this.state.routines[pid].exercises = this.state.admin.tempExercises;
-        this.state.routines[pid].title     = document.getElementById('edit-prog-title').value;
-        this.state.lastUpdated = Date.now();
+        this.state.routines[pid].title = document.getElementById('edit-prog-title').value;
         this.saveData();
-        sync.pushConfig();  // ← sync config to Firebase
         this.openAdminHome();
     },
 
-    updateProgramTitle: function() { },
+    updateProgramTitle: function() {},
 
     renderEditorList: function() {
-        const list   = document.getElementById('admin-ex-list');
+        const list = document.getElementById('admin-ex-list');
         list.innerHTML = '';
-        const exList = this.state.admin.tempExercises;
-        exList.forEach((ex, i) => {
+        this.state.admin.tempExercises.forEach((ex, i) => {
             const hasTip = ex.note ? 'has-tip' : '';
             list.innerHTML += `
             <div class="editor-row">
@@ -1217,8 +1060,8 @@ const app = {
 
     updateTempEx: function(i, field, delta) {
         let val = (this.state.admin.tempExercises[i][field] || 0) + delta;
-        if (field === 'sets' && val < 1) val = 1;
-        if (field === 'rest' && val < 0) val = 0;
+        if(field === 'sets' && val < 1) val = 1;
+        if(field === 'rest' && val < 0) val = 0;
         this.state.admin.tempExercises[i][field] = val;
         this.renderEditorList();
     },
@@ -1226,7 +1069,7 @@ const app = {
     moveEx: function(i, dir) {
         const arr = this.state.admin.tempExercises;
         if ((i === 0 && dir === -1) || (i === arr.length - 1 && dir === 1)) return;
-        const temp  = arr[i]; arr[i] = arr[i + dir]; arr[i + dir] = temp;
+        const temp = arr[i]; arr[i] = arr[i + dir]; arr[i + dir] = temp;
         this.renderEditorList();
     },
 
@@ -1235,10 +1078,9 @@ const app = {
         this.renderEditorList();
     },
 
-    // ── Exercise Manager ──────────────────────────────────────────────────────
-
+    /* --- EXERCISE MANAGER --- */
     openExerciseManager: function() {
-        document.getElementById('admin-view-home').style.display       = 'none';
+        document.getElementById('admin-view-home').style.display = 'none';
         document.getElementById('admin-view-ex-manager').style.display = 'flex';
         document.getElementById('ex-mgr-search').value = '';
         this.state.admin.exManagerFilter = 'all';
@@ -1246,15 +1088,15 @@ const app = {
         this.renderExerciseManagerList();
     },
 
-    setExManagerFilter: function(cat) {
+    setExManagerFilter: function(cat, btn) {
         this.state.admin.exManagerFilter = cat;
         this.updateExManagerChips();
         this.renderExerciseManagerList();
     },
 
     updateExManagerChips: function() {
-        const map  = { 'all':0, 'legs':1, 'chest':2, 'back':3, 'shoulders':4, 'arms':5, 'core':6 };
-        const idx  = map[this.state.admin.exManagerFilter];
+        const map = { 'all':0, 'legs':1, 'chest':2, 'back':3, 'shoulders':4, 'arms':5, 'core':6 };
+        const idx = map[this.state.admin.exManagerFilter];
         const chips = document.querySelector('#admin-view-ex-manager .chip-container').querySelectorAll('.chip');
         chips.forEach((c, i) => i === idx ? c.classList.add('active') : c.classList.remove('active'));
     },
@@ -1263,14 +1105,11 @@ const app = {
         const list = document.getElementById('ex-mgr-list');
         list.innerHTML = '';
         const term = document.getElementById('ex-mgr-search').value.toLowerCase();
-        const cat  = this.state.admin.exManagerFilter;
+        const cat = this.state.admin.exManagerFilter;
         this.state.exercises.filter(e => {
-            const matchName = e.name.toLowerCase().includes(term);
-            const matchCat  = cat === 'all' || e.cat === cat;
-            return matchName && matchCat;
+            return e.name.toLowerCase().includes(term) && (cat === 'all' || e.cat === cat);
         }).forEach(e => {
-            list.innerHTML += `
-            <div class="list-item" onclick="app.editExerciseInBank('${e.id}')">
+            list.innerHTML += `<div class="list-item" onclick="app.editExerciseInBank('${e.id}')">
                 <div style="font-weight:700">${e.name}</div>
                 <div style="font-size:0.8rem; color:#888;">${this.getCatLabel(e.cat)}</div>
             </div>`;
@@ -1294,53 +1133,49 @@ const app = {
 
     fillExerciseEditor: function(ex) {
         document.getElementById('admin-view-ex-manager').style.display = 'none';
-        document.getElementById('admin-view-ex-edit').style.display    = 'flex';
-        document.getElementById('edit-ex-name').value       = ex.name;
-        document.getElementById('edit-ex-cat').value        = ex.cat;
-        document.getElementById('edit-ex-video').value      = ex.videoUrl || '';
-        document.getElementById('edit-ex-unit').value       = ex.settings.unit;
-        document.getElementById('edit-ex-step').value       = ex.settings.step;
-        document.getElementById('edit-ex-min').value        = ex.settings.min;
-        document.getElementById('edit-ex-max').value        = ex.settings.max;
+        document.getElementById('admin-view-ex-edit').style.display = 'flex';
+        document.getElementById('edit-ex-name').value = ex.name;
+        document.getElementById('edit-ex-cat').value = ex.cat;
+        document.getElementById('edit-ex-video').value = ex.videoUrl || '';
+        document.getElementById('edit-ex-unit').value = ex.settings.unit;
+        document.getElementById('edit-ex-step').value = ex.settings.step;
+        document.getElementById('edit-ex-min').value = ex.settings.min;
+        document.getElementById('edit-ex-max').value = ex.settings.max;
         document.getElementById('edit-ex-unilateral').checked = ex.settings.isUnilateral || false;
     },
 
     saveExerciseToBank: function() {
         const exId = this.state.admin.editingExId;
         const newEx = {
-            id:       exId,
-            name:     document.getElementById('edit-ex-name').value,
-            cat:      document.getElementById('edit-ex-cat').value,
+            id: exId,
+            name: document.getElementById('edit-ex-name').value,
+            cat: document.getElementById('edit-ex-cat').value,
             videoUrl: document.getElementById('edit-ex-video').value,
             settings: {
-                unit:        document.getElementById('edit-ex-unit').value,
-                step:        Number(document.getElementById('edit-ex-step').value),
-                min:         Number(document.getElementById('edit-ex-min').value),
-                max:         Number(document.getElementById('edit-ex-max').value),
+                unit: document.getElementById('edit-ex-unit').value,
+                step: Number(document.getElementById('edit-ex-step').value),
+                min: Number(document.getElementById('edit-ex-min').value),
+                max: Number(document.getElementById('edit-ex-max').value),
                 isUnilateral: document.getElementById('edit-ex-unilateral').checked
             }
         };
         const existingIdx = this.state.exercises.findIndex(e => e.id === exId);
         if (existingIdx > -1) this.state.exercises[existingIdx] = newEx;
         else this.state.exercises.push(newEx);
-
-        this.state.lastUpdated = Date.now();
         this.saveData();
-        sync.pushConfig();  // ← sync config to Firebase
-        document.getElementById('admin-view-ex-edit').style.display    = 'none';
+        document.getElementById('admin-view-ex-edit').style.display = 'none';
         document.getElementById('admin-view-ex-manager').style.display = 'flex';
         this.renderExerciseManagerList();
     },
 
     cancelExerciseEdit: function() {
-        document.getElementById('admin-view-ex-edit').style.display    = 'none';
+        document.getElementById('admin-view-ex-edit').style.display = 'none';
         document.getElementById('admin-view-ex-manager').style.display = 'flex';
     },
 
-    // ── Selector ──────────────────────────────────────────────────────────────
-
+    /* --- SELECTOR --- */
     openAdminSelector: function() {
-        document.getElementById('admin-view-edit').style.display    = 'none';
+        document.getElementById('admin-view-edit').style.display = 'none';
         document.getElementById('admin-view-selector').style.display = 'flex';
         document.getElementById('selector-search').value = '';
         this.state.admin.selectorFilter = 'all';
@@ -1350,18 +1185,18 @@ const app = {
 
     closeSelector: function() {
         document.getElementById('admin-view-selector').style.display = 'none';
-        document.getElementById('admin-view-edit').style.display     = 'flex';
+        document.getElementById('admin-view-edit').style.display = 'flex';
     },
 
-    setSelectorFilter: function(cat) {
+    setSelectorFilter: function(cat, btn) {
         this.state.admin.selectorFilter = cat;
         this.updateFilterChips();
         this.renderSelectorList();
     },
 
     updateFilterChips: function() {
-        const map  = { 'all':0, 'legs':1, 'chest':2, 'back':3, 'shoulders':4, 'arms':5, 'core':6 };
-        const idx  = map[this.state.admin.selectorFilter];
+        const map = { 'all':0, 'legs':1, 'chest':2, 'back':3, 'shoulders':4, 'arms':5, 'core':6 };
+        const idx = map[this.state.admin.selectorFilter];
         const chips = document.querySelector('#admin-view-selector .chip-container').querySelectorAll('.chip');
         chips.forEach((c, i) => i === idx ? c.classList.add('active') : c.classList.remove('active'));
     },
@@ -1369,17 +1204,14 @@ const app = {
     filterSelector: function() { this.renderSelectorList(); },
 
     renderSelectorList: function() {
-        const list   = document.getElementById('selector-list');
+        const list = document.getElementById('selector-list');
         list.innerHTML = '';
         const search = document.getElementById('selector-search').value.toLowerCase();
-        const cat    = this.state.admin.selectorFilter;
+        const cat = this.state.admin.selectorFilter;
         this.state.exercises.filter(e => {
-            const matchName = e.name.toLowerCase().includes(search);
-            const matchCat  = cat === 'all' || e.cat === cat;
-            return matchName && matchCat;
+            return e.name.toLowerCase().includes(search) && (cat === 'all' || e.cat === cat);
         }).forEach(e => {
-            list.innerHTML += `
-            <div class="list-item" onclick="app.addExerciseFromSelector('${e.id}')">
+            list.innerHTML += `<div class="list-item" onclick="app.addExerciseFromSelector('${e.id}')">
                 <span style="font-weight:700">${e.name}</span>
                 <span style="color:var(--primary)">+</span>
             </div>`;
@@ -1388,8 +1220,7 @@ const app = {
 
     addExerciseFromSelector: function(exId) {
         const bankEx = this.getExerciseDef(exId);
-        const newEx  = { id: bankEx.id, name: bankEx.name, sets: 3, rest: 60, note: '', target: {w:10, r:12} };
-        this.state.admin.tempExercises.push(newEx);
+        this.state.admin.tempExercises.push({ id: bankEx.id, name: bankEx.name, sets: 3, rest: 60, note: '', target: {w:10, r:12} });
         this.closeSelector();
         this.renderEditorList();
     },
@@ -1399,188 +1230,25 @@ const app = {
         return map[c] || c;
     },
 
-    // ── Tips ──────────────────────────────────────────────────────────────────
-
+    /* --- TIPS --- */
     openTipModal: function(idx) {
         this.state.admin.editTipEx = idx;
-        const ex = this.state.admin.tempExercises[idx];
-        document.getElementById('tip-input').value = ex.note || '';
+        document.getElementById('tip-input').value = this.state.admin.tempExercises[idx].note || '';
         document.getElementById('tip-modal').style.display = 'flex';
     },
     closeTipModal: function() { document.getElementById('tip-modal').style.display = 'none'; },
     saveTip: function() {
         const idx = this.state.admin.editTipEx;
-        if (idx !== null) {
+        if(idx !== null) {
             this.state.admin.tempExercises[idx].note = document.getElementById('tip-input').value;
             this.renderEditorList();
         }
         this.closeTipModal();
     },
 
-    // ── Cloud Admin View ──────────────────────────────────────────────────────
-
-    saveFirebaseConfig: function() {
-        const raw = document.getElementById('firebase-config-input').value.trim();
-        if (!raw) { alert('הדבק את ה-config תחילה'); return; }
-        try {
-            const cfg = JSON.parse(raw);
-            if (!cfg.apiKey || !cfg.projectId) { alert('config לא תקין — חסרים apiKey או projectId'); return; }
-            localStorage.setItem(FIREBASE_CONFIG_KEY, JSON.stringify(cfg));
-            sync.init();
-            document.getElementById('firebase-config-input').value = '';
-            this.updateCloudStatus();
-            document.getElementById('cloud-op-status').innerHTML = '<span style="color:var(--success)">✓ חיבור נשמר</span>';
-        } catch (e) {
-            alert('JSON לא תקין — בדוק שהדבקת נכון');
-        }
-    },
-
-    clearFirebaseConfig: function() {
-        if (!confirm('לנתק מהענן?')) return;
-        localStorage.removeItem(FIREBASE_CONFIG_KEY);
-        sync.ready = false;
-        sync.db    = null;
-        this.updateCloudStatus();
-    },
-
-    openCloudView: function() {
-        ['admin-view-home','admin-view-edit','admin-view-selector',
-         'admin-view-ex-manager','admin-view-ex-edit'].forEach(id => {
-            document.getElementById(id).style.display = 'none';
-        });
-        document.getElementById('admin-view-cloud').style.display = 'flex';
-        document.getElementById('current-version-display').innerText = 'V' + CONFIG.VERSION;
-        document.getElementById('cloud-op-status').innerText = '';
-        document.getElementById('firebase-config-input').value = '';
-        this.updateCloudStatus();
-    },
-
-    updateCloudStatus: function() {
-        const el = document.getElementById('cloud-status');
-        if (!el) return;
-        if (sync.ready) {
-            el.innerHTML = '<span style="color:var(--success)">● מחובר לענן</span>';
-        } else if (sync.isConfigured()) {
-            el.innerHTML = '<span style="color:#ffaa00">● config קיים — לא מחובר</span>';
-        } else {
-            el.innerHTML = '<span style="color:#666">● לא מוגדר — הזן config למטה</span>';
-        }
-    },
-
-    uploadAllToCloud: async function() {
-        if (!sync.ready) { alert('אין חיבור לענן — הגדר config בלשונית ענן'); return; }
-        const opEl = document.getElementById('cloud-op-status');
-        try {
-            opEl.innerText = 'מעלה...';
-            await sync.pushConfig();
-            await sync.migrateHistory(this.state.history);
-            opEl.innerHTML = '<span style="color:var(--success)">✓ הועלה בהצלחה</span>';
-        } catch (e) {
-            opEl.innerHTML = '<span style="color:var(--danger)">✗ שגיאה בהעלאה</span>';
-            console.error(e);
-        }
-    },
-
-    downloadFromCloud: async function() {
-        if (!sync.ready) { alert('אין חיבור לענן — הגדר config בלשונית ענן'); return; }
-        const opEl = document.getElementById('cloud-op-status');
-        try {
-            opEl.innerText = 'מוריד...';
-
-            // Config
-            const remoteConfig = await sync.pullConfig();
-            if (remoteConfig && remoteConfig.lastUpdated > (this.state.lastUpdated || 0)) {
-                if (confirm('נמצא קונפיג חדש יותר בענן. לעדכן תוכניות ותרגילים?')) {
-                    this.state.routines    = remoteConfig.routines;
-                    this.state.exercises   = remoteConfig.exercises;
-                    this.state.lastUpdated = remoteConfig.lastUpdated;
-                    this.saveData();
-                    this.renderProgramSelect();
-                }
-            }
-
-            // History — merge by timestamp (no duplicates)
-            const remoteHistory = await sync.pullHistory();
-            if (remoteHistory.length > 0) {
-                const localTs  = new Set(this.state.history.map(h => h.timestamp));
-                const newItems = remoteHistory.filter(h => h.timestamp && !localTs.has(h.timestamp));
-                if (newItems.length > 0) {
-                    this.state.history = [...this.state.history, ...newItems]
-                        .sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
-                    this.saveData();
-                    this.renderHome();
-                    opEl.innerHTML = `<span style="color:var(--success)">✓ נטענו ${newItems.length} אימונים חדשים</span>`;
-                } else {
-                    opEl.innerHTML = '<span style="color:var(--success)">✓ ההיסטוריה מעודכנת</span>';
-                }
-            } else {
-                opEl.innerHTML = '<span style="color:#888;">לא נמצאו נתונים בענן</span>';
-            }
-        } catch (e) {
-            opEl.innerHTML = '<span style="color:var(--danger)">✗ שגיאה בטעינה</span>';
-            console.error(e);
-        }
-    },
-
-    checkForUpdates: function() {
-        const opEl = document.getElementById('cloud-op-status');
-        if (!('serviceWorker' in navigator)) {
-            opEl.innerText = 'Service Worker לא נתמך בדפדפן זה';
-            return;
-        }
-        opEl.innerText = 'בודק עדכונים...';
-        navigator.serviceWorker.getRegistrations().then(regs => {
-            if (!regs.length) {
-                opEl.innerText = 'Service Worker לא רשום — רענן את הדף';
-                return;
-            }
-            // Force update check — browser will compare sw.js with cached version
-            Promise.all(regs.map(r => r.update())).then(() => {
-                opEl.innerHTML = '<span style="color:var(--success)">✓ בדיקה הושלמה — אם יש עדכון הדפדפן יתקין אותו ברקע</span>';
-            }).catch(() => {
-                opEl.innerText = 'שגיאה בבדיקת עדכונים';
-            });
-        });
-    },
-
-    // ── Backup & Restore ──────────────────────────────────────────────────────
-
-    pullConfigFromCloud: async function() {
-        if (!sync.isConfigured()) {
-            alert('לא הוגדר חיבור לענן — כנס לניהול ← ענן');
-            return;
-        }
-        if (!sync.ready) {
-            sync.init();
-            if (!sync.ready) { alert('לא ניתן להתחבר לענן — בדוק חיבור אינטרנט'); return; }
-        }
-        try {
-            const remote = await sync.pullConfig();
-            if (!remote) { alert('לא נמצא קונפיג בענן'); return; }
-            if (remote.lastUpdated <= (this.state.lastUpdated || 0)) {
-                alert('התוכנית כבר עדכנית ✓');
-                return;
-            }
-            if (confirm('נמצא עדכון מהמאמן. לטעון?')) {
-                this.state.routines    = remote.routines;
-                this.state.exercises   = remote.exercises;
-                this.state.lastUpdated = remote.lastUpdated;
-                this.saveData();
-                this.renderProgramSelect();
-                alert('עודכן בהצלחה ✓');
-            }
-        } catch (e) {
-            console.warn('pullConfigFromCloud failed:', e);
-            alert('שגיאה בטעינת עדכון');
-        }
-    },
-
+    /* --- BACKUP & RESTORE --- */
     exportConfig: function() {
-        const data = {
-            type: 'config', ver: CONFIG.VERSION,
-            date: new Date().toLocaleDateString(),
-            routines: this.state.routines, exercises: this.state.exercises
-        };
+        const data = { type: 'config', ver: CONFIG.VERSION, date: new Date().toLocaleDateString(), routines: this.state.routines, exercises: this.state.exercises };
         this.downloadJSON(data, `gymstart_config_v${CONFIG.VERSION}_${Date.now()}.json`);
     },
 
@@ -1591,15 +1259,17 @@ const app = {
             try {
                 const json = JSON.parse(e.target.result);
                 if (json.type !== 'config') { alert("קובץ שגוי."); return; }
-                if (confirm("עדכון תוכניות יחליף את ההגדרות ואת מאגר התרגילים. להמשיך?")) {
+                if(confirm("עדכון תוכניות יחליף את ההגדרות ואת מאגר התרגילים. להמשיך?")) {
                     app.state.routines = json.routines;
-                    if (json.exercises) app.state.exercises = json.exercises;
-                    app.state.lastUpdated = Date.now();
+                    if(json.exercises) app.state.exercises = json.exercises;
                     app.saveData();
+                    if (typeof FirebaseManager !== 'undefined' && FirebaseManager.isConfigured()) {
+                        FirebaseManager.saveConfigToCloud();
+                    }
                     alert("ההגדרות עודכנו בהצלחה!");
                     location.reload();
                 }
-            } catch (err) { alert("קובץ לא תקין"); }
+            } catch(err) { alert("קובץ לא תקין"); }
         };
         reader.readAsText(file);
         input.value = '';
@@ -1615,17 +1285,20 @@ const app = {
         const reader = new FileReader();
         reader.onload = function(e) {
             try {
-                const json    = JSON.parse(e.target.result);
-                let newHist   = Array.isArray(json) ? json : json.history;
+                const json = JSON.parse(e.target.result);
+                let newHist = Array.isArray(json) ? json : json.history;
                 if (!newHist) throw new Error();
-                if (confirm(`נמצאו ${newHist.length} רשומות. למזג?`)) {
+                if(confirm(`נמצאו ${newHist.length} רשומות. למזג?`)) {
                     app.state.history = [...app.state.history, ...newHist];
-                    app.state.history.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+                    app.state.history.sort((a,b) => (a.timestamp || 0) - (b.timestamp || 0));
                     app.saveData();
+                    if (typeof FirebaseManager !== 'undefined' && FirebaseManager.isConfigured()) {
+                        FirebaseManager.saveArchiveToCloud();
+                    }
                     app.showHistory();
                     alert("ההיסטוריה עודכנה.");
                 }
-            } catch (err) { alert("שגיאה בקובץ"); }
+            } catch(err) { alert("שגיאה בקובץ"); }
         };
         reader.readAsText(file);
         input.value = '';
@@ -1633,63 +1306,123 @@ const app = {
 
     downloadJSON: function(data, filename) {
         const str = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data));
-        const a   = document.createElement('a');
+        const a = document.createElement('a');
         a.href = str; a.download = filename; a.click();
     },
 
     factoryReset: function() {
-        if (confirm("איפוס מלא ימחק הכל. להמשיך?")) {
+        if(confirm("איפוס מלא ימחק הכל. להמשיך?")) {
             localStorage.clear();
             location.reload();
         }
     },
 
-    // ── History View ──────────────────────────────────────────────────────────
-
+    /* --- HISTORY VIEW — חלוקה לחודשים ─────────────────────────────────── */
     showHistory: function() {
         this.state.historySelection = [];
         this.updateHistoryActions();
         const list = document.getElementById('history-list');
         list.innerHTML = '';
+
+        if (this.state.history.length === 0) {
+            list.innerHTML = '<div style="text-align:center; color:#555; padding:30px;">אין היסטוריה</div>';
+            this.nav('screen-history');
+            return;
+        }
+
+        // קיבוץ לפי חודש
+        const now = new Date();
+        const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2,'0')}`;
+
+        const groups = {};
         [...this.state.history].reverse().forEach((h, i) => {
             const realIdx = this.state.history.length - 1 - i;
-            const pName   = h.programTitle || h.program;
-            list.innerHTML += `
-                <div class="hist-item-row">
-                    <div style="display:flex; align-items:center">
-                        <input type="checkbox" class="custom-chk" onchange="app.toggleHistorySelection(${realIdx}, this)">
-                    </div>
-                    <div style="flex:1" onclick="app.showHistoryDetail(${realIdx})">
-                        <div style="display:flex; justify-content:space-between">
-                            <span style="font-weight:700; color:var(--text)">${h.date}</span>
-                            <span class="badge" style="background:#333; color:white; font-weight:400; font-size:0.75rem">${pName}</span>
-                        </div>
-                        <div style="font-size:0.85rem; color:var(--text-sec); margin-top:5px">
-                            ${h.data.length} תרגילים • ${h.duration||'?'} דק'
-                        </div>
-                    </div>
-                </div>`;
+            // חישוב מפתח חודש מה-timestamp או מה-date
+            let monthKey;
+            if (h.timestamp) {
+                const d = new Date(h.timestamp);
+                monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2,'0')}`;
+            } else {
+                // fallback: מה-date string בפורמט he-IL (dd/mm/yyyy)
+                const parts = h.date.split('/');
+                if (parts.length === 3) {
+                    monthKey = `${parts[2]}-${parts[1].padStart(2,'0')}`;
+                } else {
+                    monthKey = currentMonthKey;
+                }
+            }
+            if (!groups[monthKey]) groups[monthKey] = [];
+            groups[monthKey].push({ h, realIdx });
         });
+
+        const heMonths = ['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
+
+        Object.keys(groups).sort((a,b) => b.localeCompare(a)).forEach(monthKey => {
+            const items = groups[monthKey];
+            const [year, month] = monthKey.split('-');
+            const monthLabel = `${heMonths[parseInt(month) - 1]} ${year}`;
+            const isCurrentMonth = monthKey === currentMonthKey;
+            const count = items.length;
+
+            const groupEl = document.createElement('div');
+            groupEl.className = 'month-group';
+
+            groupEl.innerHTML = `
+                <div class="month-header" onclick="app._toggleMonthGroup(this)">
+                    <span class="month-header-title">${monthLabel}</span>
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <span class="month-count">${count} אימונים</span>
+                        <span class="month-chevron">${isCurrentMonth ? '▲' : '▼'}</span>
+                    </div>
+                </div>
+                <div class="month-content" style="display:${isCurrentMonth ? 'flex' : 'none'}; flex-direction:column; gap:10px;">
+                    ${items.map(({h, realIdx}) => `
+                        <div class="hist-item-row">
+                            <div style="display:flex; align-items:center">
+                                <input type="checkbox" class="custom-chk" onchange="app.toggleHistorySelection(${realIdx}, this)">
+                            </div>
+                            <div style="flex:1" onclick="app.showHistoryDetail(${realIdx})">
+                                <div style="display:flex; justify-content:space-between">
+                                    <span style="font-weight:700; color:var(--text)">${h.date}</span>
+                                    <span class="badge" style="background:#333; color:white; font-weight:400; font-size:0.75rem">${h.programTitle || h.program}</span>
+                                </div>
+                                <div style="font-size:0.85rem; color:var(--text-sec); margin-top:5px">
+                                    ${h.data.length} תרגילים • ${h.duration||'?'} דק'
+                                </div>
+                            </div>
+                        </div>`).join('')}
+                </div>`;
+
+            list.appendChild(groupEl);
+        });
+
         this.nav('screen-history');
     },
 
+    _toggleMonthGroup: function(headerEl) {
+        const content = headerEl.nextElementSibling;
+        const chevron = headerEl.querySelector('.month-chevron');
+        const isOpen = content.style.display !== 'none';
+        content.style.display = isOpen ? 'none' : 'flex';
+        if (content.style.display === 'flex') content.style.flexDirection = 'column';
+        chevron.innerText = isOpen ? '▼' : '▲';
+    },
+
     toggleHistorySelection: function(idx, el) {
-        if (el.checked) this.state.historySelection.push(idx);
+        if(el.checked) this.state.historySelection.push(idx);
         else this.state.historySelection = this.state.historySelection.filter(i => i !== idx);
         this.updateHistoryActions();
     },
 
     updateHistoryActions: function() {
         const btn = document.getElementById('btn-del-selected');
-        btn.disabled  = this.state.historySelection.length === 0;
-        btn.innerText = this.state.historySelection.length > 0
-            ? `מחק (${this.state.historySelection.length})` : "מחק";
+        btn.disabled = this.state.historySelection.length === 0;
+        btn.innerText = this.state.historySelection.length > 0 ? `מחק (${this.state.historySelection.length})` : "מחק";
     },
 
     selectAllHistory: function() {
-        const inputs     = document.querySelectorAll('.custom-chk');
-        const allSelected = this.state.historySelection.length === this.state.history.length
-            && this.state.history.length > 0;
+        const inputs = document.querySelectorAll('.custom-chk');
+        const allSelected = this.state.historySelection.length === this.state.history.length && this.state.history.length > 0;
         if (allSelected) {
             this.state.historySelection = [];
             inputs.forEach(i => i.checked = false);
@@ -1703,25 +1436,22 @@ const app = {
     deleteSelectedHistory: function() {
         if (this.state.historySelection.length === 0) return;
         if (!confirm(`למחוק ${this.state.historySelection.length} אימונים?`)) return;
-        // Delete from Firebase
-        this.state.historySelection.forEach(idx => {
-            const item = this.state.history[idx];
-            if (item && item.timestamp) sync.deleteHistoryItem(item.timestamp);
-        });
-        this.state.history = this.state.history.filter((_, index) =>
-            !this.state.historySelection.includes(index));
+        this.state.history = this.state.history.filter((_, index) => !this.state.historySelection.includes(index));
         this.saveData();
-        this.showHistory();
+        if (typeof FirebaseManager !== 'undefined' && FirebaseManager.isConfigured()) {
+            FirebaseManager.saveArchiveToCloud().then(() => this.showHistory());
+        } else {
+            this.showHistory();
+        }
     },
 
     copySelectedHistory: function() {
-        if (this.state.historySelection.length === 0) { alert("לא נבחר אימון"); return; }
+        if(this.state.historySelection.length === 0) { alert("לא נבחר אימון"); return; }
         let fullTxt = "";
-        const sortedSel = [...this.state.historySelection].sort((a, b) => a - b);
+        const sortedSel = [...this.state.historySelection].sort((a,b) => a-b);
         sortedSel.forEach((idx, i) => {
-            const h = this.state.history[idx];
-            fullTxt += this.generateLogText(h);
-            if (i < sortedSel.length - 1) fullTxt += "----------------\n\n";
+            fullTxt += this.generateLogText(this.state.history[idx]);
+            if(i < sortedSel.length - 1) fullTxt += "----------------\n\n";
         });
         this.copyText(fullTxt);
     },
@@ -1730,37 +1460,17 @@ const app = {
         const item = this.state.history[idx];
         this.state.viewHistoryIdx = idx;
         const pName = item.programTitle || item.program;
-        document.getElementById('hist-meta-header').innerHTML =
-            `<h3>${pName}</h3><p>${item.date} | ${item.duration} דק'</p>`;
-
+        document.getElementById('hist-meta-header').innerHTML = `<h3>${pName}</h3><p>${item.date} | ${item.duration} דק'</p>`;
         const content = document.getElementById('hist-detail-content');
         let html = '';
         item.data.forEach(ex => {
             html += `<div style="background:var(--bg-card); padding:15px; border-radius:12px; margin-bottom:10px; border:1px solid #222;">
                 <div style="font-weight:700; color:var(--primary)">${ex.name}</div>`;
-            const exDef  = this.getExerciseDef(ex.id);
-            // ── Bug fix: use isTimedExercise helper ──
-            const isTime = isTimedExercise(ex.id) && ex.sets.length > 0 && ex.sets[0].w === 0;
-            const isSingleSide = exDef.settings.isUnilateral;
             ex.sets.forEach((s, si) => {
-                let valStr;
-                if (isTime) {
-                    valStr = `${s.r} שנ׳`;
-                } else {
-                    if (exDef.settings.unit === 'plates') {
-                        valStr = `${s.w} פלטות | ${s.r} חזרות`;
-                    } else if (s.w === 0) {
-                        valStr = `משקל גוף | ${s.r} חזרות`;
-                    } else {
-                        valStr = `${s.w} ק״ג`;
-                        if (isSingleSide) valStr += ' (לצד)';
-                        valStr += ` | ${s.r} חזרות`;
-                    }
-                }
                 const feelStr = FEEL_MAP_TEXT[s.feel] || 'טוב';
                 html += `<div style="display:flex; justify-content:space-between; font-size:0.9rem; margin-top:5px; border-bottom:1px dashed #333; padding-bottom:5px">
                     <span>סט ${si+1} <small style="color:#777">(${feelStr})</small></span>
-                    <span>${valStr}</span>
+                    <span>${this._formatSetDisplay(ex.id, s)}</span>
                 </div>`;
             });
             html += `</div>`;
@@ -1770,38 +1480,363 @@ const app = {
     },
 
     copySingleHistory: function() {
-        const item = this.state.history[this.state.viewHistoryIdx];
-        this.copyText(this.generateLogText(item));
+        this.copyText(this.generateLogText(this.state.history[this.state.viewHistoryIdx]));
     },
 
-    closeHistoryModal: function() {
-        document.getElementById('history-modal').style.display = 'none';
-    },
+    closeHistoryModal: function() { document.getElementById('history-modal').style.display = 'none'; },
 
     deleteCurrentLog: function() {
-        if (confirm("למחוק את האימון?")) {
-            const item = this.state.history[this.state.viewHistoryIdx];
-            if (item && item.timestamp) sync.deleteHistoryItem(item.timestamp); // ← sync
+        if(confirm("למחוק את האימון?")) {
             this.state.history.splice(this.state.viewHistoryIdx, 1);
             this.saveData();
             this.closeHistoryModal();
-            this.showHistory();
+            if (typeof FirebaseManager !== 'undefined' && FirebaseManager.isConfigured()) {
+                FirebaseManager.saveArchiveToCloud().then(() => this.showHistory());
+            } else {
+                this.showHistory();
+            }
         }
     },
 
+    /* --- COPY BY RANGE ─────────────────────────────────────────────────── */
+    openRangeSheet: function() {
+        _rangeTab = 'month';
+        _rangeSelectedMonth = null;
+        _rangeSelectedWeeks = null;
+        this._renderRangeMonthChips();
+        document.getElementById('range-seg-month').classList.add('active');
+        document.getElementById('range-seg-weeks').classList.remove('active');
+        document.getElementById('range-panel-month').style.display = 'block';
+        document.getElementById('range-panel-weeks').style.display = 'none';
+        const btn = document.getElementById('btn-range-copy');
+        btn.disabled = true; btn.style.opacity = '0.5'; btn.innerText = 'בחר טווח';
+        document.getElementById('range-copy-overlay').style.display = 'block';
+        document.getElementById('range-copy-sheet').style.display = 'flex';
+    },
+
+    closeRangeSheet: function() {
+        document.getElementById('range-copy-overlay').style.display = 'none';
+        document.getElementById('range-copy-sheet').style.display = 'none';
+    },
+
+    switchRangeTab: function(tab) {
+        _rangeTab = tab;
+        _rangeSelectedMonth = null;
+        _rangeSelectedWeeks = null;
+        const btn = document.getElementById('btn-range-copy');
+        btn.disabled = true; btn.style.opacity = '0.5'; btn.innerText = 'בחר טווח';
+
+        document.getElementById('range-seg-month').classList.toggle('active', tab === 'month');
+        document.getElementById('range-seg-weeks').classList.toggle('active', tab === 'weeks');
+        document.getElementById('range-panel-month').style.display = tab === 'month' ? 'block' : 'none';
+        document.getElementById('range-panel-weeks').style.display = tab === 'weeks' ? 'block' : 'none';
+    },
+
+    _renderRangeMonthChips: function() {
+        const container = document.getElementById('range-month-chips');
+        container.innerHTML = '';
+        const heMonths = ['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
+        const months = new Set();
+        this.state.history.forEach(h => {
+            if (h.timestamp) {
+                const d = new Date(h.timestamp);
+                months.add(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`);
+            }
+        });
+        [...months].sort((a,b) => b.localeCompare(a)).forEach(mk => {
+            const [y, m] = mk.split('-');
+            const label = `${heMonths[parseInt(m)-1]} ${y}`;
+            const btn = document.createElement('button');
+            btn.className = 'range-chip';
+            btn.innerText = label;
+            btn.onclick = () => this._selectRangeMonth(mk, btn);
+            container.appendChild(btn);
+        });
+    },
+
+    _selectRangeMonth: function(monthKey, el) {
+        _rangeSelectedMonth = monthKey;
+        document.querySelectorAll('#range-month-chips .range-chip').forEach(b => b.classList.remove('active'));
+        el.classList.add('active');
+        const btn = document.getElementById('btn-range-copy');
+        btn.disabled = false; btn.style.opacity = '1'; btn.innerText = 'העתק חודש';
+    },
+
+    selectRangeWeeks: function(n, el) {
+        _rangeSelectedWeeks = n;
+        document.querySelectorAll('#range-panel-weeks .range-chip').forEach(b => b.classList.remove('active'));
+        el.classList.add('active');
+        const btn = document.getElementById('btn-range-copy');
+        btn.disabled = false; btn.style.opacity = '1'; btn.innerText = `העתק ${n} שבועות`;
+    },
+
+    _getWeeksStartDate: function(n) {
+        const now = new Date();
+        const day = now.getDay(); // 0=ראשון
+        const startOfCurrentWeek = new Date(now);
+        startOfCurrentWeek.setDate(now.getDate() - day);
+        startOfCurrentWeek.setHours(0,0,0,0);
+        const startDate = new Date(startOfCurrentWeek);
+        startDate.setDate(startOfCurrentWeek.getDate() - (n - 1) * 7);
+        return startDate;
+    },
+
+    executeCopyByRange: function() {
+        let filtered = [];
+        if (_rangeTab === 'month' && _rangeSelectedMonth) {
+            const [y, m] = _rangeSelectedMonth.split('-');
+            filtered = this.state.history.filter(h => {
+                if (!h.timestamp) return false;
+                const d = new Date(h.timestamp);
+                return d.getFullYear() === parseInt(y) && (d.getMonth() + 1) === parseInt(m);
+            });
+        } else if (_rangeTab === 'weeks' && _rangeSelectedWeeks) {
+            const startDate = this._getWeeksStartDate(_rangeSelectedWeeks);
+            filtered = this.state.history.filter(h => {
+                if (!h.timestamp) return false;
+                return new Date(h.timestamp) >= startDate;
+            });
+        }
+
+        if (filtered.length === 0) { alert("לא נמצאו אימונים בטווח זה."); return; }
+
+        let fullTxt = '';
+        filtered.sort((a,b) => (a.timestamp||0) - (b.timestamp||0)).forEach((h, i) => {
+            fullTxt += this.generateLogText(h);
+            if (i < filtered.length - 1) fullTxt += "----------------\n\n";
+        });
+        this.copyText(fullTxt);
+        this.closeRangeSheet();
+    },
+
+    /* --- CHECK FOR UPDATE ───────────────────────────────────────────────── */
+    checkForUpdate: async function() {
+        try {
+            const res = await fetch('./version.json?t=' + Date.now());
+            if (!res.ok) throw new Error('network error');
+            const data = await res.json();
+            if (data.version && data.version !== CURRENT_VERSION) {
+                if (confirm(`עדכון זמין (${data.version}). לנקות cache ולרענן?`)) {
+                    if ('caches' in window) {
+                        const keys = await caches.keys();
+                        await Promise.all(keys.map(k => caches.delete(k)));
+                    }
+                    window.location.reload(true);
+                }
+            } else {
+                alert('האפליקציה מעודכנת (v' + CURRENT_VERSION + ')');
+            }
+        } catch(e) {
+            alert('לא ניתן לבדוק עדכונים. בדקי חיבור לאינטרנט.');
+        }
+    },
+
+    /* --- UTILITIES --- */
     copyText: function(txt) {
         if (navigator.clipboard) {
             navigator.clipboard.writeText(txt).then(() => alert("הועתק!"));
         } else {
             const ta = document.createElement('textarea');
             ta.value = txt;
-            document.body.appendChild(ta);
-            ta.select();
-            document.execCommand('copy');
-            document.body.removeChild(ta);
+            document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
             alert("הועתק!");
         }
     }
 };
 
-window.addEventListener('DOMContentLoaded', () => app.init());
+// ─────────────────────────────────────────────────────────────────────────────
+// FirebaseManager — ניהול Firestore (v1.8.2)
+// ─────────────────────────────────────────────────────────────────────────────
+
+const FirebaseManager = {
+    KEY_FIREBASE_CONFIG: 'gymstart_firebase_config',
+    _db: null,
+    _initialized: false,
+
+    isConfigured() {
+        const cfg = this.getConfig();
+        return !!(cfg && cfg.apiKey && cfg.projectId);
+    },
+
+    getConfig() {
+        try { return JSON.parse(localStorage.getItem(this.KEY_FIREBASE_CONFIG)); }
+        catch { return null; }
+    },
+
+    saveConfig(cfg) {
+        localStorage.setItem(this.KEY_FIREBASE_CONFIG, JSON.stringify(cfg));
+    },
+
+    clearConfig() {
+        localStorage.removeItem(this.KEY_FIREBASE_CONFIG);
+        this._db = null;
+        this._initialized = false;
+    },
+
+    init() {
+        if (this._initialized && this._db) return true;
+        if (typeof firebase === 'undefined') return false;
+        const cfg = this.getConfig();
+        if (!cfg || !cfg.apiKey || !cfg.projectId) return false;
+        try {
+            if (!firebase.apps.length) firebase.initializeApp(cfg);
+            this._db = firebase.firestore();
+            this._initialized = true;
+            return true;
+        } catch(e) {
+            console.error('GymStart Firebase init:', e);
+            return false;
+        }
+    },
+
+    // ── Archive ───────────────────────────────────────────────────────────────
+
+    async saveArchiveToCloud() {
+        if (!this.init()) return false;
+        try {
+            await this._db.collection('gymstart_data').doc('archive').set({
+                items: app.state.history,
+                updatedAt: Date.now()
+            });
+            return true;
+        } catch(e) {
+            console.error('GymStart saveArchive:', e);
+            return false;
+        }
+    },
+
+    async loadArchiveFromCloud() {
+        if (!this.init()) { alert('Firebase לא מוגדר.'); return; }
+        try {
+            const doc = await this._db.collection('gymstart_data').doc('archive').get();
+            if (!doc.exists || !doc.data().items) { alert('לא נמצאה היסטוריה בענן.'); return; }
+            localStorage.setItem(CONFIG.KEYS.HISTORY, JSON.stringify(doc.data().items));
+            alert('ההיסטוריה שוחזרה מהענן!');
+            location.reload();
+        } catch(e) { alert('שגיאה בטעינה: ' + e.message); }
+    },
+
+    // ── Config ────────────────────────────────────────────────────────────────
+
+    async saveConfigToCloud() {
+        if (!this.init()) return false;
+        try {
+            await this._db.collection('gymstart_data').doc('config').set({
+                routines: app.state.routines,
+                exercises: app.state.exercises,
+                updatedAt: Date.now()
+            });
+            return true;
+        } catch(e) {
+            console.error('GymStart saveConfig:', e);
+            return false;
+        }
+    },
+
+    async loadConfigFromCloud() {
+        if (!this.init()) { alert('Firebase לא מוגדר.'); return; }
+        try {
+            const doc = await this._db.collection('gymstart_data').doc('config').get();
+            if (!doc.exists) { alert('לא נמצא קונפיג בענן.'); return; }
+            const data = doc.data();
+            if (data.routines)  localStorage.setItem(CONFIG.KEYS.ROUTINES, JSON.stringify(data.routines));
+            if (data.exercises) localStorage.setItem(CONFIG.KEYS.EXERCISES, JSON.stringify(data.exercises));
+            alert('הקונפיג שוחזר מהענן!');
+            location.reload();
+        } catch(e) { alert('שגיאה בטעינה: ' + e.message); }
+    },
+
+    // ── Upload All ────────────────────────────────────────────────────────────
+
+    async uploadAllToCloud() {
+        if (!this.init()) { alert('Firebase לא מוגדר. הגדר חיבור תחילה.'); return; }
+        try {
+            const archiveOk = await this.saveArchiveToCloud();
+            const configOk  = await this.saveConfigToCloud();
+            alert(archiveOk && configOk ? 'כל הנתונים הועלו לענן!' : 'חלק מהנתונים לא הועלו. בדוק חיבור.');
+        } catch(e) { alert('שגיאה: ' + e.message); }
+    }
+};
+
+// ─── Firebase Config UI ───────────────────────────────────────────────────────
+
+function openFirebaseModal() {
+    const cfg = FirebaseManager.getConfig() || {};
+    const ta = document.getElementById('fb-config-paste');
+    if (ta) {
+        if (cfg.apiKey) {
+            ta.value = `const firebaseConfig = {\n  apiKey: "${cfg.apiKey}",\n  authDomain: "${cfg.authDomain||''}",\n  projectId: "${cfg.projectId||''}",\n  storageBucket: "${cfg.storageBucket||''}",\n  messagingSenderId: "${cfg.messagingSenderId||''}",\n  appId: "${cfg.appId||''}"\n};`;
+        } else {
+            ta.value = '';
+        }
+    }
+    const btnClear = document.getElementById('btn-clear-firebase');
+    if (btnClear) btnClear.style.display = FirebaseManager.isConfigured() ? '' : 'none';
+    updateFirebaseStatus();
+    document.getElementById('firebase-modal').style.display = 'flex';
+}
+
+function closeFirebaseModal() {
+    document.getElementById('firebase-modal').style.display = 'none';
+}
+
+function saveFirebaseConfig() {
+    const raw = (document.getElementById('fb-config-paste').value || '').trim();
+    if (!raw) { alert('יש להדביק את בלוק ה-firebaseConfig.'); return; }
+
+    let jsonStr = raw;
+    jsonStr = jsonStr.replace(/^[\s\S]*?=\s*/, '').replace(/;?\s*$/, '').trim();
+    jsonStr = jsonStr.replace(/([{,]\s*)([a-zA-Z_][a-zA-Z0-9_]*)\s*:/g, '$1"$2":');
+    jsonStr = jsonStr.replace(/:\s*'([^']*)'/g, ': "$1"');
+    jsonStr = jsonStr.replace(/,(\s*[}\]])/g, '$1');
+
+    let cfg;
+    try { cfg = JSON.parse(jsonStr); }
+    catch(e) { alert('פורמט לא תקין. ודא שהדבקת את הבלוק המלא מ-Firebase Console.'); return; }
+
+    if (!cfg.apiKey || !cfg.projectId) { alert('חסרים apiKey או projectId.'); return; }
+
+    FirebaseManager.saveConfig(cfg);
+    FirebaseManager._initialized = false;
+    FirebaseManager._db = null;
+    closeFirebaseModal();
+    updateFirebaseStatus();
+    alert('חיבור Firebase נשמר!');
+}
+
+function confirmClearFirebase() {
+    if (confirm('לנתק את Firebase ולמחוק פרטי החיבור?')) {
+        FirebaseManager.clearConfig();
+        closeFirebaseModal();
+        updateFirebaseStatus();
+    }
+}
+
+function updateFirebaseStatus() {
+    const ids = ['firebase-status', 'firebase-status-admin'];
+    ids.forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        if (FirebaseManager.isConfigured()) {
+            const cfg = FirebaseManager.getConfig();
+            el.innerHTML = `<span style="color:#00ff66;font-weight:700;">&#9679; מחובר</span> <span style="color:#666;font-size:0.85em;">${cfg.projectId}</span>`;
+        } else {
+            el.innerHTML = '<span style="color:#444;">&#9679; לא מוגדר</span>';
+        }
+    });
+}
+
+// קבלת עדכון מאמן — ענן
+function openCoachUpdateSheet() {
+    document.getElementById('coach-update-overlay').style.display = 'block';
+    document.getElementById('coach-update-sheet').style.display = 'flex';
+}
+function closeCoachUpdateSheet() {
+    document.getElementById('coach-update-overlay').style.display = 'none';
+    document.getElementById('coach-update-sheet').style.display = 'none';
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+    app.init();
+    updateFirebaseStatus();
+});
