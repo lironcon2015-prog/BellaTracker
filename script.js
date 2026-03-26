@@ -16,7 +16,7 @@ const CONFIG = {
     VERSION: '1.8.2'
 };
 
-const CURRENT_VERSION = '1.8.2-10'; // חייב להיות זהה ל-version.json
+const CURRENT_VERSION = '1.8.2-11'; // חייב להיות זהה ל-version.json
 
 const FEEL_MAP_TEXT = { 'easy': 'קל', 'good': 'בינוני', 'hard': 'קשה' };
 
@@ -396,9 +396,10 @@ const app = {
     },
 
     _calcAvgTime: function() {
-        const withTime = this.state.history.filter(h => h.totalTime > 0);
+        // duration נשמר בדקות
+        const withTime = this.state.history.filter(h => h.duration > 0);
         if (!withTime.length) return null;
-        return Math.round(withTime.reduce((s,h) => s + h.totalTime, 0) / withTime.length / 60000);
+        return Math.round(withTime.reduce((s,h) => s + h.duration, 0) / withTime.length);
     },
 
     _getWeeklyTarget: function() {
