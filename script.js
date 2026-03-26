@@ -16,7 +16,7 @@ const CONFIG = {
     VERSION: '1.8.2'
 };
 
-const CURRENT_VERSION = '1.8.1-1'; // חייב להיות זהה ל-version.json
+const CURRENT_VERSION = '1.8.2-7'; // חייב להיות זהה ל-version.json
 
 const FEEL_MAP_TEXT = { 'easy': 'קל', 'good': 'בינוני', 'hard': 'קשה' };
 
@@ -510,48 +510,59 @@ const app = {
     },
 
     populateSelects: function(exDef) {
-        const selW = document.getElementById('select-weight');
-        const selR = document.getElementById('select-reps');
         const s = exDef.settings || {unit:'kg', step:2.5, min:0, max:50};
+        const isBodyweight = s.unit === 'bodyweight';
 
-        let wOpts = [];
-        if (s.unit === 'bodyweight' || s.unit === 'time') wOpts = [0];
-        else {
-            const min = parseFloat(s.min);
-            const max = parseFloat(s.max);
-            const step = parseFloat(s.step) || 2.5;
-            for(let v = min; v <= max; v += step) {
-                let cleanV = parseFloat(v.toFixed(1));
-                if(cleanV % 1 === 0) cleanV = parseInt(cleanV);
-                wOpts.push(cleanV);
-            }
+        // הסתר כרטיס משקל עבור תרגילי משקל גוף
+        const cardWeight = document.getElementById('card-weight');
+        if (cardWeight) cardWeight.style.display = isBodyweight ? 'none' : 'flex';
+
+        // שמור הגדרות ל-steppers
+        this._stepSettings = {
+            wMin: parseFloat(s.min),
+            wMax: parseFloat(s.max),
+            wStep: parseFloat(s.step) || 2.5,
+            rMax: exDef.cat === 'core' ? 50 : 30
+        };
+
+        // כוון inputW לתחום תקין ועדכן תצוגה
+        if (!isBodyweight) {
+            let w = this.state.active.inputW;
+            if (w < this._stepSettings.wMin) w = this._stepSettings.wMin;
+            if (w > this._stepSettings.wMax) w = this._stepSettings.wMax;
+            const step = this._stepSettings.wStep;
+            w = Math.round(Math.round(w / step) * step * 100) / 100;
+            this.state.active.inputW = w;
+            const wEl = document.getElementById('stepper-weight');
+            if (wEl) wEl.innerText = w % 1 === 0 ? w : w.toFixed(1);
         }
 
-        selW.innerHTML = '';
-        wOpts.forEach(val => {
-            const opt = document.createElement('option');
-            opt.value = val; opt.text = val;
-            selW.appendChild(opt);
-        });
-        if(wOpts.includes(this.state.active.inputW)) selW.value = this.state.active.inputW;
-        else {
-            const closest = wOpts.reduce((prev, curr) => (Math.abs(curr - this.state.active.inputW) < Math.abs(prev - this.state.active.inputW) ? curr : prev));
-            selW.value = closest;
-            this.state.active.inputW = closest;
-        }
-        selW.onchange = (e) => this.state.active.inputW = Number(e.target.value);
+        const rEl = document.getElementById('stepper-reps');
+        if (rEl) rEl.innerText = this.state.active.inputR;
+    },
 
-        let rOpts = [];
-        const maxReps = exDef.cat === 'core' ? 50 : 30;
-        for(let i=1; i<=maxReps; i++) rOpts.push(i);
-        selR.innerHTML = '';
-        rOpts.forEach(val => {
-            const opt = document.createElement('option');
-            opt.value = val; opt.text = val;
-            selR.appendChild(opt);
-        });
-        selR.value = this.state.active.inputR;
-        selR.onchange = (e) => this.state.active.inputR = Number(e.target.value);
+    stepWeight: function(dir) {
+        const s = this._stepSettings;
+        if (!s) return;
+        let newW = Math.round((this.state.active.inputW + dir * s.wStep) * 100) / 100;
+        if (newW < s.wMin) newW = s.wMin;
+        if (newW > s.wMax) newW = s.wMax;
+        this.state.active.inputW = newW;
+        const el = document.getElementById('stepper-weight');
+        if (el) el.innerText = newW % 1 === 0 ? newW : newW.toFixed(1);
+        if (navigator.vibrate) navigator.vibrate(8);
+    },
+
+    stepReps: function(dir) {
+        const s = this._stepSettings;
+        if (!s) return;
+        let newR = this.state.active.inputR + dir;
+        if (newR < 1) newR = 1;
+        if (newR > (s.rMax || 30)) newR = s.rMax || 30;
+        this.state.active.inputR = newR;
+        const el = document.getElementById('stepper-reps');
+        if (el) el.innerText = newR;
+        if (navigator.vibrate) navigator.vibrate(8);
     },
 
     toggleStopwatch: function() {

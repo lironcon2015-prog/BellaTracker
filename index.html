@@ -394,13 +394,21 @@
                 </div>
                 <div class="workspace">
                     <div id="cards-container" class="inputs-row">
-                        <div class="input-card">
+                        <div class="input-card" id="card-weight">
                             <span class="input-label">משקל (<span id="unit-label-card">ק״ג</span>)</span>
-                            <select id="select-weight" class="native-select"></select>
+                            <div class="stepper-row">
+                                <button class="stepper-btn" onclick="app.stepWeight(-1)">−</button>
+                                <span class="stepper-val" id="stepper-weight">10</span>
+                                <button class="stepper-btn" onclick="app.stepWeight(1)">+</button>
+                            </div>
                         </div>
                         <div class="input-card">
                             <span class="input-label">חזרות</span>
-                            <select id="select-reps" class="native-select"></select>
+                            <div class="stepper-row">
+                                <button class="stepper-btn" onclick="app.stepReps(-1)">−</button>
+                                <span class="stepper-val" id="stepper-reps">12</span>
+                                <button class="stepper-btn" onclick="app.stepReps(1)">+</button>
+                            </div>
                         </div>
                     </div>
                     <div id="stopwatch-container" class="stopwatch-box" style="display: none;">
