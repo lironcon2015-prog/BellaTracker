@@ -132,7 +132,14 @@ background:
    NEW: Dashboard components
 ────────────────────────────────────────── */
 
-/* Stats row */
+/* Stats grid */
+.dash-stats-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+  margin-bottom:14px;
+}
+
 .dash-stats-row{
   display:flex;align-items:stretch;gap:0;
   background:var(--card);
@@ -140,16 +147,28 @@ background:
   border-radius:var(--r);
   backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);
   position:relative;overflow:hidden;
-  margin-bottom:14px;
 }
 .dash-stats-row::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;
   background:linear-gradient(90deg,transparent,rgba(255,255,255,.22),transparent);pointer-events:none;}
 
 .dash-stat{
   flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
-  padding:16px 10px;gap:4px;
+  padding:14px 10px;gap:4px;
 }
 .dash-stat+.dash-stat{border-right:1px solid rgba(255,255,255,.08);}
+
+/* Single stat card (standalone) */
+.dash-stat-card{
+  background:var(--card);
+  border:1px solid var(--border);border-top-color:var(--border-t);
+  border-radius:var(--r);
+  backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);
+  position:relative;overflow:hidden;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:14px 10px;gap:4px;
+}
+.dash-stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.22),transparent);pointer-events:none;}
 
 .dash-stat-val{
   font-size:1.85rem;font-weight:700;line-height:1;
@@ -399,9 +418,11 @@ background:
         </div>
       </div>
 
-      <!-- ★ NEW: Stats row -->
-      <div class="annotation" style="margin-bottom:14px;">
-        <div class="dash-stats-row" id="stats-row">
+      <!-- ★ NEW: Stats grid -->
+      <div class="dash-stats-grid">
+
+        <!-- שורה 1: אימונים + עקביות -->
+        <div class="dash-stats-row" style="grid-column:1 / -1;">
           <div class="dash-stat">
             <div class="dash-stat-val" id="weekly-val">2</div>
             <div class="dash-stat-label">אימונים השבוע</div>
@@ -416,6 +437,29 @@ background:
             <div class="dash-stat-sub">▲ שבועות ברצף</div>
           </div>
         </div>
+
+        <!-- שורה 2: ימים מאז + סה"כ אימונים -->
+        <div class="dash-stat-card">
+          <div class="dash-stat-val" style="font-size:1.5rem;">2</div>
+          <div class="dash-stat-label">ימים מאז אימון</div>
+          <div class="dash-stat-sub">אחרון: רגליים A</div>
+        </div>
+
+        <div class="dash-stat-card">
+          <div class="dash-stat-val" style="font-size:1.5rem;">47</div>
+          <div class="dash-stat-label">סה"כ אימונים</div>
+          <div class="dash-stat-sub">מתחילת הדרך</div>
+        </div>
+
+        <!-- שורה 3: ממוצע זמן (full width) -->
+        <div class="dash-stat-card" style="grid-column:1 / -1;flex-direction:row;justify-content:space-between;padding:14px 20px;">
+          <div>
+            <div class="dash-stat-label" style="text-align:right;">ממוצע זמן אימון</div>
+            <div class="dash-stat-sub" style="text-align:right;">מבוסס על 47 אימונים</div>
+          </div>
+          <div class="dash-stat-val" style="font-size:1.7rem;">52<span style="font-size:.85rem;font-weight:500;color:var(--muted);margin-right:3px;">דק׳</span></div>
+        </div>
+
       </div>
 
       <!-- existing: last workout card -->
@@ -447,7 +491,11 @@ background:
       <div class="nav-side"></div>
       <div class="logo">GYM<span>START</span></div>
       <div class="nav-side">
-        <button class="icon-btn" style="font-size:.85rem;color:rgba(255,255,255,.35);">סגור ×</button>
+        <button class="icon-btn" onclick="showScreen('home')" style="color:rgba(255,255,255,.4);">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
       </div>
     </div>
 
