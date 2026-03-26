@@ -240,6 +240,19 @@ body::before {
 }
 .dash-progress-fill.full { background: linear-gradient(90deg, var(--success), rgba(0,200,100,0.7)); }
 
+/* ── מסך בית ללא גלילה ── */
+#screen-home .scroll-content {
+    overflow: hidden;
+    padding-top: 4px;
+    padding-bottom: 4px;
+}
+#screen-home .hero { margin-top: 4px; margin-bottom: 10px; }
+#screen-home .dash-streak-badge { margin-bottom: 8px; }
+#screen-home .dash-stats-wrap { gap: 6px; margin-bottom: 8px; }
+#screen-home .dash-stat { padding: 10px 8px; }
+#screen-home .info-card { margin-bottom: 6px; }
+#screen-home .version-tag { margin-top: 8px; }
+
 /* ── Admin screen — polished ── */
 .admin-section-label {
     font-size: 0.68rem; font-weight: 700; color: rgba(255,255,255,0.25);
