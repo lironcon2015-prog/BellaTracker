@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>GymStart — הדמיה</title>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+    --bg:      #000000;
+    --card:    rgba(255,255,255,0.08);
+    --border:  rgba(255,255,255,0.13);
+    --border-t:rgba(255,255,255,0.22);
+    --accent:  #00ffee;
+    --accent-d:rgba(0,255,238,0.12);
+    --accent-g:rgba(0,255,238,0.30);
+    --text:    #ffffff;
+    --muted:   rgba(255,255,255,0.50);
+    --danger:  #ff3333;
+    --success: #00ff66;
+    --blur:    blur(24px) saturate(200%);
+    --r:       16px;
+    --font:    'Rubik', sans-serif;
+}
+
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;outline:none;user-select:none;margin:0;padding:0}
+body,html{font-family:var(--font);background:var(--bg);color:var(--text);height:100%;overflow:hidden;direction:rtl;font-size:16px}
+
+/* ambient */
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+background:
+  radial-gradient(ellipse at 25% 10%,rgba(0,255,238,.15) 0%,transparent 50%),
+  radial-gradient(ellipse at 80% 90%,rgba(0,100,120,.13) 0%,transparent 45%),
+  radial-gradient(ellipse at 60% 40%,rgba(0,180,160,.06) 0%,transparent 40%)}
+
+/* ── Preview shell ── */
+.preview-shell{
+  position:relative;z-index:1;
+  display:flex;flex-direction:column;
+  height:100vh;max-width:420px;margin:0 auto;
+  overflow:hidden;
+}
+
+/* ── Screen switcher (only in preview) ── */
+.switcher{
+  display:flex;gap:0;flex-shrink:0;
+  background:rgba(255,255,255,0.04);
+  border-bottom:1px solid rgba(255,255,255,0.08);
+}
+.sw-btn{
+  flex:1;padding:10px 6px;font-family:var(--font);font-size:.82rem;font-weight:600;
+  background:none;border:none;color:var(--muted);cursor:pointer;
+  border-bottom:2px solid transparent;transition:.15s;
+}
+.sw-btn.active{color:var(--accent);border-bottom-color:var(--accent);}
+
+/* ── Navbar ── */
+.navbar{
+  display:flex;justify-content:space-between;align-items:center;
+  min-height:52px;padding:0 20px;flex-shrink:0;
+  background:rgba(0,0,0,.35);
+  backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);
+  border-bottom:1px solid rgba(255,255,255,.08);
+}
+.nav-side{width:40px;display:flex;align-items:center;justify-content:center;}
+.logo{font-weight:700;font-size:1.4rem;letter-spacing:-1px;flex:1;text-align:center;}
+.logo span{color:var(--accent);filter:drop-shadow(0 0 8px rgba(0,255,238,.6));}
+.icon-btn{background:none;border:none;color:rgba(255,255,255,.4);cursor:pointer;padding:6px;display:flex;}
+
+/* ── Screens ── */
+.screen{display:none;flex-direction:column;flex:1;overflow:hidden;animation:fadeIn .2s ease;}
+.screen.active{display:flex;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.scroll-content{flex:1;overflow-y:auto;padding:10px 20px 140px;-webkit-overflow-scrolling:touch;}
+
+/* ── Fixed footer ── */
+.fixed-footer{
+  flex-shrink:0;position:absolute;bottom:0;left:0;right:0;
+  background:linear-gradient(to top,rgba(0,0,0,.97) 65%,transparent);
+  padding:10px 20px 28px;
+  display:flex;flex-direction:column;gap:8px;z-index:10;
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+}
+
+/* ── Glass card ── */
+.card{
+  background:var(--card);
+  border:1px solid var(--border);border-top-color:var(--border-t);
+  border-radius:var(--r);padding:18px;
+  backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);
+  position:relative;overflow:hidden;
+}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.22),transparent);pointer-events:none;}
+
+/* ── Buttons ── */
+.btn-primary{
+  background:linear-gradient(180deg,#00ffee 0%,#00c8be 100%);
+  color:#000;border:none;border-radius:14px;
+  padding:16px;font-weight:700;font-size:1.05rem;
+  width:100%;cursor:pointer;font-family:var(--font);
+  box-shadow:0 0 24px rgba(0,255,238,.35),0 4px 16px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.45);
+  position:relative;overflow:hidden;
+}
+.btn-primary::after{content:'';position:absolute;top:0;left:0;right:0;height:50%;
+  background:linear-gradient(180deg,rgba(255,255,255,.22) 0%,transparent 100%);
+  border-radius:14px 14px 0 0;pointer-events:none;}
+.btn-primary:active{transform:scale(.98);}
+.btn-outline{
+  background:rgba(255,255,255,.06);border:1px solid var(--border);border-top-color:var(--border-t);
+  color:var(--text);border-radius:14px;padding:14px;font-weight:600;font-size:.95rem;
+  width:100%;cursor:pointer;font-family:var(--font);
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+}
+.btn-ghost{
+  background:transparent;border:1px solid rgba(255,255,255,.08);color:rgba(255,255,255,.35);
+  border-radius:14px;padding:13px;font-size:.88rem;width:100%;cursor:pointer;font-family:var(--font);
+}
+
+/* ── Hero ── */
+.hero{text-align:center;margin:20px 0 22px;}
+.hero h1{font-size:2rem;font-weight:700;letter-spacing:-.5px;}
+.hero p{color:var(--muted);margin-top:5px;font-size:1rem;}
+
+/* ── Info card ── */
+.info-card{display:flex;align-items:center;gap:15px;}
+.icon-box{color:var(--accent);font-size:1.4rem;filter:drop-shadow(0 0 8px rgba(0,255,238,.5));flex-shrink:0;}
+.lbl{font-size:.88rem;color:var(--muted);}
+.val{font-size:1.1rem;font-weight:700;margin-top:2px;}
+
+/* ──────────────────────────────────────────
+   NEW: Dashboard components
+────────────────────────────────────────── */
+
+/* Stats row */
+.dash-stats-row{
+  display:flex;align-items:stretch;gap:0;
+  background:var(--card);
+  border:1px solid var(--border);border-top-color:var(--border-t);
+  border-radius:var(--r);
+  backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);
+  position:relative;overflow:hidden;
+  margin-bottom:14px;
+}
+.dash-stats-row::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.22),transparent);pointer-events:none;}
+
+.dash-stat{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:16px 10px;gap:4px;
+}
+.dash-stat+.dash-stat{border-right:1px solid rgba(255,255,255,.08);}
+
+.dash-stat-val{
+  font-size:1.85rem;font-weight:700;line-height:1;
+  color:var(--accent);
+  filter:drop-shadow(0 0 8px rgba(0,255,238,.45));
+}
+.dash-stat-val.full{color:var(--success);filter:drop-shadow(0 0 8px rgba(0,255,102,.45));}
+.dash-stat-label{font-size:.75rem;color:var(--muted);text-align:center;font-weight:500;}
+.dash-stat-sub{
+  font-size:.78rem;font-weight:600;
+  color:rgba(255,255,255,.28);
+  text-align:center;
+}
+
+/* Progress bar inside stat */
+.dash-progress-wrap{
+  width:100%;height:3px;background:rgba(255,255,255,.08);border-radius:2px;margin-top:4px;overflow:hidden;
+}
+.dash-progress-fill{
+  height:100%;border-radius:2px;
+  background:linear-gradient(90deg,var(--accent),rgba(0,200,180,.7));
+  transition:width .4s ease;
+}
+.dash-progress-fill.full{background:linear-gradient(90deg,var(--success),rgba(0,200,100,.7));}
+
+/* Streak badge */
+.streak-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  background:rgba(255,150,0,.10);
+  border:1px solid rgba(255,150,0,.25);
+  border-radius:20px;padding:6px 14px;
+  font-size:.88rem;font-weight:600;color:rgba(255,180,0,.9);
+  margin-bottom:16px;align-self:center;
+  animation:fadeIn .3s ease;
+}
+.streak-num{font-size:1.05rem;font-weight:800;}
+
+/* ──────────────────────────────────────────
+   Admin screen
+────────────────────────────────────────── */
+.admin-wrap{
+  flex:1;display:flex;flex-direction:column;overflow:hidden;
+  padding:0 16px 24px;
+}
+.admin-scroll{flex:1;overflow-y:auto;padding-bottom:20px;}
+
+/* Section label */
+.section-label{
+  font-size:.7rem;font-weight:700;color:rgba(255,255,255,.25);
+  text-transform:uppercase;letter-spacing:1.5px;
+  margin:20px 0 8px;
+}
+
+/* Program item */
+.prog-item{
+  background:var(--card);
+  border:1px solid var(--border);border-top-color:var(--border-t);
+  border-radius:14px;padding:14px 16px;
+  display:flex;justify-content:space-between;align-items:center;
+  margin-bottom:8px;
+  backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);
+  position:relative;overflow:hidden;cursor:pointer;
+}
+.prog-item::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.18),transparent);pointer-events:none;}
+.prog-item:active{background:rgba(255,255,255,.11);}
+.prog-item-info h3{font-size:1rem;font-weight:700;margin-bottom:3px;}
+.prog-item-info p{font-size:.82rem;color:var(--muted);}
+.prog-item-actions{display:flex;gap:8px;}
+.act-btn{
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.10);
+  border-radius:8px;color:rgba(255,255,255,.45);padding:6px 12px;
+  font-size:.78rem;cursor:pointer;font-family:var(--font);
+}
+.act-btn.del{color:rgba(255,80,80,.75);border-color:rgba(255,51,51,.2);}
+
+/* NEW: Admin action card — for big single actions */
+.admin-action-card{
+  background:rgba(0,255,238,.05);
+  border:1px solid rgba(0,255,238,.18);border-top-color:rgba(0,255,238,.28);
+  border-radius:14px;padding:14px 16px;
+  display:flex;align-items:center;gap:14px;cursor:pointer;
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  transition:.15s;margin-bottom:8px;
+}
+.admin-action-card:active{background:rgba(0,255,238,.10);}
+.admin-action-icon{
+  width:40px;height:40px;border-radius:12px;flex-shrink:0;
+  background:rgba(0,255,238,.10);border:1px solid rgba(0,255,238,.25);
+  display:flex;align-items:center;justify-content:center;font-size:1.1rem;
+}
+.admin-action-text{flex:1;}
+.admin-action-title{font-size:.95rem;font-weight:600;color:var(--accent);}
+.admin-action-sub{font-size:.78rem;color:var(--muted);margin-top:2px;}
+.admin-action-arrow{color:rgba(255,255,255,.2);font-size:1rem;}
+
+/* NEW: Settings card */
+.settings-card{
+  background:var(--card);
+  border:1px solid var(--border);border-top-color:var(--border-t);
+  border-radius:14px;padding:4px 16px;
+  backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);
+  position:relative;overflow:hidden;
+  margin-bottom:8px;
+}
+.settings-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.22),transparent);pointer-events:none;}
+
+.setting-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:13px 0;
+}
+.setting-row+.setting-row{border-top:1px solid rgba(255,255,255,.06);}
+.setting-label{font-size:.95rem;font-weight:500;}
+.setting-sub{font-size:.78rem;color:var(--muted);margin-top:2px;}
+
+/* NEW: Stepper */
+.stepper{
+  display:flex;align-items:center;
+  background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.10);
+  border-radius:10px;overflow:hidden;
+}
+.stepper-btn{
+  width:36px;height:36px;background:none;border:none;color:rgba(255,255,255,.55);
+  font-size:1.2rem;cursor:pointer;font-family:var(--font);
+  display:flex;align-items:center;justify-content:center;
+  transition:.1s;
+}
+.stepper-btn:active{background:rgba(255,255,255,.08);color:var(--accent);}
+.stepper-val{
+  width:32px;text-align:center;font-size:1rem;font-weight:700;color:var(--text);
+}
+
+/* NEW: Data & Cloud section */
+.data-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:8px;
+  margin-bottom:8px;
+}
+.data-btn{
+  background:var(--card);border:1px solid var(--border);border-top-color:var(--border-t);
+  border-radius:12px;padding:12px 10px;cursor:pointer;font-family:var(--font);
+  display:flex;flex-direction:column;align-items:center;gap:5px;
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  transition:.15s;position:relative;overflow:hidden;
+}
+.data-btn::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.18),transparent);pointer-events:none;}
+.data-btn:active{background:rgba(255,255,255,.11);}
+.data-btn-icon{font-size:1.1rem;}
+.data-btn-label{font-size:.78rem;font-weight:600;color:var(--muted);}
+.data-btn.up .data-btn-label{color:var(--accent);}
+.data-btn.down .data-btn-label{color:var(--success);}
+.data-btn.danger .data-btn-label{color:var(--danger);}
+
+/* Firebase status pill */
+.firebase-pill{
+  display:flex;align-items:center;gap:8px;
+  background:rgba(0,255,102,.06);border:1px solid rgba(0,255,102,.2);
+  border-radius:10px;padding:10px 14px;margin-bottom:8px;
+}
+.fb-dot{width:8px;height:8px;border-radius:50%;background:var(--success);
+  box-shadow:0 0 6px rgba(0,255,102,.6);flex-shrink:0;}
+.fb-text{font-size:.82rem;color:rgba(255,255,255,.6);}
+.fb-text strong{color:var(--success);font-weight:600;}
+
+/* Danger zone */
+.danger-btn{
+  background:rgba(255,51,51,.05);border:1px solid rgba(255,51,51,.2);
+  border-radius:12px;padding:12px 16px;width:100%;cursor:pointer;
+  font-family:var(--font);font-size:.88rem;color:var(--danger);font-weight:600;
+  text-align:center;
+}
+.danger-btn:active{background:rgba(255,51,51,.10);}
+
+/* bottom add button */
+.btn-add{
+  background:rgba(0,255,238,.04);border:1px dashed rgba(0,255,238,.35);color:var(--accent);
+  border-radius:14px;padding:13px;width:100%;cursor:pointer;font-family:var(--font);
+  font-size:.95rem;margin-top:2px;
+}
+
+/* ── Admin footer bar ── */
+.admin-footer{
+  flex-shrink:0;padding:12px 16px;
+  border-top:1px solid rgba(255,255,255,.07);
+  background:rgba(0,0,0,.6);backdrop-filter:blur(20px);
+}
+
+/* ── Label chips ── */
+.new-chip{
+  display:inline-block;background:rgba(0,255,238,.15);border:1px solid rgba(0,255,238,.3);
+  color:var(--accent);font-size:.65rem;font-weight:700;padding:2px 7px;border-radius:20px;
+  letter-spacing:.5px;vertical-align:middle;margin-right:6px;
+}
+
+/* ── Annotation layer ── */
+.annotation{
+  position:relative;
+}
+.annotation-tag{
+  position:absolute;right:-4px;top:50%;transform:translateY(-50%);
+  background:#ff9500;color:#000;font-size:.6rem;font-weight:800;
+  padding:2px 6px;border-radius:6px;white-space:nowrap;z-index:20;
+  pointer-events:none;
+}
+
+/* version */
+.version-tag{text-align:center;color:rgba(255,255,255,.1);font-size:.72rem;margin-top:18px;}
+</style>
+</head>
+<body>
+<div class="preview-shell">
+
+  <!-- Screen switcher -->
+  <div class="switcher">
+    <button class="sw-btn active" onclick="showScreen('home')">🏠 מסך בית</button>
+    <button class="sw-btn" onclick="showScreen('admin')">⚙️ ניהול</button>
+  </div>
+
+  <!-- ═══════════════════════════════════
+       SCREEN 1 — HOME (Dashboard)
+  ═══════════════════════════════════ -->
+  <div id="s-home" class="screen active">
+
+    <div class="navbar">
+      <div class="nav-side">
+        <button class="icon-btn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 5 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </button>
+      </div>
+      <div class="logo">GYM<span>START</span></div>
+      <div class="nav-side"></div>
+    </div>
+
+    <div class="scroll-content">
+
+      <div class="hero">
+        <h1>ברוכה הבאה</h1>
+        <p>מוכנה לאימון?</p>
+      </div>
+
+      <!-- ★ NEW: Streak badge -->
+      <div style="display:flex;justify-content:center;margin-bottom:18px;" id="streak-area">
+        <div class="streak-badge" id="streak-badge">
+          🔥 סטריק <span class="streak-num" id="streak-num">5</span> ימים
+        </div>
+      </div>
+
+      <!-- ★ NEW: Stats row -->
+      <div class="annotation" style="margin-bottom:14px;">
+        <div class="dash-stats-row" id="stats-row">
+          <div class="dash-stat">
+            <div class="dash-stat-val" id="weekly-val">2</div>
+            <div class="dash-stat-label">אימונים השבוע</div>
+            <div class="dash-stat-sub" id="weekly-sub">מתוך 3</div>
+            <div class="dash-progress-wrap">
+              <div class="dash-progress-fill" id="weekly-bar" style="width:66%"></div>
+            </div>
+          </div>
+          <div class="dash-stat">
+            <div class="dash-stat-val" id="streak-stat">5</div>
+            <div class="dash-stat-label">סטריק</div>
+            <div class="dash-stat-sub">ימים ברצף 🔥</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- existing: last workout card -->
+      <div class="card info-card" style="margin-bottom:14px;">
+        <div class="icon-box">📅</div>
+        <div>
+          <div class="lbl">אימון אחרון</div>
+          <div class="val">25/03/2026 (רגליים וגב A)</div>
+        </div>
+      </div>
+
+      <div class="version-tag">GymStart V1.8.2</div>
+    </div>
+
+    <div class="fixed-footer">
+      <button class="btn-primary" onclick="animBtn(this)">התחילי אימון</button>
+      <button class="btn-outline">היסטוריה</button>
+      <button class="btn-ghost">קבלת עדכון מאמן ☁️</button>
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════════
+       SCREEN 2 — ADMIN (Polished)
+  ═══════════════════════════════════ -->
+  <div id="s-admin" class="screen">
+
+    <div class="navbar">
+      <div class="nav-side"></div>
+      <div class="logo">GYM<span>START</span></div>
+      <div class="nav-side">
+        <button class="icon-btn" style="font-size:.85rem;color:rgba(255,255,255,.35);">סגור ×</button>
+      </div>
+    </div>
+
+    <div class="admin-wrap">
+      <div class="admin-scroll">
+
+        <!-- Manage exercises button — action card -->
+        <div class="section-label">כלים</div>
+        <div class="admin-action-card" onclick="animCard(this)">
+          <div class="admin-action-icon">📚</div>
+          <div class="admin-action-text">
+            <div class="admin-action-title">ניהול מאגר תרגילים</div>
+            <div class="admin-action-sub">28 תרגילים · ערוך, הוסף, מחק</div>
+          </div>
+          <div class="admin-action-arrow">›</div>
+        </div>
+
+        <!-- Settings -->
+        <div class="section-label">הגדרות <span class="new-chip">חדש</span></div>
+        <div class="settings-card">
+          <div class="setting-row">
+            <div>
+              <div class="setting-label">יעד אימונים שבועי</div>
+              <div class="setting-sub">שבוע ישראלי — ראשון עד שבת</div>
+            </div>
+            <div class="stepper">
+              <button class="stepper-btn" onclick="changeTarget(-1)">−</button>
+              <span class="stepper-val" id="target-val">3</span>
+              <button class="stepper-btn" onclick="changeTarget(1)">+</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Programs list -->
+        <div class="section-label">תוכניות אימון</div>
+
+        <div class="prog-item" onclick="animCard(this)">
+          <div class="prog-item-info">
+            <h3>רגליים וגב (A)</h3>
+            <p>6 תרגילים · 3 סטים</p>
+          </div>
+          <div class="prog-item-actions">
+            <button class="act-btn" onclick="event.stopPropagation()">שכפל</button>
+            <button class="act-btn del" onclick="event.stopPropagation()">מחק</button>
+          </div>
+        </div>
+
+        <div class="prog-item" onclick="animCard(this)">
+          <div class="prog-item-info">
+            <h3>חזה וכתפיים (B)</h3>
+            <p>5 תרגילים · 3 סטים</p>
+          </div>
+          <div class="prog-item-actions">
+            <button class="act-btn" onclick="event.stopPropagation()">שכפל</button>
+            <button class="act-btn del" onclick="event.stopPropagation()">מחק</button>
+          </div>
+        </div>
+
+        <button class="btn-add">+ צור תוכנית חדשה</button>
+
+        <!-- Data Management -->
+        <div class="section-label">ניהול נתונים</div>
+        <div class="data-grid">
+          <button class="data-btn up" onclick="animBtn(this)">
+            <span class="data-btn-icon">⬆️</span>
+            <span class="data-btn-label">גבה היסטוריה</span>
+          </button>
+          <button class="data-btn down" onclick="animBtn(this)">
+            <span class="data-btn-icon">⬇️</span>
+            <span class="data-btn-label">שחזר היסטוריה</span>
+          </button>
+          <button class="data-btn up" onclick="animBtn(this)">
+            <span class="data-btn-icon">⬆️</span>
+            <span class="data-btn-label">גבה קונפיג</span>
+          </button>
+          <button class="data-btn down" onclick="animBtn(this)">
+            <span class="data-btn-icon">⬇️</span>
+            <span class="data-btn-label">שחזר קונפיג</span>
+          </button>
+        </div>
+
+        <!-- Cloud / Firebase -->
+        <div class="section-label">סנכרון ענן</div>
+        <div class="firebase-pill">
+          <div class="fb-dot"></div>
+          <div class="fb-text">מחובר: <strong>gymstart-bella</strong></div>
+        </div>
+        <div class="data-grid" style="margin-bottom:8px;">
+          <button class="data-btn up" onclick="animBtn(this)" style="grid-column:1/2">
+            <span class="data-btn-icon">☁️</span>
+            <span class="data-btn-label" style="color:var(--accent);">העלה הכל</span>
+          </button>
+          <button class="data-btn" onclick="animBtn(this)">
+            <span class="data-btn-icon">⚙️</span>
+            <span class="data-btn-label">הגדר Firebase</span>
+          </button>
+        </div>
+
+        <!-- Danger -->
+        <div class="section-label" style="color:rgba(255,80,80,.4);">אזור מסוכן</div>
+        <button class="danger-btn">⚠️ איפוס מלא</button>
+
+        <div style="height:20px;"></div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+/* ── Screen switcher ── */
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.sw-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('s-' + id).classList.add('active');
+  event.target.classList.add('active');
+}
+
+/* ── Weekly target stepper ── */
+let target = 3;
+function changeTarget(delta) {
+  target = Math.max(1, Math.min(7, target + delta));
+  document.getElementById('target-val').textContent = target;
+  // also update home screen
+  updateHomeStats();
+}
+
+/* ── Home screen demo data ── */
+let weeklyCount = 2;
+let streak = 5;
+
+function updateHomeStats() {
+  const pct = Math.min(100, Math.round(weeklyCount / target * 100));
+  const isFull = weeklyCount >= target;
+
+  // weekly val
+  const wv = document.getElementById('weekly-val');
+  wv.textContent = weeklyCount;
+  wv.className = 'dash-stat-val' + (isFull ? ' full' : '');
+
+  document.getElementById('weekly-sub').textContent = 'מתוך ' + target;
+
+  // progress bar
+  const bar = document.getElementById('weekly-bar');
+  bar.style.width = pct + '%';
+  bar.className = 'dash-progress-fill' + (isFull ? ' full' : '');
+
+  // streak stat
+  document.getElementById('streak-stat').textContent = streak;
+  document.getElementById('streak-num').textContent = streak;
+
+  // hide streak if 0
+  document.getElementById('streak-area').style.display = streak > 0 ? 'flex' : 'none';
+}
+
+/* ── Simulate clicking "+אימון" to show full week ── */
+let demoState = 0;
+document.addEventListener('click', function(e) {
+  if (e.target.closest('.btn-primary') && document.getElementById('s-home').classList.contains('active')) {
+    demoState = (demoState + 1) % 4;
+    const states = [
+      { count: 0, streak: 0 },
+      { count: 1, streak: 1 },
+      { count: 2, streak: 5 },
+      { count: 3, streak: 8 }
+    ];
+    weeklyCount = states[demoState].count;
+    streak = states[demoState].streak;
+    updateHomeStats();
+  }
+});
+
+/* ── Button animation ── */
+function animBtn(el) {
+  el.style.transform = 'scale(0.95)';
+  el.style.opacity = '0.8';
+  setTimeout(() => { el.style.transform = ''; el.style.opacity = ''; }, 180);
+}
+function animCard(el) {
+  el.style.background = 'rgba(255,255,255,0.13)';
+  setTimeout(() => { el.style.background = ''; }, 200);
+}
+
+updateHomeStats();
+</script>
+</body>
+</html>
