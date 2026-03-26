@@ -97,44 +97,43 @@
                     </button>
                 </div>
 
-                <!-- כלים -->
-                <div class="admin-section-label">כלים</div>
-                <div class="admin-action-card" onclick="app.openExerciseManager()">
-                    <div class="admin-action-icon">📚</div>
-                    <div class="admin-action-text">
-                        <div class="admin-action-title">ניהול מאגר תרגילים</div>
-                        <div class="admin-action-sub">ערוך, הוסף ומחק תרגילים</div>
+                <!-- כל התוכן בגלילה אחת -->
+                <div class="admin-home-scroll">
+
+                    <!-- כלים -->
+                    <div class="admin-section-label">כלים</div>
+                    <div class="admin-action-card" onclick="app.openExerciseManager()">
+                        <div class="admin-action-icon">📚</div>
+                        <div class="admin-action-text">
+                            <div class="admin-action-title">ניהול מאגר תרגילים</div>
+                            <div class="admin-action-sub">ערוך, הוסף ומחק תרגילים</div>
+                        </div>
+                        <div class="admin-action-arrow">›</div>
                     </div>
-                    <div class="admin-action-arrow">›</div>
-                </div>
 
-                <!-- תוכניות -->
-                <div class="admin-section-label">תוכניות אימון</div>
-                <div id="admin-prog-list" class="vertical-stack scroll-y"></div>
-
-                <div class="modal-footer-column">
-                    <button class="btn-primary" onclick="app.createNewProgram()">+ צור תוכנית חדשה</button>
+                    <!-- תוכניות -->
+                    <div class="admin-section-label" style="margin-top:18px;">תוכניות אימון</div>
+                    <div id="admin-prog-list" class="vertical-stack"></div>
+                    <button class="btn-dashed" onclick="app.createNewProgram()" style="margin-top:8px;">+ צור תוכנית חדשה</button>
 
                     <!-- הגדרות -->
-                    <div class="admin-setting-section">
-                        <div class="admin-section-label" style="margin-top:14px;">הגדרות</div>
-                        <div class="admin-settings-card">
-                            <div class="admin-setting-row">
-                                <div>
-                                    <div class="admin-setting-label">יעד אימונים שבועי</div>
-                                    <div class="admin-setting-sub">שבוע ישראלי — ראשון עד שבת</div>
-                                </div>
-                                <div class="stepper">
-                                    <button class="step-btn" onclick="app.adjustWeeklyTarget(-1)">−</button>
-                                    <span class="step-val" id="admin-weekly-target">3</span>
-                                    <button class="step-btn" onclick="app.adjustWeeklyTarget(1)">+</button>
-                                </div>
+                    <div class="admin-section-label" style="margin-top:18px;">הגדרות</div>
+                    <div class="admin-settings-card">
+                        <div class="admin-setting-row">
+                            <div>
+                                <div class="admin-setting-label">יעד אימונים שבועי</div>
+                                <div class="admin-setting-sub">שבוע ישראלי — ראשון עד שבת</div>
+                            </div>
+                            <div class="stepper">
+                                <button class="step-btn" onclick="app.adjustWeeklyTarget(-1)">−</button>
+                                <span class="step-val" id="admin-weekly-target">3</span>
+                                <button class="step-btn" onclick="app.adjustWeeklyTarget(1)">+</button>
                             </div>
                         </div>
                     </div>
 
                     <!-- ניהול נתונים -->
-                    <div class="admin-section-label" style="margin-top:14px;">ניהול נתונים</div>
+                    <div class="admin-section-label" style="margin-top:18px;">ניהול נתונים</div>
                     <div class="admin-data-grid">
                         <button class="admin-data-btn" onclick="app.exportConfig()">
                             <span class="admin-data-icon">📤</span>
@@ -147,9 +146,9 @@
                     </div>
 
                     <!-- סנכרון ענן -->
-                    <div class="admin-section-label" style="margin-top:14px;">סנכרון ענן</div>
+                    <div class="admin-section-label" style="margin-top:18px;">סנכרון ענן</div>
                     <div id="firebase-status-admin" style="font-size:0.8em;margin-bottom:8px;"></div>
-                    <div class="admin-data-grid" style="grid-template-columns:1fr 1fr 1fr;">
+                    <div class="admin-data-grid" style="grid-template-columns:1fr 1fr;">
                         <button class="admin-data-btn admin-data-up" onclick="FirebaseManager.saveArchiveToCloud().then(ok=>alert(ok?'היסטוריה גובתה!':'שגיאה'))">
                             <span class="admin-data-icon">⬆</span>
                             <span class="admin-data-label">גבה היסטוריה</span>
@@ -172,6 +171,8 @@
                         </button>
                     </div>
                     <button class="admin-firebase-btn" onclick="openFirebaseModal()">⚙ הגדרת חיבור Firebase</button>
+                    <div style="height:16px;"></div>
+
                 </div>
             </div>
 

@@ -308,6 +308,7 @@ body::before {
     border-radius: 12px; padding: 11px; color: rgba(255,255,255,0.45);
     font-size: 0.85rem; cursor: pointer; font-family: var(--font); margin-top: 4px;
 }
+.admin-home-scroll { flex: 1; overflow-y: auto; min-height: 0; }
 
 .page-title { font-size: 1.8rem; margin-bottom: 20px; font-weight: 700; }
 .card-grid { display: grid; gap: 12px; }
