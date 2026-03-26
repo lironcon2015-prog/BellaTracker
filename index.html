@@ -100,6 +100,20 @@
                 <div id="admin-prog-list" class="vertical-stack scroll-y" style="margin-top:15px;"></div>
                 <div class="modal-footer-column">
                     <button class="btn-primary" onclick="app.createNewProgram()">+ צור תוכנית חדשה</button>
+                    <div class="admin-setting-section">
+                        <div class="cloud-section-title">הגדרות</div>
+                        <div class="admin-setting-row">
+                            <div>
+                                <div class="admin-setting-label">יעד אימונים שבועי</div>
+                                <div class="admin-setting-sub">שבוע ישראלי — ראשון עד שבת</div>
+                            </div>
+                            <div class="stepper">
+                                <button class="step-btn" onclick="app.adjustWeeklyTarget(-1)">−</button>
+                                <span class="step-val" id="admin-weekly-target">3</span>
+                                <button class="step-btn" onclick="app.adjustWeeklyTarget(1)">+</button>
+                            </div>
+                        </div>
+                    </div>
                     <div class="backup-area">
                         <label>ניהול נתונים</label>
                         <div class="tools-row">
@@ -340,6 +354,47 @@
                 <div class="hero">
                     <h1 id="greeting">ברוכה הבאה</h1>
                     <p>מוכנה לאימון?</p>
+                </div>
+                <!-- Dashboard: streak badge -->
+                <div style="display:flex;justify-content:center;">
+                    <div id="home-streak-badge" class="dash-streak-badge" style="display:none;">
+                        <span class="dash-streak-arrow">▲</span> <span id="home-streak-num">0</span> שבועות ברצף
+                    </div>
+                </div>
+                <!-- Dashboard: stats -->
+                <div class="dash-stats-wrap">
+                    <div class="dash-stats-row">
+                        <div class="dash-stat">
+                            <div class="dash-stat-val" id="home-weekly-val">0</div>
+                            <div class="dash-stat-label">אימונים השבוע</div>
+                            <div class="dash-stat-sub" id="home-weekly-sub">מתוך 3</div>
+                            <div class="dash-progress-wrap">
+                                <div class="dash-progress-fill" id="home-weekly-bar" style="width:0%"></div>
+                            </div>
+                        </div>
+                        <div class="dash-stat">
+                            <div class="dash-stat-val" id="home-streak-val">0</div>
+                            <div class="dash-stat-label">עקביות</div>
+                            <div class="dash-stat-sub"><span class="dash-streak-arrow">▲</span> שבועות ברצף</div>
+                        </div>
+                    </div>
+                    <div class="dash-stats-row">
+                        <div class="dash-stat">
+                            <div class="dash-stat-val dash-stat-val-sm" id="home-days-since">—</div>
+                            <div class="dash-stat-label">ימים מאז</div>
+                            <div class="dash-stat-sub">אימון אחרון</div>
+                        </div>
+                        <div class="dash-stat">
+                            <div class="dash-stat-val dash-stat-val-sm" id="home-total-workouts">0</div>
+                            <div class="dash-stat-label">סה"כ אימונים</div>
+                            <div class="dash-stat-sub">מתחילת הדרך</div>
+                        </div>
+                        <div class="dash-stat">
+                            <div class="dash-stat-val dash-stat-val-sm" id="home-avg-time">—</div>
+                            <div class="dash-stat-label">ממוצע אימון</div>
+                            <div class="dash-stat-sub">זמן</div>
+                        </div>
+                    </div>
                 </div>
                 <div class="oled-card info-card">
                     <div class="icon-box">📅</div>

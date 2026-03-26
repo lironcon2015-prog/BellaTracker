@@ -16,7 +16,7 @@ const CONFIG = {
     VERSION: '1.8.2'
 };
 
-const CURRENT_VERSION = '1.8.2-7'; // חייב להיות זהה ל-version.json
+const CURRENT_VERSION = '1.8.2-8'; // חייב להיות זהה ל-version.json
 
 const FEEL_MAP_TEXT = { 'easy': 'קל', 'good': 'בינוני', 'hard': 'קשה' };
 
@@ -302,6 +302,7 @@ const app = {
     },
 
     renderHome: function() {
+        // אימון אחרון
         const lastEl = document.getElementById('last-workout-display');
         if (this.state.history.length > 0) {
             const last = this.state.history[this.state.history.length - 1];
@@ -310,6 +311,113 @@ const app = {
         } else {
             lastEl.innerText = "טרם בוצע";
         }
+
+        // ── Dashboard ──
+        const weekly  = this.calcWeeklyWorkouts();
+        const target  = this._getWeeklyTarget();
+        const streak  = this.calcStreak();
+        const total   = this.state.history.length;
+        const days    = this._calcDaysSince();
+        const avg     = this._calcAvgTime();
+
+        // כרטיס 1: אימונים + עקביות
+        const pct    = Math.min(100, Math.round(weekly / target * 100));
+        const isFull = weekly >= target;
+        const wv = document.getElementById('home-weekly-val');
+        wv.textContent = weekly;
+        wv.className = 'dash-stat-val' + (isFull ? ' dash-val-full' : '');
+        document.getElementById('home-weekly-sub').textContent = 'מתוך ' + target;
+        const bar = document.getElementById('home-weekly-bar');
+        bar.style.width = pct + '%';
+        bar.className = 'dash-progress-fill' + (isFull ? ' full' : '');
+        document.getElementById('home-streak-val').textContent = streak;
+
+        // streak badge
+        const badge = document.getElementById('home-streak-badge');
+        badge.style.display = streak > 0 ? 'inline-flex' : 'none';
+        document.getElementById('home-streak-num').textContent = streak;
+
+        // כרטיס 2: ימים מאז + סה"כ + ממוצע
+        document.getElementById('home-days-since').textContent   = days !== null ? days : '—';
+        document.getElementById('home-total-workouts').textContent = total;
+        const avgEl = document.getElementById('home-avg-time');
+        avgEl.innerHTML = avg !== null ? `${avg}<span class="dash-stat-unit">דק׳</span>` : '—';
+    },
+
+    calcStreak: function() {
+        if (!this.state.history.length) return 0;
+        // בונה מפה: weekKey → מספר אימונים
+        const weekMap = {};
+        this.state.history.forEach(h => {
+            const wk = this._getWeekKey(this._parseDateStr(h.date));
+            weekMap[wk] = (weekMap[wk] || 0) + 1;
+        });
+        const today = new Date(); today.setHours(0,0,0,0);
+        // אם שבוע נוכחי עם <2 אימונים — מתחיל מהשבוע הקודם
+        let check = new Date(today);
+        if ((weekMap[this._getWeekKey(check)] || 0) < 2) {
+            check.setDate(check.getDate() - 7);
+        }
+        let streak = 0;
+        while ((weekMap[this._getWeekKey(check)] || 0) >= 2) {
+            streak++;
+            check.setDate(check.getDate() - 7);
+        }
+        return streak;
+    },
+
+    _getWeekKey: function(d) {
+        // מחזיר מזהה שבוע ישראלי (ראשון-שבת): YYYY-MM-DD של ה-ראשון
+        const day = new Date(d); day.setHours(0,0,0,0);
+        const sun = new Date(day); sun.setDate(day.getDate() - day.getDay());
+        return sun.getFullYear() + '-' + String(sun.getMonth()+1).padStart(2,'0') + '-' + String(sun.getDate()).padStart(2,'0');
+    },
+
+    _parseDateStr: function(dateStr) {
+        const p = dateStr.split('/');
+        return new Date(parseInt(p[2]), parseInt(p[1])-1, parseInt(p[0]));
+    },
+
+    calcWeeklyWorkouts: function() {
+        const today = new Date(); today.setHours(23,59,59,999);
+        const sun   = new Date(today); sun.setDate(today.getDate() - today.getDay()); sun.setHours(0,0,0,0);
+        return this.state.history.filter(h => {
+            const d = this._parseDateStr(h.date);
+            return d >= sun && d <= today;
+        }).length;
+    },
+
+    _calcDaysSince: function() {
+        if (!this.state.history.length) return null;
+        const last = this._parseDateStr(this.state.history[this.state.history.length - 1].date);
+        const today = new Date(); today.setHours(0,0,0,0); last.setHours(0,0,0,0);
+        return Math.round((today - last) / 86400000);
+    },
+
+    _calcAvgTime: function() {
+        const withTime = this.state.history.filter(h => h.totalTime > 0);
+        if (!withTime.length) return null;
+        return Math.round(withTime.reduce((s,h) => s + h.totalTime, 0) / withTime.length / 60000);
+    },
+
+    _getWeeklyTarget: function() {
+        try { return JSON.parse(localStorage.getItem('gymstart_v1_settings') || '{}').weeklyTarget || 3; }
+        catch(e) { return 3; }
+    },
+
+    _setWeeklyTarget: function(n) {
+        try {
+            const s = JSON.parse(localStorage.getItem('gymstart_v1_settings') || '{}');
+            s.weeklyTarget = n;
+            localStorage.setItem('gymstart_v1_settings', JSON.stringify(s));
+        } catch(e) {}
+    },
+
+    adjustWeeklyTarget: function(delta) {
+        const next = Math.max(1, Math.min(7, this._getWeeklyTarget() + delta));
+        this._setWeeklyTarget(next);
+        document.getElementById('admin-weekly-target').textContent = next;
+        this.renderHome();
     },
 
     getExerciseDef: function(exId) {
@@ -976,6 +1084,7 @@ const app = {
         document.getElementById('admin-view-ex-manager').style.display = 'none';
         document.getElementById('admin-view-ex-edit').style.display = 'none';
         this.renderAdminList();
+        document.getElementById('admin-weekly-target').textContent = this._getWeeklyTarget();
     },
 
     closeAdmin: function() {
