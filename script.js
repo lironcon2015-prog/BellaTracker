@@ -16,7 +16,7 @@ const CONFIG = {
     VERSION: '1.8.2'
 };
 
-const CURRENT_VERSION = '1.8.2-9'; // חייב להיות זהה ל-version.json
+const CURRENT_VERSION = '1.8.2-10'; // חייב להיות זהה ל-version.json
 
 const FEEL_MAP_TEXT = { 'easy': 'קל', 'good': 'בינוני', 'hard': 'קשה' };
 
@@ -374,7 +374,8 @@ const app = {
     },
 
     _parseDateStr: function(dateStr) {
-        const p = dateStr.split('/');
+        // תומך בפורמט DD/MM/YYYY וגם DD.MM.YYYY
+        const p = dateStr.split(/[\/\.]/);
         return new Date(parseInt(p[2]), parseInt(p[1])-1, parseInt(p[0]));
     },
 
