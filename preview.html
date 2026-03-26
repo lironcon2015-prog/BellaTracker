@@ -118,7 +118,7 @@ background:
 }
 
 /* ── Hero ── */
-.hero{text-align:center;margin:20px 0 22px;}
+.hero{text-align:center;margin:14px 0 16px;}
 .hero h1{font-size:2rem;font-weight:700;letter-spacing:-.5px;}
 .hero p{color:var(--muted);margin-top:5px;font-size:1rem;}
 
@@ -132,16 +132,14 @@ background:
    NEW: Dashboard components
 ────────────────────────────────────────── */
 
-/* Stats grid */
-.dash-stats-grid{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:8px;
-  margin-bottom:14px;
+/* Stats rows */
+.dash-stats-wrap{
+  display:flex;flex-direction:column;gap:8px;
+  margin-bottom:12px;
 }
 
 .dash-stats-row{
-  display:flex;align-items:stretch;gap:0;
+  display:flex;align-items:stretch;
   background:var(--card);
   border:1px solid var(--border);border-top-color:var(--border-t);
   border-radius:var(--r);
@@ -153,22 +151,9 @@ background:
 
 .dash-stat{
   flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
-  padding:14px 10px;gap:4px;
+  padding:14px 8px;gap:3px;
 }
 .dash-stat+.dash-stat{border-right:1px solid rgba(255,255,255,.08);}
-
-/* Single stat card (standalone) */
-.dash-stat-card{
-  background:var(--card);
-  border:1px solid var(--border);border-top-color:var(--border-t);
-  border-radius:var(--r);
-  backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);
-  position:relative;overflow:hidden;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  padding:14px 10px;gap:4px;
-}
-.dash-stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;
-  background:linear-gradient(90deg,transparent,rgba(255,255,255,.22),transparent);pointer-events:none;}
 
 .dash-stat-val{
   font-size:1.85rem;font-weight:700;line-height:1;
@@ -194,18 +179,8 @@ background:
 }
 .dash-progress-fill.full{background:linear-gradient(90deg,var(--success),rgba(0,200,100,.7));}
 
-/* Streak badge */
-.streak-badge{
-  display:inline-flex;align-items:center;gap:6px;
-  background:rgba(0,255,238,.07);
-  border:1px solid rgba(0,255,238,.20);
-  border-radius:20px;padding:6px 14px;
-  font-size:.88rem;font-weight:600;color:rgba(0,255,238,.8);
-  margin-bottom:16px;align-self:center;
-  animation:fadeIn .3s ease;
-}
-.streak-num{font-size:1.05rem;font-weight:800;}
-.streak-arrow{font-size:.9rem;color:var(--accent);}
+/* Streak arrow accent */
+.streak-arrow{font-size:.8rem;color:var(--accent);}
 
 /* ──────────────────────────────────────────
    Admin screen
@@ -411,18 +386,11 @@ background:
         <p>מוכנה לאימון?</p>
       </div>
 
-      <!-- ★ NEW: Streak badge -->
-      <div style="display:flex;justify-content:center;margin-bottom:18px;" id="streak-area">
-        <div class="streak-badge" id="streak-badge">
-          <span class="streak-arrow">▲</span> <span class="streak-num" id="streak-num">3</span> שבועות ברצף
-        </div>
-      </div>
+      <!-- ★ NEW: Stats rows -->
+      <div class="dash-stats-wrap">
 
-      <!-- ★ NEW: Stats grid -->
-      <div class="dash-stats-grid">
-
-        <!-- שורה 1: אימונים + עקביות -->
-        <div class="dash-stats-row" style="grid-column:1 / -1;">
+        <!-- כרטיס 1: אימונים השבוע + עקביות -->
+        <div class="dash-stats-row">
           <div class="dash-stat">
             <div class="dash-stat-val" id="weekly-val">2</div>
             <div class="dash-stat-label">אימונים השבוע</div>
@@ -434,30 +402,27 @@ background:
           <div class="dash-stat">
             <div class="dash-stat-val" id="streak-stat">3</div>
             <div class="dash-stat-label">עקביות</div>
-            <div class="dash-stat-sub">▲ שבועות ברצף</div>
+            <div class="dash-stat-sub"><span class="streak-arrow">▲</span> שבועות ברצף</div>
           </div>
         </div>
 
-        <!-- שורה 2: ימים מאז + סה"כ אימונים -->
-        <div class="dash-stat-card">
-          <div class="dash-stat-val" style="font-size:1.5rem;">2</div>
-          <div class="dash-stat-label">ימים מאז אימון</div>
-          <div class="dash-stat-sub">אחרון: רגליים A</div>
-        </div>
-
-        <div class="dash-stat-card">
-          <div class="dash-stat-val" style="font-size:1.5rem;">47</div>
-          <div class="dash-stat-label">סה"כ אימונים</div>
-          <div class="dash-stat-sub">מתחילת הדרך</div>
-        </div>
-
-        <!-- שורה 3: ממוצע זמן (full width) -->
-        <div class="dash-stat-card" style="grid-column:1 / -1;flex-direction:row;justify-content:space-between;padding:14px 20px;">
-          <div>
-            <div class="dash-stat-label" style="text-align:right;">ממוצע זמן אימון</div>
-            <div class="dash-stat-sub" style="text-align:right;">מבוסס על 47 אימונים</div>
+        <!-- כרטיס 2: ימים מאז + סה"כ + ממוצע -->
+        <div class="dash-stats-row">
+          <div class="dash-stat">
+            <div class="dash-stat-val" style="font-size:1.5rem;">2</div>
+            <div class="dash-stat-label">ימים מאז</div>
+            <div class="dash-stat-sub">אימון אחרון</div>
           </div>
-          <div class="dash-stat-val" style="font-size:1.7rem;">52<span style="font-size:.85rem;font-weight:500;color:var(--muted);margin-right:3px;">דק׳</span></div>
+          <div class="dash-stat">
+            <div class="dash-stat-val" style="font-size:1.5rem;">47</div>
+            <div class="dash-stat-label">סה"כ אימונים</div>
+            <div class="dash-stat-sub">מתחילת הדרך</div>
+          </div>
+          <div class="dash-stat">
+            <div class="dash-stat-val" style="font-size:1.5rem;">52<span style="font-size:.7rem;font-weight:500;color:var(--muted);">דק׳</span></div>
+            <div class="dash-stat-label">ממוצע אימון</div>
+            <div class="dash-stat-sub">זמן</div>
+          </div>
         </div>
 
       </div>
@@ -648,13 +613,6 @@ function updateHomeStats() {
   document.getElementById('streak-stat').textContent = streak;
   document.getElementById('streak-num').textContent = streak;
 
-  // hide streak badge if 0
-  document.getElementById('streak-area').style.display = streak > 0 ? 'flex' : 'none';
-  // update badge text dynamically
-  if (streak > 0) {
-    document.getElementById('streak-badge').innerHTML =
-      `<span class="streak-arrow">▲</span> <span class="streak-num" id="streak-num">${streak}</span> שבועות ברצף`;
-  }
 }
 
 /* ── Simulate clicking "+אימון" to show full week ── */
