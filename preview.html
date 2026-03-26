@@ -179,7 +179,16 @@ background:
 }
 .dash-progress-fill.full{background:linear-gradient(90deg,var(--success),rgba(0,200,100,.7));}
 
-/* Streak arrow accent */
+/* Streak badge */
+.streak-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  background:rgba(0,255,238,.07);
+  border:1px solid rgba(0,255,238,.20);
+  border-radius:20px;padding:6px 14px;
+  font-size:.88rem;font-weight:600;color:rgba(0,255,238,.8);
+  margin-bottom:14px;align-self:center;
+  animation:fadeIn .3s ease;
+}
 .streak-arrow{font-size:.8rem;color:var(--accent);}
 
 /* ──────────────────────────────────────────
@@ -384,6 +393,13 @@ background:
       <div class="hero">
         <h1>ברוכה הבאה</h1>
         <p>מוכנה לאימון?</p>
+      </div>
+
+      <!-- ★ NEW: Streak badge -->
+      <div style="display:flex;justify-content:center;">
+        <div class="streak-badge" id="streak-badge">
+          <span class="streak-arrow">▲</span> <span id="streak-num">3</span> שבועות ברצף
+        </div>
       </div>
 
       <!-- ★ NEW: Stats rows -->
@@ -609,9 +625,10 @@ function updateHomeStats() {
   bar.style.width = pct + '%';
   bar.className = 'dash-progress-fill' + (isFull ? ' full' : '');
 
-  // streak stat
+  // streak stat + badge
   document.getElementById('streak-stat').textContent = streak;
   document.getElementById('streak-num').textContent = streak;
+  document.getElementById('streak-badge').style.display = streak > 0 ? 'inline-flex' : 'none';
 
 }
 
