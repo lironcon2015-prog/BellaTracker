@@ -91,49 +91,87 @@
             <!-- VIEW 1: ADMIN HOME -->
             <div id="admin-view-home" class="admin-view">
                 <div class="modal-header">
-                    <h3>ניהול תוכניות</h3>
-                    <button class="text-close-btn" onclick="app.closeAdmin()">סגור ×</button>
+                    <h3>ניהול</h3>
+                    <button class="icon-btn" onclick="app.closeAdmin()" style="color:rgba(255,255,255,0.4);">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </button>
                 </div>
-                <div class="admin-nav-row">
-                    <button class="btn-tool-outline" onclick="app.openExerciseManager()">📚 ניהול מאגר תרגילים</button>
+
+                <!-- כלים -->
+                <div class="admin-section-label">כלים</div>
+                <div class="admin-action-card" onclick="app.openExerciseManager()">
+                    <div class="admin-action-icon">📚</div>
+                    <div class="admin-action-text">
+                        <div class="admin-action-title">ניהול מאגר תרגילים</div>
+                        <div class="admin-action-sub">ערוך, הוסף ומחק תרגילים</div>
+                    </div>
+                    <div class="admin-action-arrow">›</div>
                 </div>
-                <div id="admin-prog-list" class="vertical-stack scroll-y" style="margin-top:15px;"></div>
+
+                <!-- תוכניות -->
+                <div class="admin-section-label">תוכניות אימון</div>
+                <div id="admin-prog-list" class="vertical-stack scroll-y"></div>
+
                 <div class="modal-footer-column">
                     <button class="btn-primary" onclick="app.createNewProgram()">+ צור תוכנית חדשה</button>
+
+                    <!-- הגדרות -->
                     <div class="admin-setting-section">
-                        <div class="cloud-section-title">הגדרות</div>
-                        <div class="admin-setting-row">
-                            <div>
-                                <div class="admin-setting-label">יעד אימונים שבועי</div>
-                                <div class="admin-setting-sub">שבוע ישראלי — ראשון עד שבת</div>
-                            </div>
-                            <div class="stepper">
-                                <button class="step-btn" onclick="app.adjustWeeklyTarget(-1)">−</button>
-                                <span class="step-val" id="admin-weekly-target">3</span>
-                                <button class="step-btn" onclick="app.adjustWeeklyTarget(1)">+</button>
+                        <div class="admin-section-label" style="margin-top:14px;">הגדרות</div>
+                        <div class="admin-settings-card">
+                            <div class="admin-setting-row">
+                                <div>
+                                    <div class="admin-setting-label">יעד אימונים שבועי</div>
+                                    <div class="admin-setting-sub">שבוע ישראלי — ראשון עד שבת</div>
+                                </div>
+                                <div class="stepper">
+                                    <button class="step-btn" onclick="app.adjustWeeklyTarget(-1)">−</button>
+                                    <span class="step-val" id="admin-weekly-target">3</span>
+                                    <button class="step-btn" onclick="app.adjustWeeklyTarget(1)">+</button>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    <div class="backup-area">
-                        <label>ניהול נתונים</label>
-                        <div class="tools-row">
-                            <button class="btn-tool-outline" onclick="app.exportConfig()">ייצוא תבנית (Config)</button>
-                            <button class="btn-tool-danger" onclick="app.factoryReset()">איפוס מלא</button>
-                        </div>
+
+                    <!-- ניהול נתונים -->
+                    <div class="admin-section-label" style="margin-top:14px;">ניהול נתונים</div>
+                    <div class="admin-data-grid">
+                        <button class="admin-data-btn" onclick="app.exportConfig()">
+                            <span class="admin-data-icon">📤</span>
+                            <span class="admin-data-label">ייצוא קונפיג</span>
+                        </button>
+                        <button class="admin-data-btn admin-data-danger" onclick="app.factoryReset()">
+                            <span class="admin-data-icon">⚠️</span>
+                            <span class="admin-data-label">איפוס מלא</span>
+                        </button>
                     </div>
+
                     <!-- סנכרון ענן -->
-                        <div class="cloud-section">
-                            <div class="cloud-section-title">סנכרון ענן</div>
-                            <div id="firebase-status-admin" style="font-size:0.8em;margin-bottom:10px;"></div>
-                            <button class="btn-tool-outline" onclick="openFirebaseModal()" style="width:100%;margin-bottom:8px;">⚙ הגדר חיבור Firebase</button>
-                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
-                                <button class="btn-tool-outline" onclick="FirebaseManager.saveArchiveToCloud().then(ok=>alert(ok?'היסטוריה גובתה!':'שגיאה'))">⬆ גבה היסטוריה</button>
-                                <button class="btn-tool-outline" onclick="FirebaseManager.loadArchiveFromCloud()" style="color:#00ff66;border-color:rgba(0,255,102,0.4);">⬇ שחזר היסטוריה</button>
-                                <button class="btn-tool-outline" onclick="FirebaseManager.saveConfigToCloud().then(ok=>alert(ok?'קונפיג גובה!':'שגיאה'))">⬆ גבה קונפיג</button>
-                                <button class="btn-tool-outline" onclick="FirebaseManager.loadConfigFromCloud()" style="color:#00ff66;border-color:rgba(0,255,102,0.4);">⬇ שחזר קונפיג</button>
-                            </div>
-                            <button class="btn-tool-outline" onclick="FirebaseManager.uploadAllToCloud()" style="width:100%;color:#00ffee;border-color:rgba(0,255,238,0.3);">⬆ העלה הכל לענן</button>
-                        </div>
+                    <div class="admin-section-label" style="margin-top:14px;">סנכרון ענן</div>
+                    <div id="firebase-status-admin" style="font-size:0.8em;margin-bottom:8px;"></div>
+                    <div class="admin-data-grid" style="grid-template-columns:1fr 1fr 1fr;">
+                        <button class="admin-data-btn admin-data-up" onclick="FirebaseManager.saveArchiveToCloud().then(ok=>alert(ok?'היסטוריה גובתה!':'שגיאה'))">
+                            <span class="admin-data-icon">⬆</span>
+                            <span class="admin-data-label">גבה היסטוריה</span>
+                        </button>
+                        <button class="admin-data-btn admin-data-down" onclick="FirebaseManager.loadArchiveFromCloud()">
+                            <span class="admin-data-icon">⬇</span>
+                            <span class="admin-data-label">שחזר היסטוריה</span>
+                        </button>
+                        <button class="admin-data-btn admin-data-up" onclick="FirebaseManager.saveConfigToCloud().then(ok=>alert(ok?'קונפיג גובה!':'שגיאה'))">
+                            <span class="admin-data-icon">⬆</span>
+                            <span class="admin-data-label">גבה קונפיג</span>
+                        </button>
+                        <button class="admin-data-btn admin-data-down" onclick="FirebaseManager.loadConfigFromCloud()">
+                            <span class="admin-data-icon">⬇</span>
+                            <span class="admin-data-label">שחזר קונפיג</span>
+                        </button>
+                        <button class="admin-data-btn admin-data-accent" onclick="FirebaseManager.uploadAllToCloud()" style="grid-column:span 2;">
+                            <span class="admin-data-icon">☁️</span>
+                            <span class="admin-data-label">העלה הכל לענן</span>
+                        </button>
+                    </div>
+                    <button class="admin-firebase-btn" onclick="openFirebaseModal()">⚙ הגדרת חיבור Firebase</button>
                 </div>
             </div>
 
