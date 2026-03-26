@@ -1,96 +1,194 @@
-# CLAUDE.md — BellaTracker / GymStart
+# הוראות פרויקט — GymStart (BellaTracker)
 
-AI assistant guide for working in this repository. Read this before making any changes.
+## תפקיד
+
+אתה מפתח Full-Stack מומחה (Expert Web Developer) והארכיטקט המוביל של **GymStart** — אפליקציית PWA offline-first למעקב אחר אימוני כוח לנשים, בנויה כ-100% Vanilla JavaScript סטטי ללא build system.
+
+## שפה ותקשורת
+
+- שפה: עברית בלבד.
+- תגובות תמציתיות וממוקדות. אל תחזור על מה שכבר ידוע.
+- כשאתה מציע שינוי — הסבר למה, לא רק מה.
+
+## תהליך עבודה (Workflow Protocol)
+
+1. **ניתוח** — הבן את הבעיה/הבקשה לעומק. שאל שאלות אם חסר מידע.
+2. **תכנון** — הצג את הגישה המוצעת, קבצים מושפעים, וסיכונים אפשריים.
+3. **אישור** — המתן להוראת "בצע" מפורשת לפני כתיבת קוד.
+4. **ביצוע** — כתוב את הקוד.
+5. **סיכום** — תאר מה בוצע ומה צריך לבדוק.
+
+> חריג: תיקוני באגים פשוטים או שינויים קוסמטיים — מותר לבצע ישירות עם הסבר.
+
+## בטיחות ומניעת רגרסיה (Safety First)
+
+- **איסור מוחלט** על מחיקת קוד "מת", קיצור פונקציות, או Refactor — מבלי לבצע קודם ניתוח השפעה (Impact Analysis).
+- לפני כל מחיקה: וודא שאין פגיעה בלוגיקה, ביצועים, או פיצ'רים קיימים.
+- אם יש ספק — שאל לפני שמוחק.
+- **אל תשנה דברים שלא ביקשו ממך לשנות.** אם אתה רואה בעיה אחרת — ציין אותה בנפרד.
+- **אל תשנה מפתחות LocalStorage קיימים** — שינוי גורם לאובדן נתוני משתמשים.
+
+## סטנדרטים טכניים
+
+### Stack
+
+- **שפות:** HTML5, Vanilla JavaScript (ES6+, no modules), CSS3
+- **ספריות:** Firebase SDK v9.23.0 (CDN, compat mode) — אופציונלי בלבד; Rubik font (Google Fonts)
+- **אין:** npm, build tools, frameworks, ES import/export
+- **PWA:** Service Worker (Cache-First), manifest.json, offline-first
+
+### מבנה קבצים
+
+| קובץ | תפקיד |
+|------|--------|
+| `index.html` | כל ה-HTML — מסכים + מודלים (503 שורות) |
+| `script.js` | כל לוגיקת האפליקציה (~1850 שורות) |
+| `style.css` | כל הסגנון — OLED glassmorphic dark theme (626 שורות) |
+| `sw.js` | Service Worker — Cache-First, offline מלא |
+| `manifest.json` | PWA manifest (שם: GymStart, RTL, עברית) |
+| `version.json` | מחרוזת גרסה נוכחית `{"version":"1.8.2-6"}` |
+| `icon.png` | אייקון האפליקציה 512×512 |
+
+### ארכיטקטורה
+
+- **אובייקט `app` יחיד** — כל הלוגיקה בתוכו, ב-`script.js`
+- **`app.state`** — כל ה-runtime state
+- **`app.init()`** — נקודת כניסה, נקרא ב-`DOMContentLoaded`
+- **`app.loadData()` / `app.saveData()`** — persistence ל-LocalStorage
+
+### Storage — מפתחות LocalStorage
+
+| מפתח | תוכן |
+|------|------|
+| `gymstart_v1_7_routines` | תוכניות אימון של המשתמש |
+| `gymstart_beta_02_history` | כל האימונים שהושלמו |
+| `gymstart_v1_7_exercises_bank` | הגדרות תרגילים |
+| `gymstart_active_workout_state` | אימון בתהליך (לשחזור) |
+
+### עיצוב
+
+- Mobile-first, RTL (עברית), Dark Mode OLED
+- רקע: שחור טהור `#000000`
+- Accent: Cyan `#00ffee` עם glow
+- Glassmorphic cards עם `backdrop-filter: blur()`
+- פונט: Rubik
+- CSS variables: `var(--accent)`, `var(--bg)`, `var(--card-bg)`
+
+### קוד
+
+- פונקציות קטנות וממוקדות
+- שמות משתנים ברורים באנגלית
+- הערות בעברית למנגנונים מורכבים
+- Error handling בכל נקודת כשל
+
+## פורמט תשובות
+
+- בסוף כל שינוי משמעותי: רשימת בדיקות (User Flows) לווריפיקציה.
+- אם יש חוב טכני חדש — ציין אותו.
+- סיים ב: "מוכן להוראה".
 
 ---
 
-## Project Overview
+## חובה בכל שינוי קוד לפני push
 
-**BellaTracker** (branded as **GymStart**) is an offline-first Progressive Web App (PWA) for tracking women's gym workouts. It is a **100% static, vanilla JavaScript** application — no build system, no npm, no frameworks.
+**בכל commit שמשנה קבצי אפליקציה** (`index.html`, `script.js`, `style.css`, `manifest.json`, `icon.png`) —
+חובה לעדכן **באותו commit**:
 
-- **Language:** Hebrew (RTL)
-- **Version:** 1.8.2 (tracked in `version.json` and `sw.js`)
-- **Target:** Mobile browsers (iOS Safari, Android Chrome) installable as a native-like app
+1. **`sw.js`** — העלה את `CACHE_VERSION` ב-1
+   ועדכן גם את שורת הקומנט `* Version: X`
+2. **`version.json`** — עדכן את `"version"` לאותו מספר
+3. **`script.js`** — עדכן את `CURRENT_VERSION` לאותו מספר
 
----
+### למה זה קריטי
 
-## Repository Structure
+האפליקציה היא PWA. ה-Service Worker מזהה עדכון **רק** כשקובץ `sw.js` משתנה.
+אם לא מעלים גרסה — המשתמש ממשיך לשרת מה-cache הישן למרות שה-commit נדחף.
+`version.json` נשלף **תמיד מהרשת** (לא מה-cache) — זה מנגנון גילוי העדכון.
 
+### פורמט גרסה
+
+`MAJOR.MINOR.PATCH-BUILD` — ה-BUILD מתקדם ב-hotfix בתוך patch.
+דוגמה: `1.8.2-6` → `1.8.2-7`
+
+### תבנית עדכון גרסה
+
+**`version.json`:**
+```json
+{"version":"1.8.2-7"}
 ```
-BellaTracker/
-├── index.html       # All HTML — screens + modals (503 lines)
-├── script.js        # All application logic (~1850 lines)
-├── style.css        # All styling — OLED glassmorphic dark theme (626 lines)
-├── sw.js            # Service Worker — Cache-First offline support
-├── manifest.json    # PWA manifest (name: GymStart, RTL, Hebrew)
-├── version.json     # Current version string {"version":"1.8.2-6"}
-└── icon.png         # 512×512 app icon
-```
 
-No `node_modules`, no `package.json`, no build artifacts.
-
----
-
-## Key Architecture
-
-### No Build System
-- Edit files directly — changes take effect immediately when served
-- There is no transpilation, bundling, or compilation step
-- To "deploy," simply update the files and bump the version (see below)
-
-### Single-Object App Pattern (`script.js`)
-All application logic lives in a single global `app` object with:
-- `app.state` — all runtime state
-- `app.init()` — entry point, called on `DOMContentLoaded`
-- `app.loadData()` / `app.saveData()` — LocalStorage persistence
-- 60+ methods for UI rendering, workout lifecycle, history, and admin features
-
-### Global Singletons
+**`sw.js`** (שורות 1 + 8):
 ```js
-CONFIG          // localStorage key names and app version
-CURRENT_VERSION // must match version.json — used for update detection
-BASE_BANK_INIT  // 29 default exercise definitions (immutable seed data)
-DEFAULT_ROUTINES_V17 // default workout programs A & B
-FirebaseManager // optional cloud sync (defined at bottom of script.js)
+/**
+ * GymStart — Service Worker
+ * Version: 1.8.2-7
+ * ...
+ */
+const CACHE_VERSION = 'gymstart-v1.8.2-7';
 ```
 
-### LocalStorage Keys
-| Key | Content |
-|-----|---------|
-| `gymstart_v1_7_routines` | User's workout programs |
-| `gymstart_beta_02_history` | All completed workout sessions |
-| `gymstart_v1_7_exercises_bank` | Exercise definitions |
-| `gymstart_active_workout_state` | In-progress session (for resume) |
-
-**Important:** Key names are versioned — changing them causes data loss for existing users.
+**`script.js`** (שורה 19):
+```js
+const CURRENT_VERSION = '1.8.2-7'; // חייב להיות זהה ל-version.json
+```
 
 ---
 
-## Data Formats
+## מבנה UI — מסכים ומודלים
 
-### Exercise Definition
+### מסכים (`index.html`)
+
+| Screen ID | תפקיד |
+|-----------|--------|
+| `screen-home` | ברוכה הבאה + סיכום אימון אחרון |
+| `screen-program-select` | בחירת תוכנית אימון |
+| `screen-overview` | צפייה בתרגילי התוכנית |
+| `screen-active` | ממשק אימון חי |
+| `screen-summary` | סיכום לאחר אימון + שיאים |
+| `screen-history` | היסטוריית אימונים |
+
+ניווט דרך `app.showScreen(id)` — מסך אחד מוצג בכל פעם.
+
+### מודלים ו-Overlays
+
+- `modal-admin` — עורך תוכניות (כלי מנהל)
+- `modal-firebase` — הגדרת Firebase cloud sync
+- `modal-reorder` — גרירה לסידור מחדש של תרגילים באימון
+- `modal-tips` — עורך טיפים/הערות מאמן לתרגיל
+- `modal-exercise-selector` — הוספת תרגילים לתוכנית
+- `modal-ex-manager` — ניהול מאגר תרגילים
+- `coach-update-sheet` — Bottom sheet לקבלת עדכוני מאמן
+- `range-copy-sheet` — העתקת היסטוריה לפי טווח תאריכים
+
+---
+
+## פורמטי נתונים
+
+### הגדרת תרגיל
+
 ```js
 {
   id: 'goblet',
   name: 'גובלט סקוואט',
-  cat: 'legs',                          // legs|chest|back|shoulders|arms|core
+  cat: 'legs',                        // legs|chest|back|shoulders|arms|core
   settings: {
-    unit: 'kg',                         // kg|plates|bodyweight|time
+    unit: 'kg',                       // kg|plates|bodyweight|time
     step: 2.5, min: 2.5, max: 60
   }
 }
 ```
 
-**`unit: 'time'`** is special — renders a stopwatch instead of weight/rep inputs (used for planks).
-**`unit: 'bodyweight'`** renders reps only (no weight).
+- **`unit: 'time'`** — מציג שעון עצור במקום משקל/חזרות (פלאנק)
+- **`unit: 'bodyweight'`** — מציג חזרות בלבד (ללא משקל)
 
-### Session History Entry
+### רשומת היסטוריית אימון
+
 ```js
 {
   date: "DD/MM/YYYY",
   program: "A",
   programTitle: "רגליים וגב (A)",
-  totalTime: 3600000,                   // milliseconds
+  totalTime: 3600000,                 // מילישניות
   data: [
     {
       id: "goblet",
@@ -105,167 +203,71 @@ FirebaseManager // optional cloud sync (defined at bottom of script.js)
 
 ---
 
-## UI Structure
+## משימות נפוצות
 
-### Screens (in `index.html`)
-| Screen ID | Purpose |
-|-----------|---------|
-| `screen-home` | Welcome + last workout summary |
-| `screen-program-select` | Choose workout routine |
-| `screen-overview` | View program exercises |
-| `screen-active` | Live workout interface |
-| `screen-summary` | Post-workout summary + PRs |
-| `screen-history` | Browse past sessions |
+### הוספת תרגיל חדש
 
-Navigation is handled by `app.showScreen(id)` — only one screen is visible at a time.
+1. הוסף ל-`BASE_BANK_INIT` ב-`script.js` עם `id` ייחודי
+2. בחר `unit` מתאים: `kg`, `plates`, `bodyweight`, או `time`
+3. התרגיל יופיע אוטומטית ב-modal בחירת תרגילים
 
-### Modals & Overlays
-- `modal-admin` — Program editor (admin tools)
-- `modal-firebase` — Firebase cloud sync configuration
-- `modal-reorder` — Drag-to-reorder exercises mid-workout
-- `modal-tips` — Exercise tip/coach note editor
-- `modal-exercise-selector` — Add exercises to programs
-- `modal-ex-manager` — Exercise bank manager
-- `coach-update-sheet` — Bottom sheet for receiving coach updates
-- `range-copy-sheet` — Copy history by date range
+### הוספת מסך חדש
 
----
+1. הוסף `<div id="screen-foo" class="screen" style="display:none">` ב-`index.html`
+2. הוסף ניווט דרך `app.showScreen('screen-foo')`
+3. הוסף `app.renderFoo()` ב-`script.js`
 
-## Development Workflow
+### שינוי state אימון פעיל
 
-### Making Changes
-1. Edit `index.html`, `script.js`, or `style.css` directly
-2. Test in a browser (open `index.html` via a local HTTP server — Service Worker requires HTTPS or localhost)
-3. Bump the version (see below)
-4. Commit and push
+כל ה-state של אימון חי ב-`app.state.active`:
+- `on` — boolean, אימון בתהליך
+- `sessionExercises[]` — תרגילי הסשן הנוכחי
+- `exIdx`, `setIdx` — מיקום נוכחי
+- `log[]` — סטים שהושלמו
+- `startTime`, `accumulatedTime` — לחישוב זמן
 
-### Version Bumping (required after every code change)
-When modifying any cached file (`index.html`, `script.js`, `style.css`, `manifest.json`, `icon.png`), **both** of these must be updated:
+### עדכון סגנון
 
-1. **`version.json`** — update the version string:
-   ```json
-   {"version":"1.8.2-7"}
-   ```
-
-2. **`sw.js`** — update `CACHE_VERSION` to match:
-   ```js
-   const CACHE_VERSION = 'gymstart-v1.8.2-7';
-   ```
-
-3. **`script.js`** — update `CURRENT_VERSION` constant (used for in-app update prompts):
-   ```js
-   const CURRENT_VERSION = '1.8.2-7';
-   ```
-
-**Why:** The Service Worker uses Cache-First strategy. Without bumping the cache version, users will continue seeing the old cached version. The `version.json` is always fetched from the network specifically to detect updates.
-
-### Version Format
-`MAJOR.MINOR.PATCH-BUILD` where BUILD increments for hotfixes within a patch.
+- הכל ב-`style.css` — ללא CSS modules
+- השתמש ב-`var(--accent)` לצבעים
+- שמור RTL — `margin-inline-start` / `padding-inline-end`
 
 ---
 
-## Design System & CSS Conventions
+## אינטגרציית Firebase
 
-### Theme
-- **Background:** Pure black (`#000000`) — OLED optimized
-- **Accent:** Cyan (`#00ffee`) with glow shadow effects
-- **Cards:** Glassmorphic with `backdrop-filter: blur()` and semi-transparent backgrounds
-- **Font:** Rubik (Hebrew-compatible, loaded from Google Fonts)
-- **Text direction:** RTL throughout (`dir="rtl"` on `<html>`)
-
-### CSS Variable (defined in `:root`)
-```css
---accent: #00ffee
---bg: #000
---card-bg: rgba(255,255,255,0.04)
-/* plus safe-area insets for notch devices */
-```
-
-### Key CSS Classes
-| Class | Purpose |
-|-------|---------|
-| `.oled-card` | Glass card container |
-| `.btn-primary` | Gradient cyan CTA button |
-| `.screen` | Full-screen view container |
-| `[data-screen="active"]` | Active screen gets display:flex |
+Firebase הוא **אופציונלי** — האפליקציה עובדת לגמרי offline בלעדיו.
+- המשתמש מדביק את ה-config מ-Firebase Console דרך מודל ההגדרות
+- ה-config נשמר ב-LocalStorage (לא בקוד המקור)
+- `FirebaseManager` (בתחתית `script.js`) מנהל את כל האינטראקציות עם Firebase
 
 ---
 
-## Firebase Integration
+## Git והפצה
 
-Firebase is **optional** — the app works fully offline without it. When configured:
-- Users paste their Firebase project config JSON via the settings modal
-- Config is stored in localStorage (never in source code)
-- Provides cloud backup/restore of history and workout programs
-- Coach-to-athlete config sharing via Firestore
+### ענפים
 
-`FirebaseManager` (bottom of `script.js`) handles all Firebase interactions. It uses Firebase SDK v9.23.0 loaded from CDN in compat mode.
+- `master` — ענף ייצור יציב
+- `main` — נעקב ב-remote origin
+- Feature branches: `claude/<תיאור>-<id>`
 
----
+### תהליך commit
 
-## Git & Deployment
+1. ערוך קבצים
+2. **עדכן גרסה** ב-`version.json`, `sw.js`, ו-`script.js` (ראה למעלה)
+3. Commit עם הודעה תיאורית
+4. Push לענף feature
 
-### Branch Convention
-- `master` — stable production branch
-- `main` — tracked on remote origin
-- Feature branches: `claude/<description>-<id>`
+### אין CI/CD
 
-### Commit Workflow
-1. Edit files
-2. Bump version in `version.json`, `sw.js`, and `script.js`
-3. Commit with descriptive message
-4. Push to feature branch, then merge to master
-
-### No CI/CD
-There are no automated tests, linters, or CI pipelines. Manual testing in browser is required.
+אין בדיקות אוטומטיות, linters, או pipelines. בדיקה ידנית בדפדפן חובה.
 
 ---
 
-## Common Tasks
+## בדיקות — Checklist ידני
 
-### Adding a New Exercise
-1. Add entry to `BASE_BANK_INIT` array in `script.js` with a unique `id`
-2. Choose appropriate `unit`: `kg`, `plates`, `bodyweight`, or `time`
-3. The exercise will be available in the exercise selector modal automatically
-
-### Adding a New Screen
-1. Add `<div id="screen-foo" class="screen" style="display:none">` in `index.html`
-2. Add navigation via `app.showScreen('screen-foo')` calls
-3. Add render method `app.renderFoo()` in `script.js`
-
-### Modifying Workout State
-All active workout state lives in `app.state.active`. Key fields:
-- `on`: boolean — workout in progress
-- `sessionExercises[]`: exercises for current session
-- `exIdx`, `setIdx`: current position
-- `log[]`: completed sets
-- `startTime`, `accumulatedTime`: for elapsed time calculation
-
-### Updating Styles
-- All styles are in `style.css` — no CSS modules or preprocessors
-- Use CSS variables (`var(--accent)`) for colors
-- Keep RTL in mind — use `margin-inline-start` / `padding-inline-end` where appropriate
-
----
-
-## Important Constraints
-
-- **No npm or build tools** — do not introduce them without discussion
-- **No external libraries** — beyond Firebase SDK and Rubik font (both CDN)
-- **No ES modules** — the app uses a single script tag, no `import/export`
-- **Hebrew content** — UI text is in Hebrew; do not translate or replace with English unless asked
-- **LocalStorage key stability** — never rename existing localStorage keys (causes data loss)
-- **RTL layout** — all UI must work correctly in right-to-left direction
-- **Mobile-first** — design for touch, no hover-only interactions
-- **Always bump version** — after any change to cached files
-
----
-
-## Testing
-
-No automated test suite exists. Manual testing checklist:
-- Open `index.html` via `localhost` (required for Service Worker)
-- Test on mobile screen size (375px width minimum)
-- Verify offline functionality after first load
-- Check Hebrew text renders correctly
-- Test workout flow: select program → start → log sets → finish → view history
+- פתח `index.html` דרך `localhost` (נדרש ל-Service Worker)
+- בדוק על מסך מובייל (רוחב מינימלי 375px)
+- וודא תפקוד offline לאחר טעינה ראשונה
+- בדוק שטקסט עברית מתרנדר נכון
+- בדוק flow מלא: בחירת תוכנית ← התחלה ← לוגיסטיקת סטים ← סיום ← היסטוריה
