@@ -16,7 +16,7 @@ const CONFIG = {
     VERSION: '1.8.2'
 };
 
-const CURRENT_VERSION = '1.8.2-15'; // חייב להיות זהה ל-version.json
+const CURRENT_VERSION = '1.8.2-16'; // חייב להיות זהה ל-version.json
 
 const FEEL_MAP_TEXT = { 'easy': 'קל', 'good': 'בינוני', 'hard': 'קשה' };
 
@@ -96,7 +96,11 @@ const app = {
         try {
             this.loadData();
             this.checkActiveWorkout();
-            this.checkUnacknowledgedAchievements();
+            // badge למאמן — רק אחרי "שחזר מהענן", לא אחרי שמירה רגילה של אימון
+            if (localStorage.getItem('gymstart_check_ach_on_load')) {
+                localStorage.removeItem('gymstart_check_ach_on_load');
+                this.checkUnacknowledgedAchievements();
+            }
             this.renderHome();
             this.renderProgramSelect();
             if(!this.state.tempActive) this.nav('screen-home');
@@ -2151,6 +2155,8 @@ const FirebaseManager = {
             const doc = await this._db.collection('gymstart_data').doc('archive').get();
             if (!doc.exists || !doc.data().items) { alert('לא נמצאה היסטוריה בענן.'); return; }
             localStorage.setItem(CONFIG.KEYS.HISTORY, JSON.stringify(doc.data().items));
+            // דגל — בטעינה הבאה app.init יציג badge אם יש יעדים שלא אושרו
+            localStorage.setItem('gymstart_check_ach_on_load', '1');
             alert('ההיסטוריה שוחזרה מהענן!');
             location.reload();
         } catch(e) { alert('שגיאה בטעינה: ' + e.message); }
