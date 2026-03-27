@@ -625,8 +625,35 @@ body::before {
 .step-label { font-size: 0.75rem; color: rgba(255,255,255,0.3); margin-right: 5px; }
 .tip-btn { background: none; border: 1px solid rgba(255,255,255,0.12); color: rgba(255,255,255,0.4); border-radius: 8px; font-size: 0.75rem; padding: 4px 8px; cursor: pointer; margin-right: auto; font-family: inherit; }
 .tip-btn.has-tip { border-color: rgba(255,230,0,0.4); color: #ffe600; }
-.row-target { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.07); }
-.target-row-label { font-size: 0.68rem; font-weight: 700; color: rgba(0,255,238,0.50); text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; }
+.row-target { display: flex; flex-direction: column; gap: 10px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.07); }
+
+/* ── Toggle switch — target ── */
+.target-chk-label { display: flex; align-items: center; gap: 10px; cursor: pointer; user-select: none; }
+.target-chk { position: absolute; opacity: 0; width: 0; height: 0; }
+.target-toggle-track {
+    width: 38px; height: 22px; border-radius: 11px; flex-shrink: 0;
+    background: rgba(255,255,255,0.10); border: 1px solid rgba(255,255,255,0.14);
+    position: relative; transition: background 0.2s, border-color 0.2s;
+}
+.target-toggle-track::after {
+    content: ''; position: absolute; width: 16px; height: 16px; border-radius: 50%;
+    background: rgba(255,255,255,0.40); top: 2px; right: 2px; transition: 0.2s;
+}
+.target-chk:checked + .target-toggle-track { background: rgba(0,255,238,0.30); border-color: rgba(0,255,238,0.55); }
+.target-chk:checked + .target-toggle-track::after { transform: translateX(-16px); background: var(--primary); }
+.target-toggle-text { font-size: 0.72rem; font-weight: 600; color: rgba(255,255,255,0.40); text-transform: uppercase; letter-spacing: 0.5px; }
+
+/* ── iOS picker (select) ── */
+.target-pickers-row { display: flex; align-items: center; gap: 8px; }
+.ios-picker {
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.16);
+    border-radius: 10px; color: white; font-family: inherit;
+    font-size: 0.95rem; font-weight: 700; padding: 8px 10px;
+    -webkit-appearance: none; appearance: none; text-align: center; min-width: 90px;
+}
+.ios-picker-sm { min-width: 60px; }
+.picker-sep { color: rgba(255,255,255,0.25); font-size: 0.9rem; }
+.picker-unit { font-size: 0.78rem; color: rgba(255,255,255,0.35); }
 
 .search-input { background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12); border-radius: 14px; padding: 12px; color: white; width: 100%; font-family: inherit; font-size: 1rem; margin-bottom: 10px; backdrop-filter: blur(12px); }
 .chip-container { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 5px; scrollbar-width: none; -webkit-overflow-scrolling: touch; flex-shrink: 0; }
