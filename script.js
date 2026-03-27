@@ -16,7 +16,7 @@ const CONFIG = {
     VERSION: '1.8.2'
 };
 
-const CURRENT_VERSION = '1.8.2-12'; // חייב להיות זהה ל-version.json
+const CURRENT_VERSION = '1.8.2-13'; // חייב להיות זהה ל-version.json
 
 const FEEL_MAP_TEXT = { 'easy': 'קל', 'good': 'בינוני', 'hard': 'קשה' };
 
@@ -285,15 +285,31 @@ const app = {
         list.innerHTML = '';
         prog.exercises.forEach((ex, i) => {
             const exDef = this.getExerciseDef(ex.id);
-            const unitLabel = exDef.settings.unit === 'time' ? 'זמן' :
-                              exDef.settings.unit === 'bodyweight' ? 'משקל גוף' :
-                              exDef.settings.unit === 'plates' ? 'פלטות' : 'ק״ג';
-            list.innerHTML += `<div class="list-item">
+            const unit = exDef.settings.unit;
+            const unitLabel = unit === 'time' ? 'זמן' :
+                              unit === 'bodyweight' ? 'משקל גוף' :
+                              unit === 'plates' ? 'פלטות' : 'ק״ג';
+            // חיווי יעד מאמן
+            const hasTarget = (ex.target?.w || ex.target?.r) && unit !== 'time';
+            let targetLine = '';
+            if (hasTarget) {
+                const parts = [];
+                if (ex.target?.w && unit !== 'bodyweight') {
+                    const uLabel = unit === 'plates' ? 'פלטות' : 'ק״ג';
+                    parts.push(`${ex.target.w} ${uLabel}`);
+                }
+                if (ex.target?.r) parts.push(`${ex.target.r} חז'`);
+                if (parts.length) targetLine = `<div class="overview-target-line"><span class="tl-dot"></span>יעד מאמן: ${parts.join(' × ')}</div>`;
+            }
+            const targetClass = hasTarget ? 'has-target' : '';
+            const numClass = hasTarget ? 'has-target' : '';
+            list.innerHTML += `<div class="list-item ${targetClass}">
                 <div style="display:flex;align-items:center;gap:12px;flex:1;">
-                    <span class="overview-num">${i+1}</span>
+                    <span class="overview-num ${numClass}">${i+1}</span>
                     <div>
                         <div class="overview-ex-name">${ex.name}</div>
                         <div class="overview-ex-sub">${ex.sets} סטים • ${unitLabel}</div>
+                        ${targetLine}
                     </div>
                 </div>
                 <span class="overview-sets-tag">${ex.sets}×</span>
@@ -499,6 +515,8 @@ const app = {
         if (isTime) {
             document.getElementById('cards-container').style.display = 'none';
             document.getElementById('stopwatch-container').style.display = 'flex';
+            const bn = document.getElementById('target-banner');
+            if (bn) bn.style.display = 'none';
             this.state.active.stopwatchVal = 0;
             this.stopStopwatch();
             document.getElementById('sw-display').innerText = "00:00";
@@ -512,17 +530,41 @@ const app = {
                 exDef.settings.unit === 'plates' ? 'פלטות' :
                 exDef.settings.unit === 'bodyweight' ? 'גוף' : 'ק״ג';
 
-            let smartWeight = exInst.target?.w || 10;
+            let defaultWeight = 10;
             for(let i=this.state.history.length-1; i>=0; i--) {
                 const sess = this.state.history[i];
                 const found = sess.data.find(e => e.id === exInst.id);
                 if(found && found.sets.length > 0) {
-                    smartWeight = found.sets[found.sets.length-1].w;
+                    defaultWeight = found.sets[found.sets.length-1].w;
                     break;
                 }
             }
-            this.state.active.inputW = smartWeight;
+            // יעד מאמן גובר על ברירת מחדל מהיסטוריה
+            if (exInst.target?.w) defaultWeight = exInst.target.w;
+            this.state.active.inputW = defaultWeight;
             this.state.active.inputR = exInst.target?.r || 12;
+
+            // הצג/הסתר banner יעד מאמן
+            const bannerEl = document.getElementById('target-banner');
+            const tagW = document.getElementById('target-tag-w');
+            const tagR = document.getElementById('target-tag-r');
+            const isBodyweightUnit = exDef.settings.unit === 'bodyweight';
+            const hasTargetW = exInst.target?.w && !isBodyweightUnit;
+            const hasTargetR = exInst.target?.r;
+            if (bannerEl && (hasTargetW || hasTargetR)) {
+                const unitStr = exDef.settings.unit === 'plates' ? 'פלטות' : 'ק״ג';
+                const parts = [];
+                if (hasTargetW) parts.push(`${exInst.target.w} ${unitStr}`);
+                if (hasTargetR) parts.push(`${exInst.target.r} חז'`);
+                bannerEl.querySelector('.tb-value').textContent = parts.join(' × ');
+                bannerEl.style.display = 'flex';
+                if (tagW) tagW.style.display = hasTargetW ? 'block' : 'none';
+                if (tagR) tagR.style.display = hasTargetR ? 'block' : 'none';
+            } else {
+                if (bannerEl) bannerEl.style.display = 'none';
+                if (tagW) tagW.style.display = 'none';
+                if (tagR) tagR.style.display = 'none';
+            }
             this.populateSelects(exDef);
         }
 
@@ -1161,6 +1203,31 @@ const app = {
         list.innerHTML = '';
         this.state.admin.tempExercises.forEach((ex, i) => {
             const hasTip = ex.note ? 'has-tip' : '';
+            const exDef = this.getExerciseDef(ex.id);
+            const unit = exDef.settings.unit;
+            const isTime = unit === 'time';
+            const isBodyweight = unit === 'bodyweight';
+            const isWeighted = unit === 'kg' || unit === 'plates';
+            const step = exDef.settings.step || 2.5;
+            const uLabel = unit === 'plates' ? 'פלטות' : 'ק״ג';
+            const targetW = ex.target?.w !== undefined ? ex.target.w : null;
+            const targetR = ex.target?.r !== undefined ? ex.target.r : null;
+            const wVal = targetW !== null ? targetW : '—';
+            const rVal = targetR !== null ? targetR : '—';
+            const targetRowHtml = isTime ? '' : `
+                <div class="row-target">
+                    <span class="target-row-label">יעד:</span>
+                    ${isWeighted ? `<div class="stepper">
+                        <button class="step-btn" onclick="app.updateTargetField(${i},'w',${-step})">-</button>
+                        <div class="step-val" style="min-width:40px;">${wVal} ${uLabel}</div>
+                        <button class="step-btn" onclick="app.updateTargetField(${i},'w',${step})">+</button>
+                    </div>` : ''}
+                    <div class="stepper">
+                        <button class="step-btn" onclick="app.updateTargetField(${i},'r',-1)">-</button>
+                        <div class="step-val">${rVal} חז'</div>
+                        <button class="step-btn" onclick="app.updateTargetField(${i},'r',1)">+</button>
+                    </div>
+                </div>`;
             list.innerHTML += `
             <div class="editor-row">
                 <div class="row-top">
@@ -1186,8 +1253,31 @@ const app = {
                         <button class="step-btn" onclick="app.updateTempEx(${i}, 'rest', 15)">+</button>
                     </div>
                 </div>
+                ${targetRowHtml}
             </div>`;
         });
+    },
+
+    updateTargetField: function(i, field, delta) {
+        const ex = this.state.admin.tempExercises[i];
+        if (!ex.target) ex.target = {};
+        const exDef = this.getExerciseDef(ex.id);
+        if (field === 'w') {
+            const step = exDef.settings.step || 2.5;
+            const min = exDef.settings.min || step;
+            const max = exDef.settings.max || 100;
+            const cur = ex.target.w !== undefined ? ex.target.w : min;
+            let newW = Math.round((cur + delta) * 100) / 100;
+            newW = Math.max(min, Math.min(max, newW));
+            ex.target.w = newW;
+        } else if (field === 'r') {
+            const cur = ex.target.r !== undefined ? ex.target.r : 12;
+            let newR = cur + delta;
+            if (newR < 1) newR = 1;
+            if (newR > 30) newR = 30;
+            ex.target.r = newR;
+        }
+        this.renderEditorList();
     },
 
     updateTempEx: function(i, field, delta) {
