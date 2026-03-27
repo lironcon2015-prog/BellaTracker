@@ -386,6 +386,18 @@ body::before {
 .strip-trend.neutral { color: rgba(255,255,255,0.3); }
 .strip-no-data { font-size: 0.85rem; color: rgba(255,255,255,0.2); text-align: center; width: 100%; }
 
+/* ── Target Banner (active workout) ── */
+.target-banner-active {
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    background: rgba(0,255,238,0.07); border: 1px solid rgba(0,255,238,0.28);
+    border-radius: 12px; padding: 8px 14px; margin-top: 8px;
+    animation: fadeIn 0.3s ease;
+}
+.tb-label { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.5px; color: rgba(0,255,238,0.50); text-transform: uppercase; flex-shrink: 0; }
+.tb-divider { width: 1px; height: 12px; background: rgba(0,255,238,0.22); flex-shrink: 0; }
+.tb-value { font-size: 0.92rem; font-weight: 700; color: rgba(0,255,238,0.90); }
+.target-tag-sm { position: absolute; bottom: 5px; left: 50%; transform: translateX(-50%); font-size: 0.58rem; color: rgba(0,255,238,0.42); white-space: nowrap; pointer-events: none; }
+
 /* ── Input Cards ── */
 .inputs-row { display: flex; gap: 12px; margin-bottom: 10px; }
 .input-card {
@@ -501,6 +513,17 @@ body::before {
     pointer-events: none;
 }
 
+/* ── Overview target indicator ── */
+.list-item.has-target { border-color: rgba(0,255,238,0.22); }
+.list-item.has-target::after {
+    content: ''; position: absolute; right: 0; top: 0; bottom: 0; width: 3px;
+    background: linear-gradient(to bottom, rgba(0,255,238,0.70), rgba(0,255,238,0.12));
+    border-radius: 0 14px 14px 0;
+}
+.overview-target-line { display: flex; align-items: center; gap: 5px; margin-top: 4px; font-size: 0.72rem; font-weight: 600; color: rgba(0,255,238,0.62); }
+.tl-dot { width: 5px; height: 5px; border-radius: 50%; background: rgba(0,255,238,0.5); flex-shrink: 0; }
+.overview-num.has-target { background: rgba(0,255,238,0.08); border-color: rgba(0,255,238,0.22); color: rgba(0,255,238,0.70); }
+
 /* ── History Item ── */
 .hist-item-row {
     background: var(--bg-card); border: 1px solid var(--border-dim); border-top-color: var(--border-top);
@@ -602,6 +625,8 @@ body::before {
 .step-label { font-size: 0.75rem; color: rgba(255,255,255,0.3); margin-right: 5px; }
 .tip-btn { background: none; border: 1px solid rgba(255,255,255,0.12); color: rgba(255,255,255,0.4); border-radius: 8px; font-size: 0.75rem; padding: 4px 8px; cursor: pointer; margin-right: auto; font-family: inherit; }
 .tip-btn.has-tip { border-color: rgba(255,230,0,0.4); color: #ffe600; }
+.row-target { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.07); }
+.target-row-label { font-size: 0.68rem; font-weight: 700; color: rgba(0,255,238,0.50); text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; }
 
 .search-input { background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12); border-radius: 14px; padding: 12px; color: white; width: 100%; font-family: inherit; font-size: 1rem; margin-bottom: 10px; backdrop-filter: blur(12px); }
 .chip-container { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 5px; scrollbar-width: none; -webkit-overflow-scrolling: touch; flex-shrink: 0; }
