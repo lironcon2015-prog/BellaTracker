@@ -16,7 +16,7 @@ const CONFIG = {
     VERSION: '1.8.2'
 };
 
-const CURRENT_VERSION = '1.8.2-14'; // חייב להיות זהה ל-version.json
+const CURRENT_VERSION = '1.8.2-15'; // חייב להיות זהה ל-version.json
 
 const FEEL_MAP_TEXT = { 'easy': 'קל', 'good': 'בינוני', 'hard': 'קשה' };
 
@@ -96,6 +96,7 @@ const app = {
         try {
             this.loadData();
             this.checkActiveWorkout();
+            this.checkUnacknowledgedAchievements();
             this.renderHome();
             this.renderProgramSelect();
             if(!this.state.tempActive) this.nav('screen-home');
@@ -809,6 +810,9 @@ const app = {
 
     startRestTimer: function(durationSec) {
         this.stopRestTimer();
+        // הסתר target-banner בזמן מנוחה — חוסך גובה ומונע גלילה
+        const bn = document.getElementById('target-banner');
+        if (bn) bn.style.display = 'none';
         const area = document.getElementById('rest-timer-area');
         const disp = document.getElementById('rest-timer-val');
         const ring = document.getElementById('rest-ring-prog');
@@ -901,12 +905,30 @@ const app = {
         const durationMin = Math.round(totalDurMs / 60000);
         const dateStr = new Date().toLocaleDateString('he-IL');
         const progTitle = this.state.routines[this.state.currentProgId]?.title || "אימון מזדמן";
+
+        // זיהוי יעדי מאמן שהושגו באימון זה
+        const achievedTargets = [];
+        this.state.active.sessionExercises.forEach(exInst => {
+            if (!exInst.target) return;
+            const exLog = this.state.active.log.find(l => l.id === exInst.id);
+            if (!exLog || exLog.sets.length === 0) return;
+            const targetW = exInst.target.w;
+            const targetR = exInst.target.r;
+            const achieved = exLog.sets.some(s => {
+                const wOk = !targetW || s.w >= targetW;
+                const rOk = !targetR || s.r >= targetR;
+                return wOk && rOk;
+            });
+            if (achieved) achievedTargets.push({ id: exInst.id, name: exInst.name, target: exInst.target });
+        });
+
         this.state.active.summary = {
             program: this.state.currentProgId,
             programTitle: progTitle,
             date: dateStr,
             duration: durationMin,
-            data: this.state.active.log
+            data: this.state.active.log,
+            achievedTargets: achievedTargets
         };
         const meta = document.getElementById('summary-meta');
         meta.innerText = `${dateStr} | ${durationMin} דקות`;
@@ -914,6 +936,7 @@ const app = {
         textBox.innerText = this.generateLogText(this.state.active.summary);
         this.renderSummaryStats(this.state.active.summary);
         this.renderWinCard(this.state.active.summary);
+        this.renderAchievedTargets(achievedTargets);
         this.nav('screen-summary');
     },
 
@@ -988,6 +1011,83 @@ const app = {
         }
     },
 
+    // ── Badge למאמן — זיהוי יעדים שהושגו ולא אושרו ─────────────────────────
+    checkUnacknowledgedAchievements: function() {
+        const ackedKey = 'gymstart_v1_ack_achievements';
+        const acked = JSON.parse(localStorage.getItem(ackedKey) || '[]');
+        const unacked = [];
+        this.state.history.forEach(h => {
+            if (!h.achievedTargets || !h.timestamp) return;
+            h.achievedTargets.forEach(at => {
+                const uid = `${h.timestamp}_${at.id}`;
+                if (!acked.includes(uid)) unacked.push({ ...at, date: h.date, uid });
+            });
+        });
+        if (unacked.length === 0) return;
+        this._pendingAchievements = unacked;
+        this._showAchievementsModal(unacked);
+    },
+
+    _showAchievementsModal: function(unacked) {
+        const list = document.getElementById('achievements-modal-list');
+        if (!list) return;
+        list.innerHTML = '';
+        unacked.forEach(at => {
+            const exDef = this.getExerciseDef(at.id);
+            const unit = exDef?.settings?.unit;
+            const unitStr = unit === 'plates' ? 'פלטות' : 'ק״ג';
+            const parts = [];
+            if (at.target.w) parts.push(`${at.target.w} ${unitStr}`);
+            if (at.target.r) parts.push(`${at.target.r} חז'`);
+            list.innerHTML += `<div class="win-row">
+                <span class="win-row-name">${at.name}</span>
+                <div class="win-delta">
+                    <span style="color:var(--text-sec);font-size:0.8rem;">${at.date}</span>
+                    <span class="win-new">✓ ${parts.join(' × ')}</span>
+                </div>
+            </div>`;
+        });
+        document.getElementById('achievements-modal').style.display = 'flex';
+    },
+
+    ackAllAchievements: function() {
+        const ackedKey = 'gymstart_v1_ack_achievements';
+        const acked = JSON.parse(localStorage.getItem(ackedKey) || '[]');
+        (this._pendingAchievements || []).forEach(at => {
+            if (!acked.includes(at.uid)) acked.push(at.uid);
+        });
+        localStorage.setItem(ackedKey, JSON.stringify(acked));
+        this._pendingAchievements = [];
+        document.getElementById('achievements-modal').style.display = 'none';
+    },
+
+    renderAchievedTargets: function(achievedTargets) {
+        const card = document.getElementById('achieved-targets-card');
+        const list = document.getElementById('achieved-targets-list');
+        if (!card) return;
+        card.style.display = 'none';
+        list.innerHTML = '';
+        if (!achievedTargets || achievedTargets.length === 0) return;
+        achievedTargets.forEach(at => {
+            const exDef = this.getExerciseDef(at.id);
+            const unit = exDef?.settings?.unit;
+            const unitStr = unit === 'plates' ? 'פלטות' : 'ק״ג';
+            const parts = [];
+            if (at.target.w) parts.push(`${at.target.w} ${unitStr}`);
+            if (at.target.r) parts.push(`${at.target.r} חז'`);
+            list.innerHTML += `<div class="win-row">
+                <span class="win-row-name">${at.name}</span>
+                <span class="win-new">✓ ${parts.join(' × ')}</span>
+            </div>`;
+        });
+        const suffix = achievedTargets.length === 1 ? 'יעד' : 'יעדים';
+        document.getElementById('achieved-targets-subtitle').innerText = `הגעת ל-${achievedTargets.length} ${suffix} של המאמן!`;
+        card.style.animation = 'none';
+        card.offsetHeight;
+        card.style.animation = '';
+        card.style.display = 'block';
+    },
+
     // ── generateLogText — משתמש ב-_formatSetDisplay ───────────────────────────
     generateLogText: function(historyItem) {
         const pName = historyItem.programTitle || historyItem.program;
@@ -1003,6 +1103,20 @@ const app = {
                 txt += "\n";
             }
         });
+        // יעדי מאמן שהושגו — תיעוד בטקסט לשיתוף
+        const achieved = historyItem.achievedTargets;
+        if (achieved && achieved.length > 0) {
+            txt += `⭐ יעדי מאמן שהושגו:\n`;
+            achieved.forEach(at => {
+                const exDef = this.getExerciseDef(at.id);
+                const unit = exDef?.settings?.unit;
+                const unitStr = unit === 'plates' ? 'פלטות' : 'ק״ג';
+                const parts = [];
+                if (at.target.w) parts.push(`${at.target.w} ${unitStr}`);
+                if (at.target.r) parts.push(`${at.target.r} חז'`);
+                txt += `   ⭐ ${at.name}: ${parts.join(' × ')}\n`;
+            });
+        }
         return txt;
     },
 
@@ -1010,13 +1124,25 @@ const app = {
         const summary = this.state.active.summary;
         if (!summary) return;
         const doSaveAndReload = () => {
+            const achieved = summary.achievedTargets || [];
+            // מחיקת targets שהושגו מהרוטינה — המאמן יראה שהיעד נמחק ויידע להגדיר חדש
+            if (achieved.length > 0 && this.state.currentProgId) {
+                const routine = this.state.routines[this.state.currentProgId];
+                if (routine) {
+                    achieved.forEach(at => {
+                        const ex = routine.exercises.find(e => e.id === at.id);
+                        if (ex) delete ex.target;
+                    });
+                }
+            }
             this.state.history.push({
                 date: summary.date,
                 timestamp: Date.now(),
                 program: summary.program,
                 programTitle: summary.programTitle,
                 data: summary.data,
-                duration: summary.duration
+                duration: summary.duration,
+                achievedTargets: achieved.length > 0 ? achieved : undefined
             });
             this.saveData();
             localStorage.removeItem(CONFIG.KEYS.ACTIVE_WORKOUT);
@@ -1194,6 +1320,7 @@ const app = {
         this.state.routines[pid].title = document.getElementById('edit-prog-title').value;
         this.saveData();
         this.openAdminHome();
+        this._autoSyncConfig();
     },
 
     updateProgramTitle: function() {},
@@ -1440,6 +1567,7 @@ const app = {
         document.getElementById('admin-view-ex-edit').style.display = 'none';
         document.getElementById('admin-view-ex-manager').style.display = 'flex';
         this.renderExerciseManagerList();
+        this._autoSyncConfig();
     },
 
     cancelExerciseEdit: function() {
@@ -1521,6 +1649,33 @@ const app = {
     },
 
     /* --- BACKUP & RESTORE --- */
+
+    openHistoryBackupSheet: function() {
+        const isConn = typeof FirebaseManager !== 'undefined' && FirebaseManager.isConfigured();
+        const cloudBtn = document.getElementById('btn-backup-cloud');
+        if (cloudBtn) { cloudBtn.disabled = !isConn; cloudBtn.style.opacity = isConn ? '1' : '0.4'; }
+        document.getElementById('history-backup-overlay').style.display = 'block';
+        document.getElementById('history-backup-sheet').style.display = 'flex';
+    },
+
+    closeHistoryBackupSheet: function() {
+        document.getElementById('history-backup-overlay').style.display = 'none';
+        document.getElementById('history-backup-sheet').style.display = 'none';
+    },
+
+    openHistoryRestoreSheet: function() {
+        const isConn = typeof FirebaseManager !== 'undefined' && FirebaseManager.isConfigured();
+        const cloudBtn = document.getElementById('btn-restore-cloud');
+        if (cloudBtn) { cloudBtn.disabled = !isConn; cloudBtn.style.opacity = isConn ? '1' : '0.4'; }
+        document.getElementById('history-restore-overlay').style.display = 'block';
+        document.getElementById('history-restore-sheet').style.display = 'flex';
+    },
+
+    closeHistoryRestoreSheet: function() {
+        document.getElementById('history-restore-overlay').style.display = 'none';
+        document.getElementById('history-restore-sheet').style.display = 'none';
+    },
+
     exportConfig: function() {
         const data = { type: 'config', ver: CONFIG.VERSION, date: new Date().toLocaleDateString(), routines: this.state.routines, exercises: this.state.exercises };
         this.downloadJSON(data, `gymstart_config_v${CONFIG.VERSION}_${Date.now()}.json`);
@@ -1588,6 +1743,19 @@ const app = {
         if(confirm("איפוס מלא ימחק הכל. להמשיך?")) {
             localStorage.clear();
             location.reload();
+        }
+    },
+
+    // עדכון קונפיג אוטומטי בענן לאחר כל שמירה
+    _autoSyncConfig: function() {
+        if (typeof FirebaseManager !== 'undefined' && FirebaseManager.isConfigured()) {
+            FirebaseManager.saveConfigToCloud().then(ok => {
+                alert(ok
+                    ? '✓ הקונפיג עודכן ונשלח לענן!\nהמתאמנת יכולה ללחוץ "קבל עדכון מהמאמן".'
+                    : 'הקונפיג נשמר מקומית, אך הייתה שגיאה בשליחה לענן.');
+            });
+        } else {
+            alert('הקונפיג נשמר.\nלא מוגדר חיבור ענן — ייצא ידנית כדי לשלוח למתאמנת.');
         }
     },
 

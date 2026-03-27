@@ -340,6 +340,28 @@
         </div>
     </div>
 
+    <!-- History Backup Sheet -->
+    <div id="history-backup-overlay" class="bottom-sheet-overlay" onclick="app.closeHistoryBackupSheet()" style="display:none;"></div>
+    <div id="history-backup-sheet" class="bottom-sheet-gs" style="display:none;">
+        <div class="sheet-handle-gs"></div>
+        <h3 style="margin:0 0 6px;">גיבוי היסטוריה</h3>
+        <p style="font-size:0.82rem;color:var(--text-sec);margin:0 0 18px;">בחרי יעד הגיבוי</p>
+        <button class="btn-primary" id="btn-backup-cloud" onclick="app.closeHistoryBackupSheet(); FirebaseManager.saveArchiveToCloud().then(ok=>alert(ok?'ההיסטוריה גובתה לענן!':'שגיאה בגיבוי לענן.'));" style="margin-bottom:10px;">☁️ גבה לענן</button>
+        <button class="btn-outline" onclick="app.closeHistoryBackupSheet(); app.exportHistory();" style="margin-bottom:10px;">📄 שמור לקובץ</button>
+        <button class="btn-outline" onclick="app.closeHistoryBackupSheet()">ביטול</button>
+    </div>
+
+    <!-- History Restore Sheet -->
+    <div id="history-restore-overlay" class="bottom-sheet-overlay" onclick="app.closeHistoryRestoreSheet()" style="display:none;"></div>
+    <div id="history-restore-sheet" class="bottom-sheet-gs" style="display:none;">
+        <div class="sheet-handle-gs"></div>
+        <h3 style="margin:0 0 6px;">שחזור היסטוריה</h3>
+        <p style="font-size:0.82rem;color:var(--text-sec);margin:0 0 18px;">בחרי מקור השחזור</p>
+        <button class="btn-primary" id="btn-restore-cloud" onclick="app.closeHistoryRestoreSheet(); FirebaseManager.loadArchiveFromCloud();" style="margin-bottom:10px;">☁️ שחזר מהענן</button>
+        <button class="btn-outline" onclick="app.closeHistoryRestoreSheet(); document.getElementById('file-import-history').click();" style="margin-bottom:10px;">📂 טען מקובץ</button>
+        <button class="btn-outline" onclick="app.closeHistoryRestoreSheet()">ביטול</button>
+    </div>
+
     <!-- Range Copy Sheet -->
     <div id="range-copy-overlay" class="bottom-sheet-overlay" onclick="app.closeRangeSheet()" style="display:none;"></div>
     <div id="range-copy-sheet" class="bottom-sheet-gs" style="display:none;">
@@ -565,6 +587,16 @@
                     <p>האימון הושלם בהצלחה</p>
                     <div id="summary-meta" class="meta-tag"></div>
                 </div>
+                <div id="achieved-targets-card" style="display:none;" class="win-card achieved-targets-card">
+                    <div class="win-card-header">
+                        <div class="win-trophy">⭐</div>
+                        <div>
+                            <div class="win-card-title">יעדי מאמן שהושגו!</div>
+                            <div id="achieved-targets-subtitle" class="win-card-subtitle"></div>
+                        </div>
+                    </div>
+                    <div id="achieved-targets-list"></div>
+                </div>
                 <div id="win-card" style="display:none;" class="win-card">
                     <div class="win-card-header">
                         <div class="win-trophy">🏆</div>
@@ -588,8 +620,8 @@
                 <div class="page-header">
                     <h2 class="page-title">היסטוריה</h2>
                     <div class="header-tools">
-                        <button class="btn-tool" onclick="app.exportHistory()">גיבוי</button>
-                        <button class="btn-tool" onclick="document.getElementById('file-import-history').click()">שחזור</button>
+                        <button class="btn-tool" onclick="app.openHistoryBackupSheet()">גיבוי</button>
+                        <button class="btn-tool" onclick="app.openHistoryRestoreSheet()">שחזור</button>
                     </div>
                 </div>
                 <div class="bulk-tools">
@@ -605,6 +637,18 @@
             </div>
         </div>
 
+    </div>
+
+    <!-- Achievements Modal (badge למאמן) -->
+    <div id="achievements-modal" class="modal-wrapper" style="display:none; z-index:500;">
+        <div class="oled-modal">
+            <div class="modal-header">
+                <h3>🏆 יעדים שהושגו</h3>
+            </div>
+            <p style="font-size:0.82rem;color:var(--text-sec);margin:0 0 14px;">המתאמנת השיגה את היעדים הבאים:</p>
+            <div id="achievements-modal-list" class="vertical-stack" style="margin-bottom:18px;"></div>
+            <button class="btn-primary" onclick="app.ackAllAchievements()">ראיתי ✓</button>
+        </div>
     </div>
 
     <script src="script.js"></script>
