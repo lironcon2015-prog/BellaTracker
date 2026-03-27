@@ -16,7 +16,7 @@
     align-items: flex-start;
     min-height: 100vh;
     padding: 24px 16px 48px;
-    gap: 24px;
+    gap: 20px;
     flex-wrap: wrap;
   }
   :root {
@@ -24,226 +24,242 @@
     --card-bg: rgba(255,255,255,0.05);
     --border: rgba(255,255,255,0.10);
     --text-sec: rgba(255,255,255,0.45);
-    --radius: 16px;
     --success: #00ff66;
+    --radius: 16px;
   }
 
+  /* ── Phone frame ── */
+  .col { display: flex; flex-direction: column; align-items: center; gap: 8px; }
   .phone-label {
-    text-align: center;
-    font-size: 0.72rem;
-    color: rgba(255,255,255,0.3);
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    margin-bottom: 8px;
-    font-weight: 600;
+    font-size: 0.68rem; color: rgba(255,255,255,0.28);
+    letter-spacing: 1.2px; text-transform: uppercase; font-weight: 700;
   }
   .phone {
-    width: 375px;
+    width: 360px;
     background: #000;
     border: 1px solid rgba(255,255,255,0.12);
-    border-radius: 40px;
+    border-radius: 38px;
     overflow: hidden;
-    box-shadow: 0 0 60px rgba(0,255,238,0.08);
+    box-shadow: 0 0 50px rgba(0,255,238,0.07);
   }
-
-  /* Navbar */
   .navbar {
-    height: 52px;
+    height: 50px;
     display: flex; align-items: center; justify-content: center;
     border-bottom: 1px solid rgba(255,255,255,0.07);
   }
-  .logo { font-size: 1rem; font-weight: 700; letter-spacing: 2px; }
+  .logo { font-size: 0.95rem; font-weight: 700; letter-spacing: 2px; }
   .logo span { color: var(--accent); filter: drop-shadow(0 0 8px rgba(0,255,238,0.6)); }
 
-  /* Header */
-  .active-header { padding: 14px 20px 8px; text-align: center; }
+  /* ════════════════════════════════
+     SCREEN A — Active workout
+  ════════════════════════════════ */
+  .active-header { padding: 12px 20px 8px; text-align: center; }
   .badge {
     display: inline-block;
-    background: rgba(0,255,238,0.10);
-    border: 1px solid rgba(0,255,238,0.25);
-    color: var(--accent);
-    font-size: 0.75rem; font-weight: 700;
-    padding: 4px 14px; border-radius: 20px;
-    margin-bottom: 8px;
+    background: rgba(0,255,238,0.10); border: 1px solid rgba(0,255,238,0.25);
+    color: var(--accent); font-size: 0.73rem; font-weight: 700;
+    padding: 3px 13px; border-radius: 20px; margin-bottom: 7px;
   }
-  .ex-name { font-size: 1.45rem; font-weight: 700; margin-bottom: 6px; }
-
+  .ex-name { font-size: 1.4rem; font-weight: 700; margin-bottom: 5px; }
   .coach-note {
-    display: inline-flex; align-items: center; gap: 6px;
-    background: rgba(255,220,80,0.08);
-    border: 1px solid rgba(255,220,80,0.20);
-    border-radius: 20px; padding: 5px 12px;
-    font-size: 0.77rem; color: rgba(255,220,80,0.85);
-    margin-bottom: 6px;
+    display: inline-flex; align-items: center; gap: 5px;
+    background: rgba(255,220,80,0.08); border: 1px solid rgba(255,220,80,0.20);
+    border-radius: 20px; padding: 4px 11px;
+    font-size: 0.75rem; color: rgba(255,220,80,0.85);
   }
-  .target-hint {
-    display: inline-flex; align-items: center; gap: 6px;
-    background: rgba(0,255,238,0.06);
-    border: 1px solid rgba(0,255,238,0.25);
-    border-radius: 20px; padding: 5px 14px;
-    font-size: 0.8rem; font-weight: 600;
-    color: rgba(0,255,238,0.85);
-  }
-  .target-hint .t-icon { font-size: 0.72rem; opacity: 0.65; }
 
-  /* ── Stats strip ── */
-  .stats-strip-enhanced {
+  /* ★ TARGET BANNER — option A */
+  .target-banner {
+    margin: 10px 16px 0;
+    background: rgba(0,255,238,0.07);
+    border: 1px solid rgba(0,255,238,0.30);
+    border-radius: 13px;
+    padding: 10px 16px;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+  }
+  .target-banner .tb-icon {
+    font-size: 0.72rem; color: rgba(0,255,238,0.55);
+    border: 1px solid rgba(0,255,238,0.25);
+    border-radius: 6px; padding: 2px 6px; font-weight: 700; letter-spacing: 0.5px;
+    flex-shrink: 0;
+  }
+  .target-banner .tb-text {
+    font-size: 0.92rem; font-weight: 700; color: rgba(0,255,238,0.90);
+    letter-spacing: 0.2px;
+  }
+  .target-banner .tb-text span { color: rgba(0,255,238,0.50); font-weight: 400; font-size: 0.78rem; margin-left: 4px; }
+
+  /* Stats strip */
+  .stats-strip {
     margin: 10px 16px 0;
     display: flex;
     background: rgba(255,255,255,0.03);
     border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 14px;
-    overflow: hidden;
+    border-radius: 13px; overflow: hidden;
   }
   .strip-section {
-    flex: 1;
-    padding: 10px 8px;
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    gap: 4px;
-    text-align: center;
+    flex: 1; padding: 9px 6px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
   }
-  .strip-section + .strip-section {
-    border-right: 1px solid rgba(255,255,255,0.07);
-  }
-  .strip-lbl {
-    font-size: 0.62rem; color: rgba(255,255,255,0.30);
-    font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
-  }
-  .strip-val {
-    font-size: 1rem; font-weight: 700; color: rgba(255,255,255,0.85); line-height: 1;
-  }
-  .strip-trend {
-    font-size: 0.68rem; font-weight: 700;
-    display: flex; align-items: center; gap: 2px;
-  }
+  .strip-section + .strip-section { border-right: 1px solid rgba(255,255,255,0.07); }
+  .strip-lbl { font-size: 0.60rem; color: rgba(255,255,255,0.28); font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; }
+  .strip-val { font-size: 0.95rem; font-weight: 700; color: rgba(255,255,255,0.82); line-height: 1; }
+  .strip-trend { font-size: 0.67rem; font-weight: 700; }
   .strip-trend.up { color: var(--success); }
-  .strip-trend.down { color: #ff6b6b; }
-  .strip-trend.neutral { color: rgba(255,255,255,0.3); }
 
   /* Workspace */
-  .workspace { padding: 14px 20px; display: flex; gap: 12px; }
+  .workspace { padding: 12px 16px; display: flex; gap: 10px; }
   .input-card {
     flex: 1;
     background: var(--card-bg);
-    border: 1px solid rgba(0,255,238,0.28);
+    border: 1px solid var(--border);
     border-radius: var(--radius);
-    padding: 16px 12px 26px; text-align: center;
-    position: relative;
+    padding: 14px 10px; text-align: center;
   }
-  .input-label { font-size: 0.72rem; color: var(--text-sec); display: block; margin-bottom: 10px; }
-  .stepper-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .input-label { font-size: 0.70rem; color: var(--text-sec); display: block; margin-bottom: 9px; }
+  .stepper-row { display: flex; align-items: center; justify-content: space-between; }
   .stepper-btn {
-    width: 36px; height: 36px;
-    background: rgba(255,255,255,0.07);
-    border: 1px solid rgba(255,255,255,0.12);
-    border-radius: 10px; color: #fff;
-    font-size: 1.2rem; cursor: pointer;
+    width: 33px; height: 33px;
+    background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 9px; color: #fff; font-size: 1.1rem; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
   }
-  .stepper-val { font-size: 2.0rem; font-weight: 700; color: var(--accent); filter: drop-shadow(0 0 8px rgba(0,255,238,0.4)); }
-  .target-tag {
-    position: absolute; bottom: 7px; left: 50%; transform: translateX(-50%);
-    font-size: 0.60rem; color: rgba(0,255,238,0.45); white-space: nowrap;
-    letter-spacing: 0.2px;
-  }
+  .stepper-val { font-size: 1.9rem; font-weight: 700; color: var(--accent); filter: drop-shadow(0 0 8px rgba(0,255,238,0.4)); }
 
   /* Feel */
-  .feel-section { padding: 0 20px 2px; text-align: center; }
-  .feel-row { display: flex; justify-content: center; gap: 12px; margin-bottom: 5px; }
+  .feel-section { padding: 0 16px 2px; text-align: center; }
+  .feel-row { display: flex; justify-content: center; gap: 10px; margin-bottom: 5px; }
   .feel-btn {
-    width: 46px; height: 46px; border-radius: 14px; font-size: 1.3rem;
-    border: 1px solid rgba(255,255,255,0.12);
-    background: rgba(255,255,255,0.05); cursor: pointer;
+    width: 43px; height: 43px; border-radius: 13px; font-size: 1.25rem;
+    border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.05);
     display: flex; align-items: center; justify-content: center;
   }
   .feel-btn.selected { background: rgba(0,255,238,0.12); border-color: rgba(0,255,238,0.35); }
-  .feel-label { font-size: 0.75rem; color: var(--text-sec); }
+  .feel-label { font-size: 0.73rem; color: var(--text-sec); }
 
-  /* CTA */
-  .cta { padding: 14px 20px 24px; }
+  .cta { padding: 12px 16px 22px; }
   .btn-primary {
-    width: 100%; padding: 16px;
+    width: 100%; padding: 15px;
     background: linear-gradient(135deg, #00ffee, #00d4c6);
-    border: none; border-radius: 14px;
+    border: none; border-radius: 13px;
     color: #000; font-family: 'Rubik', sans-serif;
-    font-size: 1rem; font-weight: 700; cursor: pointer;
-    box-shadow: 0 4px 20px rgba(0,255,238,0.25);
+    font-size: 0.97rem; font-weight: 700; cursor: pointer;
+    box-shadow: 0 4px 20px rgba(0,255,238,0.22);
   }
 
-  /* Diff panel */
-  .diff-box {
-    width: 340px;
-    background: rgba(255,255,255,0.03);
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 16px;
-    padding: 20px;
-    align-self: flex-start;
-    margin-top: 56px;
+  /* ════════════════════════════════
+     SCREEN B — Overview
+  ════════════════════════════════ */
+  .overview-scroll { padding: 16px 16px 8px; }
+  .page-title { font-size: 1.25rem; font-weight: 700; margin-bottom: 14px; }
+
+  .list-item {
+    display: flex; align-items: center; justify-content: space-between;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.09);
+    border-radius: 14px;
+    padding: 13px 14px;
+    margin-bottom: 8px;
+    position: relative;
+    overflow: hidden;
   }
-  .diff-title { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 1.5px; color: rgba(255,255,255,0.3); margin-bottom: 14px; font-weight: 700; }
-  .diff-row { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 11px; font-size: 0.86rem; }
-  .tag {
-    flex-shrink: 0; font-size: 0.62rem; font-weight: 700;
-    padding: 3px 8px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 1px;
+
+  /* ★ accent bar for exercises WITH a target */
+  .list-item.has-target {
+    border-color: rgba(0,255,238,0.20);
   }
-  .tag-new  { background: rgba(0,255,238,0.12); color: var(--accent); border: 1px solid rgba(0,255,238,0.25); }
-  .tag-chg  { background: rgba(255,220,80,0.10); color: rgba(255,220,80,0.9); border: 1px solid rgba(255,220,80,0.22); }
-  .tag-same { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.4); border: 1px solid rgba(255,255,255,0.1); }
-  .diff-row .text { color: rgba(255,255,255,0.72); line-height: 1.45; }
-  .diff-row .text s { color: rgba(255,255,255,0.22); }
-  .diff-row .text b { color: #fff; }
-  hr.sep { border: none; border-top: 1px solid rgba(255,255,255,0.07); margin: 14px 0; }
+  .list-item.has-target::before {
+    content: '';
+    position: absolute;
+    right: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: linear-gradient(to bottom, rgba(0,255,238,0.8), rgba(0,255,238,0.2));
+    border-radius: 0 14px 14px 0;
+  }
+
+  .overview-num {
+    width: 28px; height: 28px; border-radius: 8px;
+    background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.78rem; font-weight: 700; color: rgba(255,255,255,0.5);
+    flex-shrink: 0;
+  }
+  .list-item.has-target .overview-num {
+    background: rgba(0,255,238,0.08);
+    border-color: rgba(0,255,238,0.22);
+    color: rgba(0,255,238,0.7);
+  }
+
+  .ex-info { flex: 1; margin-right: 10px; }
+  .overview-ex-name { font-size: 0.92rem; font-weight: 600; margin-bottom: 2px; }
+
+  .overview-ex-sub { font-size: 0.72rem; color: var(--text-sec); }
+
+  /* ★ target sub-line */
+  .overview-target-line {
+    display: flex; align-items: center; gap: 5px;
+    margin-top: 4px;
+    font-size: 0.72rem; font-weight: 600;
+    color: rgba(0,255,238,0.65);
+  }
+  .overview-target-line .tl-dot {
+    width: 5px; height: 5px; border-radius: 50%;
+    background: rgba(0,255,238,0.5); flex-shrink: 0;
+  }
+
+  .overview-sets-tag {
+    font-size: 0.82rem; font-weight: 700;
+    color: rgba(255,255,255,0.30);
+    flex-shrink: 0; margin-right: 4px;
+  }
+
+  .fixed-footer-b { padding: 12px 16px 22px; }
+
 </style>
 </head>
 <body>
 
-<div>
-  <div class="phone-label">מסך אימון פעיל — אחרי קבלת יעד</div>
+<!-- ══ SCREEN A: Active workout ══ -->
+<div class="col">
+  <div class="phone-label">מסך אימון פעיל</div>
   <div class="phone">
     <div class="navbar"><div class="logo">GYM<span>START</span></div></div>
 
-    <!-- Header -->
     <div class="active-header">
       <div class="badge">סט 1 / 3</div>
       <div class="ex-name">דחיקת חזה</div>
-      <div class="coach-note">💡 כפות ידיים רחבות מהכתפיים</div><br>
-      <!-- ★ NEW: target hint -->
-      <div class="target-hint">
-        <span class="t-icon">▲</span>
-        יעד מאמן:&nbsp;<strong>12 ק״ג × 10 חז'</strong>
-      </div>
+      <div class="coach-note">💡 כפות ידיים רחבות מהכתפיים</div>
     </div>
 
-    <!-- ★ Stats strip — 3 sections: last / sparkline / PR -->
-    <div class="stats-strip-enhanced">
+    <!-- ★ TARGET BANNER -->
+    <div class="target-banner">
+      <span class="tb-icon">יעד</span>
+      <span class="tb-text">12 ק״ג × 10 חז'<span>מאמן</span></span>
+    </div>
 
+    <!-- Stats strip -->
+    <div class="stats-strip">
       <div class="strip-section">
         <div class="strip-lbl">אימון קודם</div>
         <div class="strip-val">10 ק״ג</div>
         <div class="strip-trend up">▲ +2 ק״ג</div>
       </div>
-
       <div class="strip-section">
         <div class="strip-lbl">מגמה</div>
-        <!-- sparkline: sessions 6, 7, 8, 8, 10 kg -->
-        <svg width="64" height="28" viewBox="0 0 64 28" style="display:block;overflow:visible;">
-          <polyline
-            points="3,22.2 19,18.2 35,10.2 51,10.2 61,3"
+        <svg width="60" height="26" viewBox="0 0 60 26" style="display:block;overflow:visible;">
+          <polyline points="3,21 16,17 30,11 44,11 57,3"
             fill="none" stroke="#00ffee" stroke-width="1.5"
             stroke-linecap="round" stroke-linejoin="round" opacity="0.7"/>
-          <circle cx="61" cy="3" r="2.5" fill="#00ffee"/>
+          <circle cx="57" cy="3" r="2.5" fill="#00ffee"/>
         </svg>
       </div>
-
       <div class="strip-section">
         <div class="strip-lbl">שיא אישי</div>
         <div class="strip-val">10 ק״ג</div>
       </div>
-
     </div>
 
-    <!-- Workspace — defaults now 12/10 -->
+    <!-- Workspace -->
     <div class="workspace">
       <div class="input-card">
         <span class="input-label">משקל (ק״ג)</span>
@@ -252,7 +268,6 @@
           <span class="stepper-val">12</span>
           <button class="stepper-btn">+</button>
         </div>
-        <span class="target-tag">↑ לפי יעד מאמן</span>
       </div>
       <div class="input-card">
         <span class="input-label">חזרות</span>
@@ -261,11 +276,9 @@
           <span class="stepper-val">10</span>
           <button class="stepper-btn">+</button>
         </div>
-        <span class="target-tag">↑ לפי יעד מאמן</span>
       </div>
     </div>
 
-    <!-- Feel -->
     <div class="feel-section">
       <div class="feel-row">
         <button class="feel-btn">😌</button>
@@ -274,54 +287,76 @@
       </div>
       <div class="feel-label">בינוני (טוב)</div>
     </div>
-
-    <div class="cta">
-      <button class="btn-primary">סיום סט</button>
-    </div>
+    <div class="cta"><button class="btn-primary">סיום סט</button></div>
   </div>
 </div>
 
-<!-- Change summary -->
-<div class="diff-box">
-  <div class="diff-title">מה משתנה לעומת היום</div>
+<!-- ══ SCREEN B: Overview ══ -->
+<div class="col">
+  <div class="phone-label">מסך סקירת תוכנית</div>
+  <div class="phone">
+    <div class="navbar"><div class="logo">GYM<span>START</span></div></div>
 
-  <div class="diff-row">
-    <span class="tag tag-new">חדש</span>
-    <span class="text">תווית <b>יעד מאמן: 12 ק״ג × 10 חז'</b> מתחת לשם התרגיל</span>
-  </div>
-  <div class="diff-row">
-    <span class="tag tag-chg">שינוי</span>
-    <span class="text">ברירת מחדל משקל: <s>10 ק״ג (היסטוריה)</s> → <b>12 ק״ג (יעד)</b></span>
-  </div>
-  <div class="diff-row">
-    <span class="tag tag-chg">שינוי</span>
-    <span class="text">ברירת מחדל חזרות: <s>12</s> → <b>10</b></span>
-  </div>
-  <div class="diff-row">
-    <span class="tag tag-new">חדש</span>
-    <span class="text">תווית קטנה <b>↑ לפי יעד מאמן</b> בכרטיס (כשיש יעד)</span>
-  </div>
+    <div class="overview-scroll">
+      <div class="page-title">סקירה: חזה וכתפיים (B)</div>
 
-  <hr class="sep">
+      <!-- Exercise 1 — has target -->
+      <div class="list-item has-target">
+        <div class="overview-num">1</div>
+        <div class="ex-info">
+          <div class="overview-ex-name">דחיקת חזה</div>
+          <div class="overview-ex-sub">3 סטים • ק״ג</div>
+          <div class="overview-target-line">
+            <span class="tl-dot"></span>
+            יעד מאמן: 12 ק״ג × 10 חז'
+          </div>
+        </div>
+        <span class="overview-sets-tag">3×</span>
+      </div>
 
-  <div class="diff-row">
-    <span class="tag tag-same">ללא שינוי</span>
-    <span class="text">strip ההתקדמות: אימון קודם + גרף + שיא — כרגיל</span>
-  </div>
-  <div class="diff-row">
-    <span class="tag tag-same">ללא שינוי</span>
-    <span class="text">המתאמנת יכולה לשנות ידנית את הסטפרים</span>
-  </div>
-  <div class="diff-row">
-    <span class="tag tag-same">ללא שינוי</span>
-    <span class="text">אם אין יעד — ברירת מחדל מהיסטוריה כרגיל</span>
-  </div>
+      <!-- Exercise 2 — has target -->
+      <div class="list-item has-target">
+        <div class="overview-num">2</div>
+        <div class="ex-info">
+          <div class="overview-ex-name">לחיצת כתפיים</div>
+          <div class="overview-ex-sub">3 סטים • ק״ג</div>
+          <div class="overview-target-line">
+            <span class="tl-dot"></span>
+            יעד מאמן: 8 ק״ג × 12 חז'
+          </div>
+        </div>
+        <span class="overview-sets-tag">3×</span>
+      </div>
 
-  <hr class="sep">
-  <div class="diff-title" style="margin-bottom:10px;">אדמין — עורך תוכנית</div>
-  <div class="diff-row">
-    <span class="tag tag-new">חדש</span>
-    <span class="text">שורת יעד בכל תרגיל: <b>[−] 12 [+] ק״ג × [−] 10 [+] חז'</b></span>
+      <!-- Exercise 3 — NO target -->
+      <div class="list-item">
+        <div class="overview-num">3</div>
+        <div class="ex-info">
+          <div class="overview-ex-name">פלאנק</div>
+          <div class="overview-ex-sub">3 סטים • זמן</div>
+        </div>
+        <span class="overview-sets-tag">3×</span>
+      </div>
+
+      <!-- Exercise 4 — has target, reps only (bodyweight) -->
+      <div class="list-item has-target">
+        <div class="overview-num">4</div>
+        <div class="ex-info">
+          <div class="overview-ex-name">פושאפס</div>
+          <div class="overview-ex-sub">3 סטים • משקל גוף</div>
+          <div class="overview-target-line">
+            <span class="tl-dot"></span>
+            יעד מאמן: 15 חז'
+          </div>
+        </div>
+        <span class="overview-sets-tag">3×</span>
+      </div>
+
+    </div>
+
+    <div class="fixed-footer-b">
+      <button class="btn-primary">התחילי אימון ⚡</button>
+    </div>
   </div>
 </div>
 
