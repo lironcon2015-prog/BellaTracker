@@ -16,7 +16,7 @@ const CONFIG = {
     VERSION: '1.8.2'
 };
 
-const CURRENT_VERSION = '1.8.2-13'; // חייב להיות זהה ל-version.json
+const CURRENT_VERSION = '1.8.2-14'; // חייב להיות זהה ל-version.json
 
 const FEEL_MAP_TEXT = { 'easy': 'קל', 'good': 'בינוני', 'hard': 'קשה' };
 
@@ -1206,28 +1206,52 @@ const app = {
             const exDef = this.getExerciseDef(ex.id);
             const unit = exDef.settings.unit;
             const isTime = unit === 'time';
-            const isBodyweight = unit === 'bodyweight';
             const isWeighted = unit === 'kg' || unit === 'plates';
-            const step = exDef.settings.step || 2.5;
             const uLabel = unit === 'plates' ? 'פלטות' : 'ק״ג';
-            const targetW = ex.target?.w !== undefined ? ex.target.w : null;
-            const targetR = ex.target?.r !== undefined ? ex.target.r : null;
-            const wVal = targetW !== null ? targetW : '—';
-            const rVal = targetR !== null ? targetR : '—';
-            const targetRowHtml = isTime ? '' : `
+            const hasTarget = ex.target !== undefined && ex.target !== null;
+
+            // בניית אפשרויות select למשקל
+            let wOptionsHtml = '';
+            if (isWeighted) {
+                const step = exDef.settings.step || 2.5;
+                const min = exDef.settings.min || step;
+                const max = exDef.settings.max || 100;
+                const selW = ex.target?.w;
+                for (let v = min; v <= max + 0.001; v = Math.round((v + step) * 100) / 100) {
+                    const sel = selW !== undefined && Math.abs(selW - v) < 0.01 ? 'selected' : '';
+                    const lbl = v % 1 === 0 ? v : v.toFixed(1);
+                    wOptionsHtml += `<option value="${v}" ${sel}>${lbl}</option>`;
+                }
+            }
+            // בניית אפשרויות select לחזרות (1-30)
+            const selR = ex.target?.r || 12;
+            let rOptionsHtml = '';
+            for (let v = 1; v <= 30; v++) {
+                rOptionsHtml += `<option value="${v}" ${selR === v ? 'selected' : ''}>${v}</option>`;
+            }
+
+            const pickerRowHtml = (hasTarget && !isTime) ? `
+                <div class="target-pickers-row">
+                    ${isWeighted ? `<select class="ios-picker" onchange="app.setTargetW(${i},this.value)">
+                        ${wOptionsHtml}
+                    </select>
+                    <span class="picker-sep">×</span>` : ''}
+                    <select class="ios-picker ios-picker-sm" onchange="app.setTargetR(${i},this.value)">
+                        ${rOptionsHtml}
+                    </select>
+                    <span class="picker-unit">חז'</span>
+                </div>` : '';
+
+            const targetSectionHtml = isTime ? '' : `
                 <div class="row-target">
-                    <span class="target-row-label">יעד:</span>
-                    ${isWeighted ? `<div class="stepper">
-                        <button class="step-btn" onclick="app.updateTargetField(${i},'w',${-step})">-</button>
-                        <div class="step-val" style="min-width:40px;">${wVal} ${uLabel}</div>
-                        <button class="step-btn" onclick="app.updateTargetField(${i},'w',${step})">+</button>
-                    </div>` : ''}
-                    <div class="stepper">
-                        <button class="step-btn" onclick="app.updateTargetField(${i},'r',-1)">-</button>
-                        <div class="step-val">${rVal} חז'</div>
-                        <button class="step-btn" onclick="app.updateTargetField(${i},'r',1)">+</button>
-                    </div>
+                    <label class="target-chk-label">
+                        <input type="checkbox" class="target-chk" onchange="app.toggleTarget(${i},this.checked)" ${hasTarget ? 'checked' : ''}>
+                        <span class="target-toggle-track"></span>
+                        <span class="target-toggle-text">קביעת יעד מאמן</span>
+                    </label>
+                    ${pickerRowHtml}
                 </div>`;
+
             list.innerHTML += `
             <div class="editor-row">
                 <div class="row-top">
@@ -1253,9 +1277,37 @@ const app = {
                         <button class="step-btn" onclick="app.updateTempEx(${i}, 'rest', 15)">+</button>
                     </div>
                 </div>
-                ${targetRowHtml}
+                ${targetSectionHtml}
             </div>`;
         });
+    },
+
+    toggleTarget: function(i, enabled) {
+        const ex = this.state.admin.tempExercises[i];
+        if (enabled) {
+            const exDef = this.getExerciseDef(ex.id);
+            const unit = exDef.settings.unit;
+            ex.target = {};
+            if (unit === 'kg' || unit === 'plates') {
+                ex.target.w = exDef.settings.min || exDef.settings.step || 10;
+            }
+            ex.target.r = 12;
+        } else {
+            delete ex.target;
+        }
+        this.renderEditorList();
+    },
+
+    setTargetW: function(i, val) {
+        const ex = this.state.admin.tempExercises[i];
+        if (!ex.target) ex.target = {};
+        ex.target.w = parseFloat(val);
+    },
+
+    setTargetR: function(i, val) {
+        const ex = this.state.admin.tempExercises[i];
+        if (!ex.target) ex.target = {};
+        ex.target.r = parseInt(val);
     },
 
     updateTargetField: function(i, field, delta) {
