@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>מוקאפ — טיימר אימון</title>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+    --bg: #000; --primary: #00ffee; --primary-dim: rgba(0,255,238,0.12);
+    --primary-glow: rgba(0,255,238,0.3); --text: #fff;
+    --text-sec: rgba(255,255,255,0.50); --border-dim: rgba(255,255,255,0.13);
+    --border-top: rgba(255,255,255,0.22); --bg-card: rgba(255,255,255,0.08);
+    --blur: blur(24px) saturate(200%); --radius: 16px; --font: 'Rubik', sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: var(--font); -webkit-tap-highlight-color: transparent; }
+body {
+    background: var(--bg); color: var(--text); direction: rtl; font-size: 16px;
+    min-height: 100vh; overflow-x: hidden;
+}
+body::before {
+    content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background:
+        radial-gradient(ellipse at 25% 10%, rgba(0,255,238,0.15) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 90%, rgba(0,100,120,0.13) 0%, transparent 45%);
+}
+
+/* ── Selector ── */
+.selector-bar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(0,0,0,0.85); backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    padding: 10px 16px; display: flex; gap: 8px; align-items: center;
+    overflow-x: auto;
+}
+.sel-btn {
+    background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.15);
+    color: var(--text-sec); border-radius: 20px; padding: 7px 16px;
+    font-size: 0.85rem; font-weight: 600; cursor: pointer; white-space: nowrap;
+    transition: 0.2s; font-family: var(--font);
+}
+.sel-btn.active {
+    background: var(--primary-dim); border-color: rgba(0,255,238,0.5);
+    color: var(--primary);
+}
+.sel-label { font-size: 0.78rem; color: var(--text-sec); white-space: nowrap; }
+
+/* ── Page layout ── */
+.page { padding-top: 60px; display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; padding-bottom: 40px; position: relative; z-index: 1; }
+
+/* ── Phone frame ── */
+.phone {
+    width: 375px; height: 720px; border-radius: 44px;
+    border: 2px solid rgba(255,255,255,0.15);
+    overflow: hidden; position: relative; flex-shrink: 0;
+    background: #000;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.05);
+}
+.phone-label {
+    text-align: center; margin-top: 12px; font-size: 0.82rem;
+    color: var(--text-sec); font-weight: 600;
+}
+.phone-sublabel { text-align: center; font-size: 0.72rem; color: rgba(255,255,255,0.25); margin-top: 3px; }
+
+/* ── Navbar ── */
+.navbar {
+    display: flex; justify-content: space-between; align-items: center;
+    height: 44px; padding: 0 16px; flex-shrink: 0;
+    background: rgba(0,0,0,0.35); backdrop-filter: blur(24px);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.nav-back { color: var(--primary); font-size: 1.1rem; font-weight: 600; }
+.nav-logo { font-weight: 700; font-size: 1.1rem; letter-spacing: -0.5px; }
+.nav-logo span { color: var(--primary); }
+.nav-right { width: 32px; }
+
+/* ── Badge row ── */
+.badge-row {
+    display: flex; justify-content: center; align-items: center;
+    gap: 10px; margin-bottom: 5px; position: relative;
+}
+.badge {
+    background: linear-gradient(135deg, var(--primary), rgba(0,200,180,0.9));
+    color: black; font-weight: 800; padding: 4px 16px; border-radius: 20px;
+    font-size: 0.85rem; display: inline-block;
+    box-shadow: 0 0 16px rgba(0,255,238,0.45);
+}
+
+/* ── Workout timer chips ── */
+.wt-chip-badge {
+    background: rgba(0,255,238,0.08); border: 1px solid rgba(0,255,238,0.2);
+    border-radius: 16px; padding: 3px 10px; font-size: 0.78rem;
+    color: rgba(0,255,238,0.75); font-weight: 700; font-variant-numeric: tabular-nums;
+    display: flex; align-items: center; gap: 4px; letter-spacing: 0.3px;
+}
+.wt-chip-badge .wt-icon { font-size: 0.7rem; opacity: 0.7; }
+
+.wt-nav {
+    font-size: 0.75rem; color: rgba(0,255,238,0.6); font-weight: 700;
+    font-variant-numeric: tabular-nums; letter-spacing: 0.5px;
+    display: flex; align-items: center; gap: 3px;
+}
+
+.wt-footer {
+    font-size: 0.82rem; color: rgba(0,255,238,0.6); font-weight: 700;
+    font-variant-numeric: tabular-nums; letter-spacing: 0.3px;
+    display: flex; align-items: center; gap: 4px;
+}
+
+/* ── Ex name ── */
+.ex-name { font-size: 1.4rem; font-weight: 700; text-align: center; }
+
+/* ── Target banner ── */
+.target-banner {
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    background: rgba(0,255,238,0.07); border: 1px solid rgba(0,255,238,0.28);
+    border-radius: 12px; padding: 8px 14px; margin-top: 8px;
+}
+.tb-label { font-size: 0.75rem; color: rgba(0,255,238,0.6); font-weight: 600; }
+.tb-divider { width: 1px; height: 16px; background: rgba(0,255,238,0.2); }
+.tb-value { font-size: 0.92rem; font-weight: 700; color: var(--primary); }
+
+/* ── Stats strip ── */
+.stats-strip {
+    display: flex; align-items: center; background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.10); border-top-color: rgba(255,255,255,0.18);
+    border-radius: 14px; padding: 10px 14px; margin-top: 10px; min-height: 52px;
+    justify-content: space-around; backdrop-filter: blur(16px);
+}
+.strip-sec { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.strip-lbl { font-size: 0.65rem; color: rgba(255,255,255,0.3); }
+.strip-val { font-size: 0.95rem; font-weight: 700; color: var(--primary); }
+
+/* ── Input cards ── */
+.inputs-row { display: flex; gap: 12px; }
+.input-card {
+    flex: 1; background: rgba(255,255,255,0.07);
+    border: 1px solid var(--border-dim); border-top-color: var(--border-top);
+    border-radius: 18px; padding: 14px; text-align: center;
+    backdrop-filter: var(--blur);
+}
+.input-label { font-size: 0.75rem; color: var(--text-sec); }
+.stepper-row { display: flex; align-items: center; justify-content: space-between; margin-top: 6px; }
+.stepper-btn {
+    width: 42px; height: 42px; border-radius: 50%;
+    background: rgba(255,255,255,0.09); border: 1px solid rgba(255,255,255,0.18);
+    color: #fff; font-size: 1.3rem; cursor: pointer; display: flex;
+    align-items: center; justify-content: center;
+}
+.stepper-val { font-size: 2rem; font-weight: 700; min-width: 48px; text-align: center; line-height: 1; }
+
+/* ── Feel ── */
+.feeling-row { display: flex; justify-content: center; gap: 18px; margin-bottom: 4px; }
+.feel-btn {
+    width: 44px; height: 44px; border-radius: 50%; font-size: 1.3rem;
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
+    display: flex; align-items: center; justify-content: center; cursor: pointer;
+}
+.feel-btn.selected {
+    border-color: rgba(0,255,238,0.55); background: rgba(0,255,238,0.12);
+    box-shadow: 0 0 18px rgba(0,255,238,0.25);
+}
+.feel-label { text-align: center; color: var(--primary); font-size: 0.88rem; font-weight: 500; }
+
+/* ── Action btn ── */
+.btn-primary {
+    background: linear-gradient(180deg, #00ffee 0%, #00c8be 100%);
+    color: #000; border: none; border-radius: 14px;
+    padding: 15px; font-weight: 700; font-size: 1.05rem;
+    width: 100%; cursor: pointer; font-family: var(--font);
+    box-shadow: 0 0 24px rgba(0,255,238,0.35);
+}
+.btn-quiet {
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
+    color: rgba(255,255,255,0.6); width: 100%; padding: 10px 16px;
+    font-size: 0.92rem; cursor: pointer; font-family: var(--font);
+    border-radius: 12px; text-align: center; margin-top: 8px;
+}
+
+/* ── Rest timer ── */
+.rest-box { display: flex; flex-direction: column; align-items: center; }
+.circular-timer { width: 140px; height: 140px; position: relative; }
+.circular-timer svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.bg-ring { stroke: rgba(255,255,255,0.06); stroke-width: 8; fill: none; }
+.prog-ring {
+    stroke: var(--primary); stroke-width: 8; fill: none;
+    stroke-dasharray: 408; stroke-dashoffset: 150; stroke-linecap: round;
+    filter: drop-shadow(0 0 6px rgba(0,255,238,0.5));
+}
+.timer-text {
+    position: absolute; inset: 0; display: flex; align-items: center;
+    justify-content: center; font-size: 1.5rem; font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+.rest-caption { font-size: 0.8rem; color: var(--text-sec); margin-top: 6px; }
+
+/* ── Sub footer ── */
+.sub-footer {
+    margin-top: auto; display: flex; justify-content: space-between;
+    padding: 10px 4px 4px; gap: 10px;
+}
+.text-link {
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.11);
+    color: rgba(255,255,255,0.55); border-radius: 22px; padding: 8px 16px;
+    font-size: 0.85rem; font-family: var(--font); flex: 1; text-align: center;
+}
+
+/* ── Screen inner ── */
+.screen-inner {
+    height: calc(100% - 44px); display: flex; flex-direction: column;
+    padding: 12px 18px; padding-bottom: 14px; overflow: hidden;
+}
+.header-sec { flex-shrink: 0; text-align: center; margin-bottom: 14px; }
+.workspace { flex-shrink: 0; margin-bottom: 14px; }
+.controls-area { display: flex; flex-direction: column; gap: 12px; margin-bottom: 14px; }
+
+/* ── Highlight overlay on active option ── */
+.phone.highlighted { box-shadow: 0 0 0 3px var(--primary), 0 30px 80px rgba(0,0,0,0.8); }
+.recommended-tag {
+    text-align: center; font-size: 0.72rem; color: var(--primary);
+    font-weight: 700; margin-top: 6px; letter-spacing: 0.5px;
+}
+
+/* ── Toggle rest ── */
+.toggle-bar {
+    display: flex; gap: 8px; align-items: center;
+    justify-content: center; padding: 8px 16px 0;
+}
+.toggle-btn {
+    background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.15);
+    color: var(--text-sec); border-radius: 20px; padding: 6px 14px;
+    font-size: 0.8rem; font-weight: 600; cursor: pointer; font-family: var(--font);
+    transition: 0.2s;
+}
+.toggle-btn.on { background: rgba(0,255,238,0.1); border-color: rgba(0,255,238,0.4); color: var(--primary); }
+</style>
+</head>
+<body>
+
+<div class="selector-bar">
+    <span class="sel-label">מצב:</span>
+    <button class="sel-btn active" onclick="setMode('normal')">אימון רגיל</button>
+    <button class="sel-btn" onclick="setMode('rest')">+ טיימר מנוחה</button>
+    <button class="sel-btn" onclick="setMode('target')">+ יעד מאמן</button>
+    <button class="sel-btn" onclick="setMode('full')">הכל יחד</button>
+</div>
+
+<div class="page">
+
+    <!-- OPTION A -->
+    <div>
+        <div class="phone" id="phone-a">
+            <div class="navbar">
+                <span class="nav-back">← חזרה</span>
+                <span class="nav-logo">Gym<span>Start</span></span>
+                <span class="nav-right"></span>
+            </div>
+            <div class="screen-inner">
+                <div class="header-sec">
+                    <div class="badge-row">
+                        <span class="badge" id="badge-a">סט 2 / 3</span>
+                        <span class="wt-chip-badge"><span class="wt-icon">⏱</span><span class="wt-display-a">00:00</span></span>
+                    </div>
+                    <div class="ex-name">דחיקת חזה</div>
+                    <div id="target-a" style="display:none;">
+                        <div class="target-banner">
+                            <span class="tb-label">יעד מאמן</span>
+                            <span class="tb-divider"></span>
+                            <span class="tb-value">12 ק״ג × 10 חז'</span>
+                        </div>
+                    </div>
+                    <div class="stats-strip">
+                        <div class="strip-sec"><div class="strip-lbl">אימון קודם</div><div class="strip-val">10 ק״ג × 12</div></div>
+                        <div class="strip-sec"><div class="strip-lbl">שיא</div><div class="strip-val">10 ק״ג</div></div>
+                    </div>
+                </div>
+                <div class="workspace" id="ws-a">
+                    <div class="inputs-row">
+                        <div class="input-card">
+                            <div class="input-label">משקל (ק״ג)</div>
+                            <div class="stepper-row">
+                                <div class="stepper-btn">−</div>
+                                <div class="stepper-val">10</div>
+                                <div class="stepper-btn">+</div>
+                            </div>
+                        </div>
+                        <div class="input-card">
+                            <div class="input-label">חזרות</div>
+                            <div class="stepper-row">
+                                <div class="stepper-btn">−</div>
+                                <div class="stepper-val">12</div>
+                                <div class="stepper-btn">+</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="controls-area">
+                    <div>
+                        <div class="feeling-row">
+                            <div class="feel-btn">😌</div>
+                            <div class="feel-btn selected">🙂</div>
+                            <div class="feel-btn">🥵</div>
+                        </div>
+                        <div class="feel-label">בינוני (טוב)</div>
+                    </div>
+                    <div id="action-a">
+                        <button class="btn-primary">סיום סט</button>
+                        <button class="btn-quiet">שינוי סדר</button>
+                    </div>
+                    <div id="rest-a" class="rest-box" style="display:none;">
+                        <div class="circular-timer">
+                            <svg viewBox="0 0 150 150">
+                                <circle class="bg-ring" cx="75" cy="75" r="65"></circle>
+                                <circle class="prog-ring" cx="75" cy="75" r="65"></circle>
+                            </svg>
+                            <div class="timer-text" id="rest-val-a">01:10</div>
+                        </div>
+                        <div class="rest-caption">זמן מנוחה</div>
+                    </div>
+                </div>
+                <div class="sub-footer">
+                    <div class="text-link">בטל סט אחרון</div>
+                    <div class="text-link">דלג תרגיל</div>
+                </div>
+            </div>
+        </div>
+        <div class="phone-label">אפשרות A</div>
+        <div class="phone-sublabel">טיימר ב-badge row</div>
+        <div class="recommended-tag" id="rec-a">★ המלצתי</div>
+    </div>
+
+    <!-- OPTION B -->
+    <div>
+        <div class="phone" id="phone-b">
+            <div class="navbar">
+                <span class="nav-back">← חזרה</span>
+                <span class="nav-logo">Gym<span>Start</span></span>
+                <span class="wt-nav">⏱ <span class="wt-display-b">00:00</span></span>
+            </div>
+            <div class="screen-inner">
+                <div class="header-sec">
+                    <div class="badge-row">
+                        <span class="badge">סט 2 / 3</span>
+                    </div>
+                    <div class="ex-name">דחיקת חזה</div>
+                    <div id="target-b" style="display:none;">
+                        <div class="target-banner">
+                            <span class="tb-label">יעד מאמן</span>
+                            <span class="tb-divider"></span>
+                            <span class="tb-value">12 ק״ג × 10 חז'</span>
+                        </div>
+                    </div>
+                    <div class="stats-strip">
+                        <div class="strip-sec"><div class="strip-lbl">אימון קודם</div><div class="strip-val">10 ק״ג × 12</div></div>
+                        <div class="strip-sec"><div class="strip-lbl">שיא</div><div class="strip-val">10 ק״ג</div></div>
+                    </div>
+                </div>
+                <div class="workspace" id="ws-b">
+                    <div class="inputs-row">
+                        <div class="input-card">
+                            <div class="input-label">משקל (ק״ג)</div>
+                            <div class="stepper-row">
+                                <div class="stepper-btn">−</div>
+                                <div class="stepper-val">10</div>
+                                <div class="stepper-btn">+</div>
+                            </div>
+                        </div>
+                        <div class="input-card">
+                            <div class="input-label">חזרות</div>
+                            <div class="stepper-row">
+                                <div class="stepper-btn">−</div>
+                                <div class="stepper-val">12</div>
+                                <div class="stepper-btn">+</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="controls-area">
+                    <div>
+                        <div class="feeling-row">
+                            <div class="feel-btn">😌</div>
+                            <div class="feel-btn selected">🙂</div>
+                            <div class="feel-btn">🥵</div>
+                        </div>
+                        <div class="feel-label">בינוני (טוב)</div>
+                    </div>
+                    <div id="action-b">
+                        <button class="btn-primary">סיום סט</button>
+                        <button class="btn-quiet">שינוי סדר</button>
+                    </div>
+                    <div id="rest-b" class="rest-box" style="display:none;">
+                        <div class="circular-timer">
+                            <svg viewBox="0 0 150 150">
+                                <circle class="bg-ring" cx="75" cy="75" r="65"></circle>
+                                <circle class="prog-ring" cx="75" cy="75" r="65"></circle>
+                            </svg>
+                            <div class="timer-text" id="rest-val-b">01:10</div>
+                        </div>
+                        <div class="rest-caption">זמן מנוחה</div>
+                    </div>
+                </div>
+                <div class="sub-footer">
+                    <div class="text-link">בטל סט אחרון</div>
+                    <div class="text-link">דלג תרגיל</div>
+                </div>
+            </div>
+        </div>
+        <div class="phone-label">אפשרות B</div>
+        <div class="phone-sublabel">טיימר ב-navbar</div>
+        <div class="recommended-tag" style="opacity:0;">-</div>
+    </div>
+
+    <!-- OPTION C -->
+    <div>
+        <div class="phone" id="phone-c">
+            <div class="navbar">
+                <span class="nav-back">← חזרה</span>
+                <span class="nav-logo">Gym<span>Start</span></span>
+                <span class="nav-right"></span>
+            </div>
+            <div class="screen-inner">
+                <div class="header-sec">
+                    <div class="badge-row">
+                        <span class="badge">סט 2 / 3</span>
+                    </div>
+                    <div class="ex-name">דחיקת חזה</div>
+                    <div id="target-c" style="display:none;">
+                        <div class="target-banner">
+                            <span class="tb-label">יעד מאמן</span>
+                            <span class="tb-divider"></span>
+                            <span class="tb-value">12 ק״ג × 10 חז'</span>
+                        </div>
+                    </div>
+                    <div class="stats-strip">
+                        <div class="strip-sec"><div class="strip-lbl">אימון קודם</div><div class="strip-val">10 ק״ג × 12</div></div>
+                        <div class="strip-sec"><div class="strip-lbl">שיא</div><div class="strip-val">10 ק״ג</div></div>
+                    </div>
+                </div>
+                <div class="workspace" id="ws-c">
+                    <div class="inputs-row">
+                        <div class="input-card">
+                            <div class="input-label">משקל (ק״ג)</div>
+                            <div class="stepper-row">
+                                <div class="stepper-btn">−</div>
+                                <div class="stepper-val">10</div>
+                                <div class="stepper-btn">+</div>
+                            </div>
+                        </div>
+                        <div class="input-card">
+                            <div class="input-label">חזרות</div>
+                            <div class="stepper-row">
+                                <div class="stepper-btn">−</div>
+                                <div class="stepper-val">12</div>
+                                <div class="stepper-btn">+</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="controls-area">
+                    <div>
+                        <div class="feeling-row">
+                            <div class="feel-btn">😌</div>
+                            <div class="feel-btn selected">🙂</div>
+                            <div class="feel-btn">🥵</div>
+                        </div>
+                        <div class="feel-label">בינוני (טוב)</div>
+                    </div>
+                    <div id="action-c">
+                        <button class="btn-primary">סיום סט</button>
+                        <button class="btn-quiet">שינוי סדר</button>
+                    </div>
+                    <div id="rest-c" class="rest-box" style="display:none;">
+                        <div class="circular-timer">
+                            <svg viewBox="0 0 150 150">
+                                <circle class="bg-ring" cx="75" cy="75" r="65"></circle>
+                                <circle class="prog-ring" cx="75" cy="75" r="65"></circle>
+                            </svg>
+                            <div class="timer-text" id="rest-val-c">01:10</div>
+                        </div>
+                        <div class="rest-caption">זמן מנוחה</div>
+                    </div>
+                </div>
+                <div class="sub-footer">
+                    <div class="text-link">בטל סט אחרון</div>
+                    <div class="wt-footer">⏱ <span class="wt-display-c">00:00</span></div>
+                    <div class="text-link">דלג תרגיל</div>
+                </div>
+            </div>
+        </div>
+        <div class="phone-label">אפשרות C</div>
+        <div class="phone-sublabel">טיימר ב-sub-footer</div>
+        <div class="recommended-tag" style="opacity:0;">-</div>
+    </div>
+
+</div>
+
+<script>
+// ── Ticking workout timer ──────────────────────────────────────────────────
+const startTime = Date.now();
+
+function fmtTime(ms) {
+    const tot = Math.floor(ms / 1000);
+    const m = Math.floor(tot / 60);
+    const s = tot % 60;
+    return `${m < 10 ? '0'+m : m}:${s < 10 ? '0'+s : s}`;
+}
+
+// Animate rest timer ring
+let restStart = null;
+const REST_DUR = 90;
+const MAX_OFFSET = 408;
+
+function tick() {
+    const elapsed = Date.now() - startTime;
+    const str = fmtTime(elapsed);
+    document.querySelectorAll('.wt-display-a, .wt-display-b, .wt-display-c').forEach(el => el.textContent = str);
+
+    // rest timer
+    if (restStart !== null) {
+        const re = Math.floor((Date.now() - restStart) / 1000);
+        const rm = Math.floor(re / 60), rs = re % 60;
+        const restStr = `${rm<10?'0'+rm:rm}:${rs<10?'0'+rs:rs}`;
+        ['rest-val-a','rest-val-b','rest-val-c'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = restStr;
+        });
+        const ratio = Math.min(re / REST_DUR, 1);
+        const offset = MAX_OFFSET - MAX_OFFSET * ratio;
+        document.querySelectorAll('.prog-ring').forEach(r => r.style.strokeDashoffset = offset);
+    }
+}
+setInterval(tick, 250);
+
+// ── Modes ──────────────────────────────────────────────────────────────────
+let currentMode = 'normal';
+
+function setMode(mode) {
+    currentMode = mode;
+    document.querySelectorAll('.sel-btn').forEach((b,i) => {
+        b.classList.toggle('active', ['normal','rest','target','full'][i] === mode);
+    });
+
+    const showRest   = mode === 'rest'   || mode === 'full';
+    const showTarget = mode === 'target' || mode === 'full';
+
+    // rest timer
+    restStart = showRest ? (Date.now() - 20000) : null; // simulate 20s elapsed
+    ['rest-a','rest-b','rest-c'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = showRest ? 'flex' : 'none';
+    });
+    // hide action buttons when rest is showing (matches app behavior)
+    ['action-a','action-b','action-c'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = showRest ? 'none' : 'block';
+    });
+    // workspace — hide during rest on option A to simulate
+    // (in reality it stays, but we want to show no scroll)
+
+    // target banner
+    ['target-a','target-b','target-c'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = showTarget ? 'block' : 'none';
+    });
+
+    // reset ring
+    if (!showRest) {
+        document.querySelectorAll('.prog-ring').forEach(r => r.style.strokeDashoffset = MAX_OFFSET * 0.3);
+        ['rest-val-a','rest-val-b','rest-val-c'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = '00:00';
+        });
+    }
+}
+
+// initial ring
+document.querySelectorAll('.prog-ring').forEach(r => r.style.strokeDashoffset = MAX_OFFSET * 0.3);
+tick();
+</script>
+</body>
+</html>
