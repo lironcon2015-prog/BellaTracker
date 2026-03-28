@@ -16,7 +16,7 @@ const CONFIG = {
     VERSION: '1.8.2'
 };
 
-const CURRENT_VERSION = '1.8.2-17'; // חייב להיות זהה ל-version.json
+const CURRENT_VERSION = '1.8.2-18'; // חייב להיות זהה ל-version.json
 
 const FEEL_MAP_TEXT = { 'easy': 'קל', 'good': 'בינוני', 'hard': 'קשה' };
 
@@ -229,6 +229,7 @@ const app = {
             backBtn.style.visibility = 'hidden';
             if(adminBtn) adminBtn.style.display = 'flex';
             this.stopAllTimers();
+            this._stopWorkoutTimer();
             this.state.active.on = false;
         } else {
             backBtn.style.visibility = 'visible';
@@ -238,18 +239,90 @@ const app = {
 
     goBack: function() {
         const activeScreen = document.querySelector('.screen.active').id;
-        if (activeScreen === 'screen-active') {
+        if (activeScreen !== 'screen-active') {
+            if (activeScreen === 'screen-overview') this.nav('screen-program-select');
+            else this.nav('screen-home');
+            return;
+        }
+
+        // ── חזרה בתוך פלואו האימון ──
+        this.stopRestTimer();
+        const decisionVisible = document.getElementById('decision-buttons').style.display !== 'none';
+        const exIdx = this.state.active.exIdx;
+        const setIdx = this.state.active.setIdx;
+
+        if (decisionVisible) {
+            // אחרי סיום כל הסטים → חזרה לסט האחרון, ביטול הסט האחרון
+            this._undoLastSet();
+            this.state.active.setIdx = this.state.active.totalSets;
+            this._restoreLoggingUI();
+        } else if (setIdx > 1) {
+            // סט > 1 → חזרה לסט הקודם, ביטול הסט האחרון
+            this._undoLastSet();
+            this.state.active.setIdx--;
+            this._restoreLoggingUI();
+        } else if (exIdx === 0) {
+            // תרגיל ראשון, סט ראשון — המקרה היחיד שיוצאים
             if (confirm("לצאת מהאימון?")) {
+                this._stopWorkoutTimer();
                 this.stopAllTimers();
                 this.state.active.on = false;
                 localStorage.removeItem(CONFIG.KEYS.ACTIVE_WORKOUT);
                 this.nav('screen-overview');
             }
-        } else if (activeScreen === 'screen-overview') {
-            this.nav('screen-program-select');
+            return;
         } else {
-            this.nav('screen-home');
+            // סט ראשון של תרגיל מאוחר → חזרה לתרגיל הקודם במצב החלטה
+            this.state.active.exIdx--;
+            const prevInst = this.state.active.sessionExercises[this.state.active.exIdx];
+            this.state.active.setIdx = prevInst.sets || 3;
+            this.loadActiveExercise();
+            this._showDecisionUI();
         }
+        this.saveActiveState();
+    },
+
+    // מחיקת הסט האחרון שנרשם לתרגיל הנוכחי
+    _undoLastSet: function() {
+        const exInst = this.state.active.sessionExercises[this.state.active.exIdx];
+        const logIdx = this.state.active.log.findIndex(l => l.id === exInst.id);
+        if (logIdx !== -1) {
+            this.state.active.log[logIdx].sets.pop();
+            if (this.state.active.log[logIdx].sets.length === 0) {
+                this.state.active.log.splice(logIdx, 1);
+            }
+        }
+    },
+
+    // שחזור ממשק תיעוד סט (מסתיר decision-buttons, מציג btn-finish)
+    _restoreLoggingUI: function() {
+        document.getElementById('decision-buttons').style.display = 'none';
+        document.getElementById('next-ex-preview').style.display = 'none';
+        document.getElementById('btn-add-core').style.display = 'none';
+        document.getElementById('btn-finish').style.display = 'flex';
+        document.getElementById('rest-timer-area').style.display = 'none';
+        document.getElementById('set-badge').innerText = `סט ${this.state.active.setIdx} / ${this.state.active.totalSets}`;
+        const reorderBtn = document.getElementById('btn-reorder');
+        reorderBtn.style.display = this.state.active.setIdx === 1 ? 'block' : 'none';
+        this.state.active.feel = 'good';
+        this.updateFeelUI();
+    },
+
+    // הצגת מסך החלטה (אחרי כל סטים) לתרגיל הנוכחי
+    _showDecisionUI: function() {
+        document.getElementById('btn-reorder').style.display = 'none';
+        document.getElementById('btn-finish').style.display = 'none';
+        document.getElementById('rest-timer-area').style.display = 'none';
+        document.getElementById('decision-buttons').style.display = 'flex';
+        const nextEx = this.state.active.sessionExercises[this.state.active.exIdx + 1];
+        const nextEl = document.getElementById('next-ex-preview');
+        nextEl.innerText = nextEx ? `הבא בתור: ${nextEx.name}` : "הבא בתור: סיום אימון";
+        nextEl.style.display = 'block';
+        const exInst = this.state.active.sessionExercises[this.state.active.exIdx];
+        const exDef = this.getExerciseDef(exInst.id);
+        const addBtn = document.getElementById('btn-add-core');
+        if (addBtn) addBtn.style.display = exDef.cat === 'core' ? 'block' : 'none';
+        document.getElementById('set-badge').innerText = `סט ${this.state.active.totalSets} / ${this.state.active.totalSets}`;
     },
 
     /* --- RENDERING --- */
@@ -850,7 +923,6 @@ const app = {
     stopAllTimers: function() {
         this.stopStopwatch();
         this.stopRestTimer();
-        this._stopWorkoutTimer();
     },
 
     _startWorkoutTimer: function() {
@@ -859,7 +931,8 @@ const app = {
         const val = document.getElementById('workout-timer-val');
         if (!el || !val) return;
         el.style.display = 'flex';
-        this.state.active.timerInterval = setInterval(() => {
+        // שדה נפרד — לא state.active.timerInterval שמשמש גם את ה-stopwatch
+        this._navTimerInterval = setInterval(() => {
             const elapsed = this.state.active.accumulatedTime + (Date.now() - this.state.active.startTime);
             const tot = Math.floor(elapsed / 1000);
             const m = Math.floor(tot / 60);
@@ -869,9 +942,9 @@ const app = {
     },
 
     _stopWorkoutTimer: function() {
-        if (this.state.active.timerInterval) {
-            clearInterval(this.state.active.timerInterval);
-            this.state.active.timerInterval = null;
+        if (this._navTimerInterval) {
+            clearInterval(this._navTimerInterval);
+            this._navTimerInterval = null;
         }
         const el = document.getElementById('workout-timer-nav');
         if (el) el.style.display = 'none';
@@ -931,6 +1004,7 @@ const app = {
 
     finishWorkout: function() {
         this.stopAllTimers();
+        this._stopWorkoutTimer();
         const currentSessionDur = Date.now() - this.state.active.startTime;
         const totalDurMs = this.state.active.accumulatedTime + currentSessionDur;
         const durationMin = Math.round(totalDurMs / 60000);
