@@ -50,7 +50,11 @@ body::before {
     -webkit-backdrop-filter: blur(24px) saturate(200%);
     border-bottom: 1px solid rgba(255,255,255,0.08);
 }
-.nav-left, .nav-right { width: 40px; display: flex; align-items: center; justify-content: center; }
+.nav-left, .nav-right { min-width: 40px; display: flex; align-items: center; justify-content: center; }
+#workout-timer-nav {
+    font-size: 0.75rem; color: rgba(0,255,238,0.65); font-weight: 700;
+    font-variant-numeric: tabular-nums; letter-spacing: 0.3px; white-space: nowrap;
+}
 .logo { font-weight: 700; font-size: 1.5rem; letter-spacing: -1px; text-align: center; flex: 1; }
 .logo .highlight { color: var(--primary); filter: drop-shadow(0 0 8px rgba(0,255,238,0.6)); }
 .icon-btn { background: none; border: none; color: rgba(255,255,255,0.5); padding: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; }

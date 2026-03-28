@@ -16,7 +16,7 @@ const CONFIG = {
     VERSION: '1.8.2'
 };
 
-const CURRENT_VERSION = '1.8.2-16'; // חייב להיות זהה ל-version.json
+const CURRENT_VERSION = '1.8.2-17'; // חייב להיות זהה ל-version.json
 
 const FEEL_MAP_TEXT = { 'easy': 'קל', 'good': 'בינוני', 'hard': 'קשה' };
 
@@ -207,6 +207,7 @@ const app = {
             }
             document.getElementById('resume-modal').style.display = 'none';
             this.loadActiveExercise();
+            this._startWorkoutTimer();
             this.nav('screen-active');
         }
     },
@@ -476,6 +477,7 @@ const app = {
         };
         this.saveActiveState();
         this.loadActiveExercise();
+        this._startWorkoutTimer();
         this.nav('screen-active');
     },
 
@@ -848,6 +850,31 @@ const app = {
     stopAllTimers: function() {
         this.stopStopwatch();
         this.stopRestTimer();
+        this._stopWorkoutTimer();
+    },
+
+    _startWorkoutTimer: function() {
+        this._stopWorkoutTimer();
+        const el = document.getElementById('workout-timer-nav');
+        const val = document.getElementById('workout-timer-val');
+        if (!el || !val) return;
+        el.style.display = 'flex';
+        this.state.active.timerInterval = setInterval(() => {
+            const elapsed = this.state.active.accumulatedTime + (Date.now() - this.state.active.startTime);
+            const tot = Math.floor(elapsed / 1000);
+            const m = Math.floor(tot / 60);
+            const s = tot % 60;
+            val.textContent = `${m < 10 ? '0'+m : m}:${s < 10 ? '0'+s : s}`;
+        }, 1000);
+    },
+
+    _stopWorkoutTimer: function() {
+        if (this.state.active.timerInterval) {
+            clearInterval(this.state.active.timerInterval);
+            this.state.active.timerInterval = null;
+        }
+        const el = document.getElementById('workout-timer-nav');
+        if (el) el.style.display = 'none';
     },
 
     addSet: function() {
