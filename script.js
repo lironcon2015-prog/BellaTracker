@@ -16,7 +16,7 @@ const CONFIG = {
     VERSION: '1.8.2'
 };
 
-const CURRENT_VERSION = '1.8.2-19'; // חייב להיות זהה ל-version.json
+const CURRENT_VERSION = '1.8.2-20'; // חייב להיות זהה ל-version.json
 
 const FEEL_MAP_TEXT = { 'easy': 'קל', 'good': 'בינוני', 'hard': 'קשה' };
 
@@ -1253,15 +1253,17 @@ const app = {
                 });
             }
         }
-        this.state.history.push({
+        const histEntry = {
             date: summary.date,
             timestamp: Date.now(),
             program: summary.program,
             programTitle: summary.programTitle,
             data: summary.data,
             duration: summary.duration,
-            achievedTargets: achieved.length > 0 ? achieved : undefined
-        });
+        };
+        // אין להוסיף achievedTargets כשהוא ריק — Firestore דוחה undefined
+        if (achieved.length > 0) histEntry.achievedTargets = achieved;
+        this.state.history.push(histEntry);
         this.saveData();
         localStorage.removeItem(CONFIG.KEYS.ACTIVE_WORKOUT);
         if (typeof FirebaseManager !== 'undefined' && FirebaseManager.isConfigured()) {
@@ -2245,8 +2247,10 @@ const FirebaseManager = {
     async saveArchiveToCloud() {
         if (!this.init()) return false;
         try {
+            // JSON round-trip מסנן undefined שגורם ל-Firestore לזרוק שגיאה
+            const cleanHistory = JSON.parse(JSON.stringify(app.state.history));
             await this._db.collection('gymstart_data').doc('archive').set({
-                items: app.state.history,
+                items: cleanHistory,
                 updatedAt: Date.now()
             });
             return true;
