@@ -16,7 +16,7 @@ const CONFIG = {
     VERSION: '1.8.2'
 };
 
-const CURRENT_VERSION = '1.8.2-18'; // חייב להיות זהה ל-version.json
+const CURRENT_VERSION = '1.8.2-19'; // חייב להיות זהה ל-version.json
 
 const FEEL_MAP_TEXT = { 'easy': 'קל', 'good': 'בינוני', 'hard': 'קשה' };
 
@@ -1228,43 +1228,49 @@ const app = {
     finishAndCopy: function() {
         const summary = this.state.active.summary;
         if (!summary) return;
-        const doSaveAndReload = () => {
-            const achieved = summary.achievedTargets || [];
-            // מחיקת targets שהושגו מהרוטינה — המאמן יראה שהיעד נמחק ויידע להגדיר חדש
-            if (achieved.length > 0 && this.state.currentProgId) {
-                const routine = this.state.routines[this.state.currentProgId];
-                if (routine) {
-                    achieved.forEach(at => {
-                        const ex = routine.exercises.find(e => e.id === at.id);
-                        if (ex) delete ex.target;
-                    });
-                }
-            }
-            this.state.history.push({
-                date: summary.date,
-                timestamp: Date.now(),
-                program: summary.program,
-                programTitle: summary.programTitle,
-                data: summary.data,
-                duration: summary.duration,
-                achievedTargets: achieved.length > 0 ? achieved : undefined
-            });
-            this.saveData();
-            localStorage.removeItem(CONFIG.KEYS.ACTIVE_WORKOUT);
-            if (typeof FirebaseManager !== 'undefined' && FirebaseManager.isConfigured()) {
-                FirebaseManager.saveArchiveToCloud().then(() => window.location.reload());
-            } else {
-                window.location.reload();
-            }
-        };
+
+        // העתקה ל-clipboard — fire and forget, לא תלוי בשמירה
         const txt = document.getElementById('summary-text').innerText;
         if (navigator.clipboard) {
-            navigator.clipboard.writeText(txt).then(doSaveAndReload).catch(doSaveAndReload);
+            navigator.clipboard.writeText(txt).catch(() => {});
         } else {
-            const ta = document.createElement('textarea');
-            ta.value = txt;
-            document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
-            doSaveAndReload();
+            try {
+                const ta = document.createElement('textarea');
+                ta.value = txt;
+                document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+            } catch(e) {}
+        }
+
+        // שמירה + sync לענן — תמיד מתבצע, לא תלוי ב-clipboard
+        const achieved = summary.achievedTargets || [];
+        // מחיקת targets שהושגו מהרוטינה — המאמן יראה שהיעד נמחק ויידע להגדיר חדש
+        if (achieved.length > 0 && this.state.currentProgId) {
+            const routine = this.state.routines[this.state.currentProgId];
+            if (routine) {
+                achieved.forEach(at => {
+                    const ex = routine.exercises.find(e => e.id === at.id);
+                    if (ex) delete ex.target;
+                });
+            }
+        }
+        this.state.history.push({
+            date: summary.date,
+            timestamp: Date.now(),
+            program: summary.program,
+            programTitle: summary.programTitle,
+            data: summary.data,
+            duration: summary.duration,
+            achievedTargets: achieved.length > 0 ? achieved : undefined
+        });
+        this.saveData();
+        localStorage.removeItem(CONFIG.KEYS.ACTIVE_WORKOUT);
+        if (typeof FirebaseManager !== 'undefined' && FirebaseManager.isConfigured()) {
+            FirebaseManager.saveArchiveToCloud().then(ok => {
+                if (!ok) alert('לא ניתן לשמור לענן. הנתונים נשמרו מקומית.');
+                window.location.reload();
+            });
+        } else {
+            window.location.reload();
         }
     },
 
