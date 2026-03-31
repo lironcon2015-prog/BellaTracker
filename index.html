@@ -472,7 +472,7 @@
                 <div class="version-tag">GymStart V1.8.2</div>
             </div>
             <div class="fixed-footer">
-                <button class="btn-primary big-btn" onclick="app.nav('screen-program-select')">התחילי אימון</button>
+                <button id="btn-start-home" class="btn-primary big-btn" onclick="app.nav('screen-program-select')">התחילי אימון</button>
                 <div style="height: 15px;"></div>
                 <button class="btn-outline" onclick="app.showHistory()">היסטוריה</button>
                 <div style="height: 25px;"></div>
@@ -485,7 +485,7 @@
         <!-- SCREEN 1.5: PROGRAM SELECT -->
         <div id="screen-program-select" class="screen">
             <div class="scroll-content">
-                <h2 class="page-title">בחרי תוכנית</h2>
+                <h2 id="prog-select-title" class="page-title">בחרי תוכנית</h2>
                 <div id="prog-list-container" class="card-grid"></div>
             </div>
         </div>
@@ -497,7 +497,7 @@
                 <div id="overview-list" class="simple-list"></div>
             </div>
             <div class="fixed-footer">
-                <button class="btn-primary" onclick="app.startWorkout()">התחילי אימון ⚡</button>
+                <button id="btn-start-overview" class="btn-primary" onclick="app.startWorkout()">התחילי אימון ⚡</button>
             </div>
         </div>
 

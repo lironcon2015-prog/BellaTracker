@@ -16,7 +16,7 @@ const CONFIG = {
     VERSION: '1.8.2'
 };
 
-const CURRENT_VERSION = '1.8.2-21'; // חייב להיות זהה ל-version.json
+const CURRENT_VERSION = '1.8.2-22'; // חייב להיות זהה ל-version.json
 
 const FEEL_MAP_TEXT = { 'easy': 'קל', 'good': 'בינוני', 'hard': 'קשה' };
 
@@ -203,6 +203,26 @@ const app = {
             coachBtns[0].textContent = isMale ? '☁️ טעֵן מהענן' : '☁️ טעני מהענן';
             coachBtns[1].textContent = isMale ? '📂 טעֵן מקובץ' : '📂 טעני מקובץ';
         }
+
+        // כפתורי התחל/התחילי אימון
+        const btnStartHome = document.getElementById('btn-start-home');
+        if (btnStartHome) btnStartHome.textContent = isMale ? 'התחל אימון' : 'התחילי אימון';
+        const btnStartOverview = document.getElementById('btn-start-overview');
+        if (btnStartOverview) btnStartOverview.textContent = isMale ? 'התחל אימון ⚡' : 'התחילי אימון ⚡';
+
+        // כותרת בחירת תוכנית
+        const progSelectTitle = document.getElementById('prog-select-title');
+        if (progSelectTitle) progSelectTitle.textContent = isMale ? 'בחר תוכנית' : 'בחרי תוכנית';
+
+        // כפתור הוסף תרגיל בטן
+        const btnAddCore = document.getElementById('btn-add-core');
+        if (btnAddCore) btnAddCore.textContent = isMale ? '+ הוסף תרגיל בטן' : '+ הוסיפי תרגיל בטן';
+
+        // גיבוי ושחזור היסטוריה
+        const backupP = document.querySelector('#history-backup-sheet > p');
+        if (backupP) backupP.textContent = isMale ? 'בחר יעד הגיבוי' : 'בחרי יעד הגיבוי';
+        const restoreP = document.querySelector('#history-restore-sheet > p');
+        if (restoreP) restoreP.textContent = isMale ? 'בחר מקור השחזור' : 'בחרי מקור השחזור';
     },
 
     renderAuthPanel: function() {
@@ -844,8 +864,8 @@ const app = {
             });
             const lastPt = points[points.length - 1].split(',');
             sparkHtml = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="display:block;overflow:visible;">
-                <polyline points="${points.join(' ')}" fill="none" stroke="#00ffee" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.7"/>
-                <circle cx="${lastPt[0]}" cy="${lastPt[1]}" r="2.5" fill="#00ffee"/>
+                <polyline points="${points.join(' ')}" fill="none" stroke="var(--primary)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.7"/>
+                <circle cx="${lastPt[0]}" cy="${lastPt[1]}" r="2.5" fill="var(--primary)"/>
             </svg>`;
         }
 
@@ -1452,7 +1472,7 @@ const app = {
     openAddCoreExercise: function() {
         this.state.userSelector.mode = 'add';
         this.renderUserSelector('core');
-        document.getElementById('user-sel-title').innerText = "הוסיפי תרגיל";
+        document.getElementById('user-sel-title').innerText = this.state.activeProfile === 'male' ? "הוסף תרגיל" : "הוסיפי תרגיל";
         document.getElementById('user-selector-modal').style.display = 'flex';
     },
 
