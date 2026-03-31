@@ -39,20 +39,20 @@ body::before {
         radial-gradient(ellipse at 60% 40%, rgba(0,180,160,0.06) 0%, transparent 40%);
 }
 
-/* ── Male profile theme — royal blue ── */
+/* ── Male profile theme — electric blue #00aaff ── */
 body.theme-male {
-    --primary: #5b8dee;
-    --primary-rgb: 91, 141, 238;
-    --primary-2: #3d6ecc;
+    --primary: #00aaff;
+    --primary-rgb: 0, 170, 255;
+    --primary-2: #0080dd;
     --btn-fg: #fff;
     --primary-dim: rgba(var(--primary-rgb), 0.12);
     --primary-glow: rgba(var(--primary-rgb), 0.3);
 }
 body.theme-male::before {
     background:
-        radial-gradient(ellipse at 25% 10%, rgba(91,141,238,0.15) 0%, transparent 50%),
-        radial-gradient(ellipse at 80% 90%, rgba(50,90,200,0.13) 0%, transparent 45%),
-        radial-gradient(ellipse at 60% 40%, rgba(70,110,220,0.06) 0%, transparent 40%);
+        radial-gradient(ellipse at 25% 10%, rgba(var(--primary-rgb),0.15) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 90%, rgba(0,100,180,0.13) 0%, transparent 45%),
+        radial-gradient(ellipse at 60% 40%, rgba(0,130,200,0.06) 0%, transparent 40%);
 }
 
 .app-container {

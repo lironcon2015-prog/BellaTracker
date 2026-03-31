@@ -16,7 +16,7 @@ const CONFIG = {
     VERSION: '1.8.2'
 };
 
-const CURRENT_VERSION = '1.8.2-22'; // חייב להיות זהה ל-version.json
+const CURRENT_VERSION = '1.8.2-23'; // חייב להיות זהה ל-version.json
 
 const FEEL_MAP_TEXT = { 'easy': 'קל', 'good': 'בינוני', 'hard': 'קשה' };
 
@@ -179,6 +179,12 @@ const app = {
     applyProfileTheme: function() {
         const isMale = this.state.activeProfile === 'male';
         document.body.classList.toggle('theme-male', isMale);
+
+        // החלפת אייקון דינמית (favicon + apple-touch-icon)
+        const iconHref = isMale ? './icon-male.png' : './icon.png';
+        document.querySelectorAll('link[rel="apple-touch-icon"], link[rel="icon"]').forEach(el => {
+            el.href = iconHref;
+        });
 
         // ברכה ראשית
         const greeting = document.getElementById('greeting');

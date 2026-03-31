@@ -1,11 +1,11 @@
 /**
  * GymStart — Service Worker
- * Version: 1.8.2-22
+ * Version: 1.8.2-23
  * Cache First strategy — עבודה אופליין מלאה.
  * העלה את CACHE_VERSION בכל עדכון קוד.
  */
 
-const CACHE_VERSION = 'gymstart-v1.8.2-22';
+const CACHE_VERSION = 'gymstart-v1.8.2-23';
 
 const FILES_TO_CACHE = [
     './index.html',
@@ -13,7 +13,8 @@ const FILES_TO_CACHE = [
     './script.js',
     './version.json',
     './manifest.json',
-    './icon.png'
+    './icon.png',
+    './icon-male.png'
 ];
 
 self.addEventListener('install', event => {
