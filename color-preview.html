@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GymStart — Color Preview</title>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+    font-family: 'Rubik', sans-serif;
+    background: #111;
+    color: #fff;
+    padding: 20px;
+    direction: rtl;
+}
+h2 {
+    text-align: center;
+    color: #888;
+    font-size: 0.85rem;
+    font-weight: 400;
+    margin-bottom: 24px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+.grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    max-width: 1100px;
+    margin: 0 auto;
+}
+@media (max-width: 700px) {
+    .grid { grid-template-columns: 1fr; }
+}
+
+/* ── Phone Frame ── */
+.phone {
+    background: #000;
+    border-radius: 36px;
+    overflow: hidden;
+    border: 2px solid rgba(255,255,255,0.12);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+    position: relative;
+    aspect-ratio: 9/19;
+    display: flex;
+    flex-direction: column;
+}
+.phone-label {
+    text-align: center;
+    margin-bottom: 10px;
+    font-size: 0.8rem;
+    color: #666;
+}
+.phone-label strong {
+    display: block;
+    font-size: 1rem;
+    margin-bottom: 2px;
+}
+
+/* ── Ambient bg layer ── */
+.ambient {
+    position: absolute; inset: 0; z-index: 0; pointer-events: none;
+}
+
+/* ── Content ── */
+.phone-inner {
+    position: relative; z-index: 1;
+    display: flex; flex-direction: column;
+    height: 100%; padding: 0;
+}
+
+/* navbar */
+.navbar {
+    display: flex; justify-content: space-between; align-items: center;
+    height: 44px; padding: 0 16px; flex-shrink: 0;
+    background: rgba(0,0,0,0.35);
+    backdrop-filter: blur(24px);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    margin-top: 12px;
+}
+.logo { font-weight: 700; font-size: 1.2rem; letter-spacing: -1px; flex:1; text-align:center; }
+.icon { width: 20px; height: 20px; opacity: 0.4; }
+
+/* screen content */
+.screen { padding: 16px; flex: 1; overflow: hidden; }
+
+.hero { text-align: center; margin-bottom: 16px; }
+.hero h1 { font-size: 1.3rem; font-weight: 700; margin-bottom: 2px; }
+.hero p  { font-size: 0.78rem; opacity: 0.5; }
+
+/* stats cards */
+.stats-row { display: flex; gap: 8px; margin-bottom: 8px; }
+.stat-card {
+    flex: 1; padding: 10px 12px; border-radius: 14px;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.1);
+}
+.stat-val { font-size: 1.5rem; font-weight: 700; line-height: 1; margin-bottom: 2px; }
+.stat-label { font-size: 0.62rem; opacity: 0.5; }
+.progress-wrap { height: 3px; background: rgba(255,255,255,0.1); border-radius: 2px; margin-top: 6px; }
+.progress-fill { height: 100%; border-radius: 2px; width: 60%; }
+
+/* big button */
+.btn-main {
+    width: 100%; padding: 14px; border-radius: 16px; border: none;
+    font-family: 'Rubik', sans-serif; font-size: 0.95rem; font-weight: 600;
+    cursor: pointer; margin-top: 10px;
+    letter-spacing: 0.3px;
+}
+
+/* admin panel peek */
+.admin-peek {
+    margin-top: 10px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 14px; padding: 10px 12px;
+}
+.admin-peek-label { font-size: 0.6rem; opacity: 0.4; margin-bottom: 8px; letter-spacing: 1px; text-transform: uppercase; }
+.profile-toggle { display: flex; gap: 6px; }
+.profile-btn {
+    flex: 1; padding: 7px 4px; border-radius: 10px; font-family: 'Rubik', sans-serif;
+    font-size: 0.72rem; cursor: pointer; border: 1.5px solid;
+}
+
+/* streak badge */
+.streak {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 4px 10px; border-radius: 20px; font-size: 0.7rem;
+    font-weight: 600; margin-bottom: 12px;
+}
+
+/* ════════════════════════════════════════ */
+/* FEMALE (reference)                       */
+/* ════════════════════════════════════════ */
+.female .ambient {
+    background:
+        radial-gradient(ellipse at 25% 10%, rgba(0,255,238,0.15) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 90%, rgba(0,100,120,0.13) 0%, transparent 45%);
+}
+.female .logo .hl { color: #00ffee; filter: drop-shadow(0 0 6px rgba(0,255,238,0.6)); }
+.female .stat-val { color: #00ffee; }
+.female .progress-fill { background: #00ffee; }
+.female .btn-main { background: #00ffee; color: #000; }
+.female .streak { background: rgba(0,255,238,0.12); color: #00ffee; border: 1px solid rgba(0,255,238,0.25); }
+.female .profile-btn.active { border-color: #00ffee; background: rgba(0,255,238,0.12); color: #00ffee; }
+.female .profile-btn.inactive { border-color: rgba(255,255,255,0.15); background: transparent; color: #666; }
+
+/* ════════════════════════════════════════ */
+/* OPTION A — #3d8bff Electric Blue         */
+/* ════════════════════════════════════════ */
+.optA .ambient {
+    background:
+        radial-gradient(ellipse at 25% 10%, rgba(61,139,255,0.15) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 90%, rgba(30,80,180,0.13) 0%, transparent 45%);
+}
+.optA .logo .hl { color: #3d8bff; filter: drop-shadow(0 0 6px rgba(61,139,255,0.6)); }
+.optA .stat-val { color: #3d8bff; }
+.optA .progress-fill { background: #3d8bff; }
+.optA .btn-main { background: #3d8bff; color: #fff; }
+.optA .streak { background: rgba(61,139,255,0.12); color: #3d8bff; border: 1px solid rgba(61,139,255,0.25); }
+.optA .profile-btn.active { border-color: #3d8bff; background: rgba(61,139,255,0.12); color: #3d8bff; }
+.optA .profile-btn.inactive { border-color: rgba(255,255,255,0.15); background: transparent; color: #666; }
+
+/* ════════════════════════════════════════ */
+/* OPTION B — #0099ff Sky Blue              */
+/* ════════════════════════════════════════ */
+.optB .ambient {
+    background:
+        radial-gradient(ellipse at 25% 10%, rgba(0,153,255,0.15) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 90%, rgba(0,80,160,0.13) 0%, transparent 45%);
+}
+.optB .logo .hl { color: #0099ff; filter: drop-shadow(0 0 6px rgba(0,153,255,0.6)); }
+.optB .stat-val { color: #0099ff; }
+.optB .progress-fill { background: #0099ff; }
+.optB .btn-main { background: #0099ff; color: #fff; }
+.optB .streak { background: rgba(0,153,255,0.12); color: #0099ff; border: 1px solid rgba(0,153,255,0.25); }
+.optB .profile-btn.active { border-color: #0099ff; background: rgba(0,153,255,0.12); color: #0099ff; }
+.optB .profile-btn.inactive { border-color: rgba(255,255,255,0.15); background: transparent; color: #666; }
+
+/* ════════════════════════════════════════ */
+/* OPTION C — #5b8dee Royal Blue            */
+/* ════════════════════════════════════════ */
+.optC .ambient {
+    background:
+        radial-gradient(ellipse at 25% 10%, rgba(91,141,238,0.15) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 90%, rgba(50,90,200,0.13) 0%, transparent 45%);
+}
+.optC .logo .hl { color: #5b8dee; filter: drop-shadow(0 0 6px rgba(91,141,238,0.6)); }
+.optC .stat-val { color: #5b8dee; }
+.optC .progress-fill { background: #5b8dee; }
+.optC .btn-main { background: #5b8dee; color: #fff; }
+.optC .streak { background: rgba(91,141,238,0.12); color: #5b8dee; border: 1px solid rgba(91,141,238,0.25); }
+.optC .profile-btn.active { border-color: #5b8dee; background: rgba(91,141,238,0.12); color: #5b8dee; }
+.optC .profile-btn.inactive { border-color: rgba(255,255,255,0.15); background: transparent; color: #666; }
+</style>
+</head>
+<body>
+
+<h2>GymStart — Color Preview: Male Profile Theme</h2>
+
+<div class="grid">
+
+    <!-- FEMALE REFERENCE -->
+    <div>
+        <div class="phone-label">
+            <strong style="color:#00ffee;">ציאן (נקבה — reference)</strong>
+            <span>#00ffee</span>
+        </div>
+        <div class="phone female">
+            <div class="ambient"></div>
+            <div class="phone-inner">
+                <div class="navbar">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 5 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                    <div class="logo">GYM<span class="hl">START</span></div>
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                </div>
+                <div class="screen">
+                    <div class="hero">
+                        <h1>ברוכה הבאה</h1>
+                        <p>מוכנה לאימון?</p>
+                    </div>
+                    <div style="text-align:center;">
+                        <div class="streak">▲ 4 שבועות ברצף</div>
+                    </div>
+                    <div class="stats-row">
+                        <div class="stat-card">
+                            <div class="stat-val">3</div>
+                            <div class="stat-label">אימונים השבוע</div>
+                            <div class="progress-wrap"><div class="progress-fill" style="width:100%"></div></div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-val">4</div>
+                            <div class="stat-label">עקביות</div>
+                        </div>
+                    </div>
+                    <div class="stats-row">
+                        <div class="stat-card">
+                            <div class="stat-val" style="font-size:1.1rem;">2</div>
+                            <div class="stat-label">ימים מאז</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-val" style="font-size:1.1rem;">47</div>
+                            <div class="stat-label">סה״כ אימונים</div>
+                        </div>
+                    </div>
+                    <button class="btn-main">התחילי אימון</button>
+                    <div class="admin-peek">
+                        <div class="admin-peek-label">פרופיל</div>
+                        <div class="profile-toggle">
+                            <button class="profile-btn active">👩 נקבה</button>
+                            <button class="profile-btn inactive">👨 זכר</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- OPTION A -->
+    <div>
+        <div class="phone-label">
+            <strong style="color:#3d8bff;">A — כחול חשמלי</strong>
+            <span>#3d8bff</span>
+        </div>
+        <div class="phone optA">
+            <div class="ambient"></div>
+            <div class="phone-inner">
+                <div class="navbar">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 5 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                    <div class="logo">GYM<span class="hl">START</span></div>
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                </div>
+                <div class="screen">
+                    <div class="hero">
+                        <h1>ברוך הבא</h1>
+                        <p>מוכן לאימון?</p>
+                    </div>
+                    <div style="text-align:center;">
+                        <div class="streak">▲ 3 שבועות ברצף</div>
+                    </div>
+                    <div class="stats-row">
+                        <div class="stat-card">
+                            <div class="stat-val">2</div>
+                            <div class="stat-label">אימונים השבוע</div>
+                            <div class="progress-wrap"><div class="progress-fill" style="width:66%"></div></div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-val">3</div>
+                            <div class="stat-label">עקביות</div>
+                        </div>
+                    </div>
+                    <div class="stats-row">
+                        <div class="stat-card">
+                            <div class="stat-val" style="font-size:1.1rem;">1</div>
+                            <div class="stat-label">ימים מאז</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-val" style="font-size:1.1rem;">31</div>
+                            <div class="stat-label">סה״כ אימונים</div>
+                        </div>
+                    </div>
+                    <button class="btn-main">התחל אימון</button>
+                    <div class="admin-peek">
+                        <div class="admin-peek-label">פרופיל</div>
+                        <div class="profile-toggle">
+                            <button class="profile-btn inactive">👩 נקבה</button>
+                            <button class="profile-btn active">👨 זכר</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- OPTION B -->
+    <div>
+        <div class="phone-label">
+            <strong style="color:#0099ff;">B — כחול שמיים</strong>
+            <span>#0099ff</span>
+        </div>
+        <div class="phone optB">
+            <div class="ambient"></div>
+            <div class="phone-inner">
+                <div class="navbar">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 5 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                    <div class="logo">GYM<span class="hl">START</span></div>
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                </div>
+                <div class="screen">
+                    <div class="hero">
+                        <h1>ברוך הבא</h1>
+                        <p>מוכן לאימון?</p>
+                    </div>
+                    <div style="text-align:center;">
+                        <div class="streak">▲ 3 שבועות ברצף</div>
+                    </div>
+                    <div class="stats-row">
+                        <div class="stat-card">
+                            <div class="stat-val">2</div>
+                            <div class="stat-label">אימונים השבוע</div>
+                            <div class="progress-wrap"><div class="progress-fill" style="width:66%"></div></div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-val">3</div>
+                            <div class="stat-label">עקביות</div>
+                        </div>
+                    </div>
+                    <div class="stats-row">
+                        <div class="stat-card">
+                            <div class="stat-val" style="font-size:1.1rem;">1</div>
+                            <div class="stat-label">ימים מאז</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-val" style="font-size:1.1rem;">31</div>
+                            <div class="stat-label">סה״כ אימונים</div>
+                        </div>
+                    </div>
+                    <button class="btn-main">התחל אימון</button>
+                    <div class="admin-peek">
+                        <div class="admin-peek-label">פרופיל</div>
+                        <div class="profile-toggle">
+                            <button class="profile-btn inactive">👩 נקבה</button>
+                            <button class="profile-btn active">👨 זכר</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- OPTION C -->
+    <div>
+        <div class="phone-label">
+            <strong style="color:#5b8dee;">C — כחול רויאל</strong>
+            <span>#5b8dee</span>
+        </div>
+        <div class="phone optC">
+            <div class="ambient"></div>
+            <div class="phone-inner">
+                <div class="navbar">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 5 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                    <div class="logo">GYM<span class="hl">START</span></div>
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                </div>
+                <div class="screen">
+                    <div class="hero">
+                        <h1>ברוך הבא</h1>
+                        <p>מוכן לאימון?</p>
+                    </div>
+                    <div style="text-align:center;">
+                        <div class="streak">▲ 3 שבועות ברצף</div>
+                    </div>
+                    <div class="stats-row">
+                        <div class="stat-card">
+                            <div class="stat-val">2</div>
+                            <div class="stat-label">אימונים השבוע</div>
+                            <div class="progress-wrap"><div class="progress-fill" style="width:66%"></div></div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-val">3</div>
+                            <div class="stat-label">עקביות</div>
+                        </div>
+                    </div>
+                    <div class="stats-row">
+                        <div class="stat-card">
+                            <div class="stat-val" style="font-size:1.1rem;">1</div>
+                            <div class="stat-label">ימים מאז</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-val" style="font-size:1.1rem;">31</div>
+                            <div class="stat-label">סה״כ אימונים</div>
+                        </div>
+                    </div>
+                    <button class="btn-main">התחל אימון</button>
+                    <div class="admin-peek">
+                        <div class="admin-peek-label">פרופיל</div>
+                        <div class="profile-toggle">
+                            <button class="profile-btn inactive">👩 נקבה</button>
+                            <button class="profile-btn active">👨 זכר</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html>
