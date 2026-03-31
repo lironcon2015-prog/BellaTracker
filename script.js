@@ -16,7 +16,7 @@ const CONFIG = {
     VERSION: '1.8.2'
 };
 
-const CURRENT_VERSION = '1.8.2-23'; // חייב להיות זהה ל-version.json
+const CURRENT_VERSION = '1.8.2-24'; // חייב להיות זהה ל-version.json
 
 const FEEL_MAP_TEXT = { 'easy': 'קל', 'good': 'בינוני', 'hard': 'קשה' };
 
@@ -2523,6 +2523,8 @@ function saveFirebaseConfig() {
     if (!raw) { alert('יש להדביק את בלוק ה-firebaseConfig.'); return; }
 
     let jsonStr = raw;
+    // נרמול גרשיים מתולתלים (iOS/WhatsApp) לגרשיים ישרים
+    jsonStr = jsonStr.replace(/[\u201C\u201D\u201E]/g, '"').replace(/[\u2018\u2019\u201A]/g, "'");
     jsonStr = jsonStr.replace(/^[\s\S]*?=\s*/, '').replace(/;?\s*$/, '').trim();
     jsonStr = jsonStr.replace(/([{,]\s*)([a-zA-Z_][a-zA-Z0-9_]*)\s*:/g, '$1"$2":');
     jsonStr = jsonStr.replace(/:\s*'([^']*)'/g, ': "$1"');
