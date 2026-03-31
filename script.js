@@ -16,7 +16,7 @@ const CONFIG = {
     VERSION: '1.8.2'
 };
 
-const CURRENT_VERSION = '1.8.2-20'; // חייב להיות זהה ל-version.json
+const CURRENT_VERSION = '1.8.2-21'; // חייב להיות זהה ל-version.json
 
 const FEEL_MAP_TEXT = { 'easy': 'קל', 'good': 'בינוני', 'hard': 'קשה' };
 
@@ -89,11 +89,14 @@ const app = {
         },
         userSelector: { mode: null },
         historySelection:[],
-        viewHistoryIdx: null
+        viewHistoryIdx: null,
+        activeProfile: 'female',
+        authLevel: 0
     },
 
     init: function() {
         try {
+            this.initProfile();
             this.loadData();
             this.checkActiveWorkout();
             // badge למאמן — רק אחרי "שחזר מהענן", לא אחרי שמירה רגילה של אימון
@@ -104,6 +107,7 @@ const app = {
             this.renderHome();
             this.renderProgramSelect();
             if(!this.state.tempActive) this.nav('screen-home');
+            this.applyProfileTheme();
         } catch (e) {
             console.error(e);
             alert("שגיאה בטעינת נתונים.");
@@ -111,18 +115,24 @@ const app = {
     },
 
     loadData: function() {
-        const h = localStorage.getItem(CONFIG.KEYS.HISTORY);
+        const keys = this.getActiveKeys();
+        const h = localStorage.getItem(keys.HISTORY);
         this.state.history = h ? JSON.parse(h) :[];
 
-        const r = localStorage.getItem(CONFIG.KEYS.ROUTINES);
+        const r = localStorage.getItem(keys.ROUTINES);
         let loadedRoutines = r ? JSON.parse(r) : null;
         if (!loadedRoutines) {
-            this.state.routines = JSON.parse(JSON.stringify(DEFAULT_ROUTINES_V17));
-            for(const pid in this.state.routines) {
-                this.state.routines[pid].exercises.forEach(ex => {
-                    const bankEx = BASE_BANK_INIT.find(b => b.id === ex.id);
-                    if(bankEx) { ex.name = bankEx.name; ex.unit = bankEx.settings.unit; ex.cat = bankEx.cat; }
-                });
+            if (this.state.activeProfile === 'male') {
+                // פרופיל זכר מתחיל ריק — אין תוכניות ברירת מחדל
+                this.state.routines = {};
+            } else {
+                this.state.routines = JSON.parse(JSON.stringify(DEFAULT_ROUTINES_V17));
+                for(const pid in this.state.routines) {
+                    this.state.routines[pid].exercises.forEach(ex => {
+                        const bankEx = BASE_BANK_INIT.find(b => b.id === ex.id);
+                        if(bankEx) { ex.name = bankEx.name; ex.unit = bankEx.settings.unit; ex.cat = bankEx.cat; }
+                    });
+                }
             }
         } else {
             this.state.routines = loadedRoutines;
@@ -138,9 +148,128 @@ const app = {
     },
 
     saveData: function() {
-        localStorage.setItem(CONFIG.KEYS.ROUTINES, JSON.stringify(this.state.routines));
-        localStorage.setItem(CONFIG.KEYS.HISTORY, JSON.stringify(this.state.history));
+        const keys = this.getActiveKeys();
+        localStorage.setItem(keys.ROUTINES, JSON.stringify(this.state.routines));
+        localStorage.setItem(keys.HISTORY, JSON.stringify(this.state.history));
         localStorage.setItem(CONFIG.KEYS.EXERCISES, JSON.stringify(this.state.exercises));
+    },
+
+    /* --- PROFILE & AUTH --- */
+
+    getActiveKeys: function() {
+        const p = this.state.activeProfile;
+        return {
+            ROUTINES: p === 'male' ? 'gymstart_routines_male' : CONFIG.KEYS.ROUTINES,
+            HISTORY:  p === 'male' ? 'gymstart_history_male'  : CONFIG.KEYS.HISTORY
+        };
+    },
+
+    initProfile: function() {
+        const level = parseInt(localStorage.getItem('gymstart_auth_level') || '0');
+        this.state.authLevel = level;
+        if (level === 0) {
+            this.state.activeProfile = 'female';
+        } else if (level === 1) {
+            this.state.activeProfile = 'male';
+        } else if (level === 2) {
+            this.state.activeProfile = localStorage.getItem('gymstart_active_profile') || 'female';
+        }
+    },
+
+    applyProfileTheme: function() {
+        const isMale = this.state.activeProfile === 'male';
+        document.body.classList.toggle('theme-male', isMale);
+
+        // ברכה ראשית
+        const greeting = document.getElementById('greeting');
+        if (greeting) {
+            greeting.textContent = isMale ? 'ברוך הבא' : 'ברוכה הבאה';
+            const sub = greeting.nextElementSibling;
+            if (sub) sub.textContent = isMale ? 'מוכן לאימון?' : 'מוכנה לאימון?';
+        }
+        // placeholder הערת מאמן
+        const tipInput = document.getElementById('tip-input');
+        if (tipInput) tipInput.placeholder = isMale ? 'כתוב הערה למתאמן...' : 'כתוב הערה למתאמנת...';
+
+        // מודל הישגים
+        const achP = document.querySelector('#achievements-modal > .oled-modal > p, #achievements-modal .oled-modal p');
+        if (achP) achP.textContent = isMale ? 'המתאמן השיג את היעדים הבאים:' : 'המתאמנת השיגה את היעדים הבאים:';
+
+        // coach update sheet
+        const coachP = document.querySelector('#coach-update-sheet p');
+        if (coachP) coachP.textContent = isMale ? 'טעֵן קונפיגורציה שנשלחה מהמאמן' : 'טעני קונפיגורציה שנשלחה מהמאמן';
+        const coachBtns = document.querySelectorAll('#coach-update-sheet .btn-primary, #coach-update-sheet .btn-outline');
+        if (coachBtns.length >= 2) {
+            coachBtns[0].textContent = isMale ? '☁️ טעֵן מהענן' : '☁️ טעני מהענן';
+            coachBtns[1].textContent = isMale ? '📂 טעֵן מקובץ' : '📂 טעני מקובץ';
+        }
+    },
+
+    renderAuthPanel: function() {
+        const panel = document.getElementById('auth-panel');
+        if (!panel) return;
+        const level = this.state.authLevel;
+        const p = this.state.activeProfile;
+        if (level === 0) {
+            panel.innerHTML = `
+                <div class="oled-card compact">
+                    <p style="font-size:0.82rem;color:var(--text-sec);margin:0 0 12px;">הזן קוד כדי לשנות פרופיל</p>
+                    <div style="display:flex;gap:8px;">
+                        <input type="password" id="auth-pin-input" class="minimal-input" placeholder="קוד גישה" maxlength="8" inputmode="numeric" style="flex:1;direction:ltr;">
+                        <button class="btn-primary-small" onclick="app.submitAuthCode()">אשר</button>
+                    </div>
+                </div>`;
+        } else if (level === 1) {
+            panel.innerHTML = `
+                <div class="oled-card compact" style="display:flex;align-items:center;gap:10px;">
+                    <span style="font-size:1.2em;">👤</span>
+                    <span style="color:var(--primary);">מחובר כמתאמן</span>
+                </div>`;
+        } else if (level === 2) {
+            panel.innerHTML = `
+                <div class="oled-card compact">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                        <span style="font-weight:600;">פרופיל פעיל</span>
+                        <span style="font-size:0.8rem;color:var(--text-sec);">מצב מאמן 🔑</span>
+                    </div>
+                    <div style="display:flex;gap:8px;">
+                        <button onclick="app.switchProfile('female')" style="flex:1;padding:10px 4px;border-radius:10px;border:1.5px solid ${p==='female'?'var(--primary)':'rgba(255,255,255,0.15)'};background:${p==='female'?'var(--primary-dim)':'transparent'};color:${p==='female'?'var(--primary)':'#aaa'};font-family:var(--font);font-size:0.88rem;cursor:pointer;">👩 נקבה</button>
+                        <button onclick="app.switchProfile('male')" style="flex:1;padding:10px 4px;border-radius:10px;border:1.5px solid ${p==='male'?'var(--primary)':'rgba(255,255,255,0.15)'};background:${p==='male'?'var(--primary-dim)':'transparent'};color:${p==='male'?'var(--primary)':'#aaa'};font-family:var(--font);font-size:0.88rem;cursor:pointer;">👨 זכר</button>
+                    </div>
+                </div>`;
+        }
+    },
+
+    submitAuthCode: function() {
+        const PIN_MALE  = '1111';
+        const PIN_ADMIN = '9999';
+        const input = document.getElementById('auth-pin-input');
+        if (!input) return;
+        const code = input.value.trim();
+        if (code === PIN_ADMIN) {
+            localStorage.setItem('gymstart_auth_level', '2');
+            this.state.authLevel = 2;
+            this.state.activeProfile = localStorage.getItem('gymstart_active_profile') || 'female';
+            this.renderAuthPanel();
+            this.applyProfileTheme();
+            alert('מצב מאמן פעיל. ניתן לעבור בין פרופילים.');
+        } else if (code === PIN_MALE) {
+            if (confirm('מעבר לפרופיל מתאמן. הפעולה קבועה במכשיר זה. להמשיך?')) {
+                localStorage.setItem('gymstart_auth_level', '1');
+                localStorage.setItem('gymstart_active_profile', 'male');
+                location.reload();
+            }
+        } else {
+            alert('קוד שגוי.');
+            input.value = '';
+        }
+    },
+
+    switchProfile: function(profile) {
+        if (this.state.authLevel < 2) return;
+        this.saveData();
+        localStorage.setItem('gymstart_active_profile', profile);
+        location.reload();
     },
 
     // ── Helper: האם תרגיל הוא מדידת זמן ──────────────────────────────────────
@@ -498,15 +627,17 @@ const app = {
     },
 
     _getWeeklyTarget: function() {
-        try { return JSON.parse(localStorage.getItem('gymstart_v1_settings') || '{}').weeklyTarget || 3; }
+        const key = this.state.activeProfile === 'male' ? 'gymstart_v1_settings_male' : 'gymstart_v1_settings';
+        try { return JSON.parse(localStorage.getItem(key) || '{}').weeklyTarget || 3; }
         catch(e) { return 3; }
     },
 
     _setWeeklyTarget: function(n) {
+        const key = this.state.activeProfile === 'male' ? 'gymstart_v1_settings_male' : 'gymstart_v1_settings';
         try {
-            const s = JSON.parse(localStorage.getItem('gymstart_v1_settings') || '{}');
+            const s = JSON.parse(localStorage.getItem(key) || '{}');
             s.weeklyTarget = n;
-            localStorage.setItem('gymstart_v1_settings', JSON.stringify(s));
+            localStorage.setItem(key, JSON.stringify(s));
         } catch(e) {}
     },
 
@@ -1368,6 +1499,7 @@ const app = {
         document.getElementById('admin-view-ex-edit').style.display = 'none';
         this.renderAdminList();
         document.getElementById('admin-weekly-target').textContent = this._getWeeklyTarget();
+        this.renderAuthPanel();
     },
 
     closeAdmin: function() {
@@ -1790,8 +1922,8 @@ const app = {
     },
 
     exportConfig: function() {
-        const data = { type: 'config', ver: CONFIG.VERSION, date: new Date().toLocaleDateString(), routines: this.state.routines, exercises: this.state.exercises };
-        this.downloadJSON(data, `gymstart_config_v${CONFIG.VERSION}_${Date.now()}.json`);
+        const data = { type: 'config', ver: CONFIG.VERSION, profile: this.state.activeProfile, date: new Date().toLocaleDateString(), routines: this.state.routines, exercises: this.state.exercises };
+        this.downloadJSON(data, `gymstart_config_${this.state.activeProfile}_v${CONFIG.VERSION}_${Date.now()}.json`);
     },
 
     importConfig: function(input) {
@@ -1861,14 +1993,15 @@ const app = {
 
     // עדכון קונפיג אוטומטי בענן לאחר כל שמירה
     _autoSyncConfig: function() {
+        const traineeWord = this.state.activeProfile === 'male' ? 'המתאמן' : 'המתאמנת';
         if (typeof FirebaseManager !== 'undefined' && FirebaseManager.isConfigured()) {
             FirebaseManager.saveConfigToCloud().then(ok => {
                 alert(ok
-                    ? '✓ הקונפיג עודכן ונשלח לענן!\nהמתאמנת יכולה ללחוץ "קבל עדכון מהמאמן".'
+                    ? `✓ הקונפיג עודכן ונשלח לענן!\n${traineeWord} יכול/ה ללחוץ "קבל עדכון מהמאמן".`
                     : 'הקונפיג נשמר מקומית, אך הייתה שגיאה בשליחה לענן.');
             });
         } else {
-            alert('הקונפיג נשמר.\nלא מוגדר חיבור ענן — ייצא ידנית כדי לשלוח למתאמנת.');
+            alert(`הקונפיג נשמר.\nלא מוגדר חיבור ענן — ייצא ידנית כדי לשלוח ל${traineeWord}.`);
         }
     },
 
@@ -2247,9 +2380,10 @@ const FirebaseManager = {
     async saveArchiveToCloud() {
         if (!this.init()) return false;
         try {
+            const archiveDoc = app.state.activeProfile === 'male' ? 'archive_male' : 'archive';
             // JSON round-trip מסנן undefined שגורם ל-Firestore לזרוק שגיאה
             const cleanHistory = JSON.parse(JSON.stringify(app.state.history));
-            await this._db.collection('gymstart_data').doc('archive').set({
+            await this._db.collection('gymstart_data').doc(archiveDoc).set({
                 items: cleanHistory,
                 updatedAt: Date.now()
             });
@@ -2263,9 +2397,11 @@ const FirebaseManager = {
     async loadArchiveFromCloud() {
         if (!this.init()) { alert('Firebase לא מוגדר.'); return; }
         try {
-            const doc = await this._db.collection('gymstart_data').doc('archive').get();
+            const archiveDoc = app.state.activeProfile === 'male' ? 'archive_male' : 'archive';
+            const historyKey = app.state.activeProfile === 'male' ? 'gymstart_history_male' : CONFIG.KEYS.HISTORY;
+            const doc = await this._db.collection('gymstart_data').doc(archiveDoc).get();
             if (!doc.exists || !doc.data().items) { alert('לא נמצאה היסטוריה בענן.'); return; }
-            localStorage.setItem(CONFIG.KEYS.HISTORY, JSON.stringify(doc.data().items));
+            localStorage.setItem(historyKey, JSON.stringify(doc.data().items));
             // דגל — בטעינה הבאה app.init יציג badge אם יש יעדים שלא אושרו
             localStorage.setItem('gymstart_check_ach_on_load', '1');
             alert('ההיסטוריה שוחזרה מהענן!');
@@ -2278,8 +2414,14 @@ const FirebaseManager = {
     async saveConfigToCloud() {
         if (!this.init()) return false;
         try {
-            await this._db.collection('gymstart_data').doc('config').set({
+            const profileDoc = app.state.activeProfile === 'male' ? 'config_male' : 'config';
+            // תוכניות אימון — נפרד לפי פרופיל
+            await this._db.collection('gymstart_data').doc(profileDoc).set({
                 routines: app.state.routines,
+                updatedAt: Date.now()
+            });
+            // מאגר תרגילים — משותף לשני הפרופילים
+            await this._db.collection('gymstart_data').doc('exercises_bank').set({
                 exercises: app.state.exercises,
                 updatedAt: Date.now()
             });
@@ -2293,11 +2435,24 @@ const FirebaseManager = {
     async loadConfigFromCloud() {
         if (!this.init()) { alert('Firebase לא מוגדר.'); return; }
         try {
-            const doc = await this._db.collection('gymstart_data').doc('config').get();
-            if (!doc.exists) { alert('לא נמצא קונפיג בענן.'); return; }
-            const data = doc.data();
-            if (data.routines)  localStorage.setItem(CONFIG.KEYS.ROUTINES, JSON.stringify(data.routines));
-            if (data.exercises) localStorage.setItem(CONFIG.KEYS.EXERCISES, JSON.stringify(data.exercises));
+            const profileDoc = app.state.activeProfile === 'male' ? 'config_male' : 'config';
+            const routinesKey = app.state.activeProfile === 'male' ? 'gymstart_routines_male' : CONFIG.KEYS.ROUTINES;
+            const [configDoc, exDoc] = await Promise.all([
+                this._db.collection('gymstart_data').doc(profileDoc).get(),
+                this._db.collection('gymstart_data').doc('exercises_bank').get()
+            ]);
+            if (!configDoc.exists) {
+                alert('לא נמצא קונפיג בענן לפרופיל זה.\nגבה קודם מהמכשיר הנוכחי.');
+                return;
+            }
+            const data = configDoc.data();
+            if (data.routines) localStorage.setItem(routinesKey, JSON.stringify(data.routines));
+            // תרגילים: מ-exercises_bank, fallback ל-config.exercises (תאימות לאחור)
+            if (exDoc.exists && exDoc.data().exercises) {
+                localStorage.setItem(CONFIG.KEYS.EXERCISES, JSON.stringify(exDoc.data().exercises));
+            } else if (data.exercises) {
+                localStorage.setItem(CONFIG.KEYS.EXERCISES, JSON.stringify(data.exercises));
+            }
             alert('הקונפיג שוחזר מהענן!');
             location.reload();
         } catch(e) { alert('שגיאה בטעינה: ' + e.message); }
