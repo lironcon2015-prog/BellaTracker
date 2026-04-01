@@ -16,7 +16,7 @@ const CONFIG = {
     VERSION: '1.8.2'
 };
 
-const CURRENT_VERSION = '1.8.2-24'; // חייב להיות זהה ל-version.json
+const CURRENT_VERSION = '1.8.2-25'; // חייב להיות זהה ל-version.json
 
 const FEEL_MAP_TEXT = { 'easy': 'קל', 'good': 'בינוני', 'hard': 'קשה' };
 
@@ -259,8 +259,8 @@ const app = {
                         <span style="font-size:0.8rem;color:var(--text-sec);">מצב מאמן 🔑</span>
                     </div>
                     <div style="display:flex;gap:8px;">
-                        <button onclick="app.switchProfile('female')" style="flex:1;padding:10px 4px;border-radius:10px;border:1.5px solid ${p==='female'?'var(--primary)':'rgba(255,255,255,0.15)'};background:${p==='female'?'var(--primary-dim)':'transparent'};color:${p==='female'?'var(--primary)':'#aaa'};font-family:var(--font);font-size:0.88rem;cursor:pointer;">👩 נקבה</button>
-                        <button onclick="app.switchProfile('male')" style="flex:1;padding:10px 4px;border-radius:10px;border:1.5px solid ${p==='male'?'var(--primary)':'rgba(255,255,255,0.15)'};background:${p==='male'?'var(--primary-dim)':'transparent'};color:${p==='male'?'var(--primary)':'#aaa'};font-family:var(--font);font-size:0.88rem;cursor:pointer;">👨 זכר</button>
+                        <button onclick="app.switchProfile('female')" style="flex:1;padding:10px 4px;border-radius:10px;border:1.5px solid ${p==='female'?'var(--primary)':'rgba(255,255,255,0.15)'};background:${p==='female'?'var(--primary-dim)':'transparent'};color:${p==='female'?'var(--primary)':'#aaa'};font-family:var(--font);font-size:0.88rem;cursor:pointer;">👩 בלה</button>
+                        <button onclick="app.switchProfile('male')" style="flex:1;padding:10px 4px;border-radius:10px;border:1.5px solid ${p==='male'?'var(--primary)':'rgba(255,255,255,0.15)'};background:${p==='male'?'var(--primary-dim)':'transparent'};color:${p==='male'?'var(--primary)':'#aaa'};font-family:var(--font);font-size:0.88rem;cursor:pointer;">👨 איתמר</button>
                     </div>
                 </div>`;
         }
