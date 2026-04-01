@@ -276,6 +276,18 @@ body.theme-male::before {
 #screen-home .info-card { margin-bottom: 6px; }
 #screen-home .version-tag { margin-top: 8px; }
 
+/* ── מסך בית — מסכים קטנים (iPhone 14 ומטה) ── */
+@media (max-height: 860px) {
+    #screen-home .hero h1 { font-size: 1.8rem; }
+    #screen-home .hero p { font-size: 0.95rem; }
+    #screen-home .hero { margin-top: 2px; margin-bottom: 6px; }
+    #screen-home .dash-streak-badge { margin-bottom: 5px; }
+    #screen-home .dash-stats-wrap { gap: 4px; margin-bottom: 6px; }
+    #screen-home .dash-stat { padding: 7px 6px; }
+    #screen-home .info-card { margin-bottom: 4px; }
+    #screen-home .version-tag { margin-top: 4px; }
+}
+
 /* ── Admin screen — polished ── */
 .admin-section-label {
     font-size: 0.68rem; font-weight: 700; color: rgba(255,255,255,0.25);
