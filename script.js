@@ -16,7 +16,7 @@ const CONFIG = {
     VERSION: '1.8.2'
 };
 
-const CURRENT_VERSION = '1.8.2-25'; // חייב להיות זהה ל-version.json
+const CURRENT_VERSION = '1.8.2-26'; // חייב להיות זהה ל-version.json
 
 const FEEL_MAP_TEXT = { 'easy': 'קל', 'good': 'בינוני', 'hard': 'קשה' };
 
@@ -1385,6 +1385,7 @@ const app = {
     finishAndCopy: function() {
         const summary = this.state.active.summary;
         if (!summary) return;
+        this.state.active.summary = null; // מניעת double-save בלחיצה כפולה
 
         // העתקה ל-clipboard — fire and forget, לא תלוי בשמירה
         const txt = document.getElementById('summary-text').innerText;
