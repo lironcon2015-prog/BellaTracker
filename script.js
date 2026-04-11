@@ -16,7 +16,7 @@ const CONFIG = {
     VERSION: '1.8.2'
 };
 
-const CURRENT_VERSION = '1.8.2-26'; // חייב להיות זהה ל-version.json
+const CURRENT_VERSION = '1.8.2-27'; // חייב להיות זהה ל-version.json
 
 const FEEL_MAP_TEXT = { 'easy': 'קל', 'good': 'בינוני', 'hard': 'קשה' };
 
@@ -1386,6 +1386,10 @@ const app = {
         const summary = this.state.active.summary;
         if (!summary) return;
         this.state.active.summary = null; // מניעת double-save בלחיצה כפולה
+
+        // פידבק ויזואלי מיידי — נראה לחוץ עד ה-reload
+        const saveBtn = document.querySelector('#screen-summary .btn-primary.big-btn');
+        if (saveBtn) saveBtn.classList.add('btn-committed');
 
         // העתקה ל-clipboard — fire and forget, לא תלוי בשמירה
         const txt = document.getElementById('summary-text').innerText;

@@ -145,6 +145,7 @@ body.theme-male::before {
     100% { transform: scale(1); }
 }
 .btn-primary.pressed { animation: pressFlash 0.18s ease-out forwards; }
+.btn-primary.btn-committed { transform: scale(0.97); opacity: 0.55; box-shadow: none; cursor: default; pointer-events: none; }
 
 /* ── Outline Button ── */
 .btn-outline {
