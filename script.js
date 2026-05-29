@@ -16,7 +16,7 @@ const CONFIG = {
     VERSION: '1.8.2'
 };
 
-const CURRENT_VERSION = '1.8.5-0'; // חייב להיות זהה ל-version.json
+const CURRENT_VERSION = '1.8.6-0'; // חייב להיות זהה ל-version.json
 
 const FEEL_MAP_TEXT = { 'easy': 'קל', 'good': 'בינוני', 'hard': 'קשה' };
 
@@ -1291,10 +1291,10 @@ const app = {
         const disp = document.getElementById('rest-timer-val');
         const ring = document.getElementById('rest-ring-prog');
         const ringWrap = area ? area.querySelector('.rest-ring-lg') : null;
-        const cap = document.getElementById('rest-caption');
+        const eyebrow = document.getElementById('rest-eyebrow');
         if (disp) disp.classList.remove('rest-done');
         if (ringWrap) ringWrap.classList.remove('done');
-        if (cap) cap.textContent = 'זמן מנוחה';
+        if (eyebrow) eyebrow.textContent = 'מנוחה';
         area.style.display = 'flex';
         // מצב מנוחה — מסתיר סטטיסטיקה ונותן זרקור לטיימר
         const container = document.querySelector('.active-container');
@@ -1308,44 +1308,24 @@ const app = {
         this.state.active.restInterval = setInterval(() => {
             const dur = this.state.active.restDuration || durationSec;
             const elapsed = Math.floor((Date.now() - this.state.active.restStartTime) / 1000);
-            const remaining = Math.max(0, dur - elapsed);
-            // ספירה לאחור — תצוגה יוקרתית יותר
-            let m = Math.floor(remaining / 60);
-            let s = remaining % 60;
-            disp.innerText = `${m<10?'0'+m:m}:${s<10?'0'+s:s}`;
+            // ── ספירה למעלה (מאפס ומעלה) ──
+            const m = Math.floor(elapsed / 60);
+            const s = elapsed % 60;
+            disp.innerText = `${m}:${s<10?'0'+s:s}`;
+            // הטבעת מתמלאת עד תום זמן המנוחה המומלץ ואז נשארת מלאה
             const ratio = Math.min(elapsed / dur, 1);
             ring.style.strokeDashoffset = MAX_OFFSET - (MAX_OFFSET * ratio);
-            // פעמון + רטט פעם אחת כשהמנוחה הסתיימה
-            if (ratio >= 1 && !this._restRang) {
+            // בסיום זמן המנוחה — מחליפים צבע לירוק + פעמון/רטט; הטיימר ממשיך לרוץ
+            if (elapsed >= dur && !this._restRang) {
                 this._restRang = true;
                 this._restBell();
                 this.haptic([60, 40, 60]);
                 if (disp) disp.classList.add('rest-done');
                 if (ringWrap) ringWrap.classList.add('done');
-                if (cap) cap.textContent = 'מוכנה לסט הבא! 💪';
+                if (eyebrow) eyebrow.textContent = 'מוכנה!';
                 this.toast('זמן מנוחה הסתיים — קדימה לסט הבא! 💪', 'success');
             }
-        }, 100);
-        this.saveActiveState();
-    },
-
-    // שינוי משך המנוחה תוך כדי (±15 שניות)
-    adjustRest: function(delta) {
-        if (!this.state.active.restInterval) return;
-        const cur = this.state.active.restDuration || 60;
-        this.state.active.restDuration = Math.max(10, cur + delta);
-        // אם הוארך מעבר לסיום — אפס את מצב ה"נגמר"
-        const elapsed = Math.floor((Date.now() - this.state.active.restStartTime) / 1000);
-        if (elapsed < this.state.active.restDuration) {
-            this._restRang = false;
-            const disp = document.getElementById('rest-timer-val');
-            const cap = document.getElementById('rest-caption');
-            const ringWrap = document.querySelector('#rest-timer-area .rest-ring-lg');
-            if (disp) disp.classList.remove('rest-done');
-            if (ringWrap) ringWrap.classList.remove('done');
-            if (cap) cap.textContent = 'זמן מנוחה';
-        }
-        this.haptic(8);
+        }, 250);
         this.saveActiveState();
     },
 
