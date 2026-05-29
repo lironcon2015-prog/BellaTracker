@@ -16,7 +16,7 @@ const CONFIG = {
     VERSION: '1.8.2'
 };
 
-const CURRENT_VERSION = '1.8.4-0'; // חייב להיות זהה ל-version.json
+const CURRENT_VERSION = '1.8.5-0'; // חייב להיות זהה ל-version.json
 
 const FEEL_MAP_TEXT = { 'easy': 'קל', 'good': 'בינוני', 'hard': 'קשה' };
 
@@ -617,6 +617,8 @@ const app = {
         document.getElementById('btn-add-core').style.display = 'none';
         document.getElementById('btn-finish').style.display = 'flex';
         document.getElementById('rest-timer-area').style.display = 'none';
+        const _ac = document.querySelector('.active-container');
+        if (_ac) _ac.classList.remove('resting');
         document.getElementById('set-badge').innerText = `סט ${this.state.active.setIdx} / ${this.state.active.totalSets}`;
         const reorderBtn = document.getElementById('btn-reorder');
         reorderBtn.style.display = this.state.active.setIdx === 1 ? 'block' : 'none';
@@ -1021,6 +1023,8 @@ const app = {
         document.getElementById('next-ex-preview').style.display = 'none';
         document.getElementById('btn-finish').style.display = 'flex';
         document.getElementById('rest-timer-area').style.display = 'none';
+        const ac = document.querySelector('.active-container');
+        if (ac) ac.classList.remove('resting');
     },
 
     renderStatsStrip: function(exId, unit) {
@@ -1250,6 +1254,8 @@ const app = {
         if (this.state.active.setIdx < this.state.active.totalSets) {
             this.state.active.setIdx++;
             document.getElementById('set-badge').innerText = `סט ${this.state.active.setIdx} / ${this.state.active.totalSets}`;
+            const upnext = document.getElementById('rest-upnext');
+            if (upnext) upnext.textContent = `הבא: סט ${this.state.active.setIdx} מתוך ${this.state.active.totalSets}`;
             document.getElementById('btn-reorder').style.display = 'none';
             this.state.active.feel = 'good';
             this.updateFeelUI();
@@ -1261,7 +1267,7 @@ const app = {
             document.getElementById('btn-reorder').style.display = 'none';
             document.getElementById('btn-finish').style.display = 'none';
             document.getElementById('decision-buttons').style.display = 'flex';
-            document.getElementById('rest-timer-area').style.display = 'none';
+            this.stopRestTimer();
 
             const nextEx = this.state.active.sessionExercises[this.state.active.exIdx + 1];
             const nextEl = document.getElementById('next-ex-preview');
@@ -1284,8 +1290,15 @@ const app = {
         const area = document.getElementById('rest-timer-area');
         const disp = document.getElementById('rest-timer-val');
         const ring = document.getElementById('rest-ring-prog');
+        const ringWrap = area ? area.querySelector('.rest-ring-lg') : null;
+        const cap = document.getElementById('rest-caption');
         if (disp) disp.classList.remove('rest-done');
+        if (ringWrap) ringWrap.classList.remove('done');
+        if (cap) cap.textContent = 'זמן מנוחה';
         area.style.display = 'flex';
+        // מצב מנוחה — מסתיר סטטיסטיקה ונותן זרקור לטיימר
+        const container = document.querySelector('.active-container');
+        if (container) container.classList.add('resting');
         this.state.active.restDuration = durationSec;
         if (!this.state.active.restStartTime || this.state.active.restStartTime === 0) {
             this.state.active.restStartTime = Date.now();
@@ -1293,22 +1306,46 @@ const app = {
         const MAX_OFFSET = 408;
         this._restRang = false;
         this.state.active.restInterval = setInterval(() => {
+            const dur = this.state.active.restDuration || durationSec;
             const elapsed = Math.floor((Date.now() - this.state.active.restStartTime) / 1000);
-            let m = Math.floor(elapsed / 60);
-            let s = elapsed % 60;
+            const remaining = Math.max(0, dur - elapsed);
+            // ספירה לאחור — תצוגה יוקרתית יותר
+            let m = Math.floor(remaining / 60);
+            let s = remaining % 60;
             disp.innerText = `${m<10?'0'+m:m}:${s<10?'0'+s:s}`;
-            const ratio = Math.min(elapsed / durationSec, 1);
-            const offset = MAX_OFFSET - (MAX_OFFSET * ratio);
-            ring.style.strokeDashoffset = offset;
+            const ratio = Math.min(elapsed / dur, 1);
+            ring.style.strokeDashoffset = MAX_OFFSET - (MAX_OFFSET * ratio);
             // פעמון + רטט פעם אחת כשהמנוחה הסתיימה
             if (ratio >= 1 && !this._restRang) {
                 this._restRang = true;
                 this._restBell();
                 this.haptic([60, 40, 60]);
                 if (disp) disp.classList.add('rest-done');
+                if (ringWrap) ringWrap.classList.add('done');
+                if (cap) cap.textContent = 'מוכנה לסט הבא! 💪';
                 this.toast('זמן מנוחה הסתיים — קדימה לסט הבא! 💪', 'success');
             }
         }, 100);
+        this.saveActiveState();
+    },
+
+    // שינוי משך המנוחה תוך כדי (±15 שניות)
+    adjustRest: function(delta) {
+        if (!this.state.active.restInterval) return;
+        const cur = this.state.active.restDuration || 60;
+        this.state.active.restDuration = Math.max(10, cur + delta);
+        // אם הוארך מעבר לסיום — אפס את מצב ה"נגמר"
+        const elapsed = Math.floor((Date.now() - this.state.active.restStartTime) / 1000);
+        if (elapsed < this.state.active.restDuration) {
+            this._restRang = false;
+            const disp = document.getElementById('rest-timer-val');
+            const cap = document.getElementById('rest-caption');
+            const ringWrap = document.querySelector('#rest-timer-area .rest-ring-lg');
+            if (disp) disp.classList.remove('rest-done');
+            if (ringWrap) ringWrap.classList.remove('done');
+            if (cap) cap.textContent = 'זמן מנוחה';
+        }
+        this.haptic(8);
         this.saveActiveState();
     },
 
@@ -1316,6 +1353,8 @@ const app = {
         if(this.state.active.restInterval) clearInterval(this.state.active.restInterval);
         this.state.active.restInterval = null;
         document.getElementById('rest-timer-area').style.display = 'none';
+        const container = document.querySelector('.active-container');
+        if (container) container.classList.remove('resting');
         this.state.active.restStartTime = 0;
     },
 
