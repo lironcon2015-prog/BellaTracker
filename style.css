@@ -192,14 +192,14 @@ body.theme-male::before {
 /* רווחים מבוססי-vh: מתכווצים במסך נמוך (סיום-סט נשאר במסך), מתרחבים בגבוה (אוויר) */
 .active-focus {
     display: flex; flex-direction: column; align-items: center;
-    gap: clamp(8px, 1.5vh, 16px);
-    padding: clamp(12px, 2.6vh, 30px) 0;
+    gap: clamp(7px, 1.3vh, 13px);
+    padding: clamp(8px, 2vh, 24px) 0;
 }
-.workspace { margin-bottom: clamp(10px, 1.6vh, 20px); }
-.active-controls-area { display: flex; flex-direction: column; gap: clamp(10px, 1.6vh, 16px); margin-bottom: 0; }
+.workspace { margin-bottom: clamp(8px, 1.3vh, 16px); }
+.active-controls-area { display: flex; flex-direction: column; gap: clamp(8px, 1.3vh, 13px); margin-bottom: 0; }
 .main-action-box { width: 100%; }
 .next-preview-text { text-align: center; color: var(--text-sec); font-size: 0.95rem; margin-bottom: 12px; font-weight: 500; animation: fadeIn 0.3s ease; }
-.sub-actions-footer { display: flex; justify-content: space-between; padding: 4px; gap: 12px; margin-top: clamp(14px, 2vh, 24px); }
+.sub-actions-footer { display: flex; justify-content: space-between; padding: 4px; gap: 12px; margin-top: clamp(12px, 1.7vh, 20px); }
 .active-focus #last-stat-strip { align-self: stretch; width: 100%; margin-top: 0; }
 /* רצועת הסטטיסטיקה מוסתרת בזמן מנוחה — הזרקור על הטיימר */
 .active-container.resting #last-stat-strip { display: none !important; }
@@ -1155,7 +1155,7 @@ body.theme-male::before {
 /* ── Rest timer — big, always visible, premium ── */
 .rest-panel { display: flex; flex-direction: column; align-items: center; gap: 14px; width: 100%; animation: restIn 0.4s var(--ease-out); }
 @keyframes restIn { from { opacity: 0; transform: scale(0.94); } to { opacity: 1; transform: none; } }
-.rest-ring-lg { width: clamp(150px, 24vh, 214px); height: clamp(150px, 24vh, 214px); position: relative; }
+.rest-ring-lg { width: clamp(172px, 28vh, 244px); height: clamp(172px, 28vh, 244px); position: relative; }
 .rest-ring-lg svg { width: 100%; height: 100%; transform: rotate(-90deg); overflow: visible; }
 .rest-ring-lg .bg-ring { stroke: rgba(255,255,255,0.055); stroke-width: 3; }
 .rest-ring-lg .prog-ring { stroke-width: 3; stroke-linecap: round; filter: drop-shadow(0 0 6px rgba(var(--primary-rgb),0.45)); transition: stroke 0.6s var(--ease-out), stroke-dashoffset 1s linear; }
