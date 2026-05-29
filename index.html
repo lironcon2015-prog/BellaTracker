@@ -399,14 +399,14 @@
         <!-- Navbar -->
         <header class="navbar">
             <div class="nav-left">
-                <button id="btn-admin-home" class="icon-btn" onclick="app.openAdminHome()" style="display:none;">
+                <button id="btn-admin-home" class="icon-btn" onclick="app.openAdminHome()" style="display:none;" aria-label="הגדרות וניהול">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 5 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
                 </button>
                 <div id="workout-timer-nav" style="display:none;">⏱ <span id="workout-timer-val">00:00</span></div>
             </div>
             <div class="logo">GYM<span class="highlight">START</span></div>
             <div class="nav-right">
-                <button id="nav-back" class="icon-btn" onclick="app.goBack()" style="visibility: hidden;">
+                <button id="nav-back" class="icon-btn" onclick="app.goBack()" style="visibility: hidden;" aria-label="חזרה">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
                 </button>
             </div>
@@ -655,6 +655,21 @@
             <button class="btn-primary" onclick="app.ackAllAchievements()">ראיתי ✓</button>
         </div>
     </div>
+
+    <!-- Onboarding Sheet (פעם ראשונה) -->
+    <div id="onboarding-overlay" class="bottom-sheet-overlay" onclick="app.closeOnboarding()" style="display:none;"></div>
+    <div id="onboarding-sheet" class="bottom-sheet-gs" style="display:none;">
+        <div class="sheet-handle-gs"></div>
+        <div class="onboarding-icon">💪</div>
+        <h3 id="onboarding-title" style="margin:0 0 6px;text-align:center;">ברוכה הבאה ל-GymStart</h3>
+        <p id="onboarding-body" style="font-size:0.92rem;color:var(--text-sec);margin:0 0 20px;text-align:center;line-height:1.5;"></p>
+        <div class="onboarding-dots" id="onboarding-dots"></div>
+        <button class="btn-primary" id="onboarding-next" onclick="app.onboardingNext()">הבא</button>
+        <button class="btn-ghost" onclick="app.closeOnboarding()">דלגי</button>
+    </div>
+
+    <!-- Toast host -->
+    <div id="toast-host" aria-live="polite" aria-atomic="false"></div>
 
     <script src="script.js"></script>
 </body>
