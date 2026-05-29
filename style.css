@@ -181,16 +181,28 @@ body.theme-male::before {
     backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
 }
 
+/* ── Active screen — fixed 3-zone layout (no scroll) ── */
 .active-container {
-    display: flex; flex-direction: column; height: 100%; overflow-y: auto;
-    padding: 10px 20px; padding-bottom: calc(env(safe-area-inset-bottom) + 20px);
+    display: flex; flex-direction: column; height: 100%; overflow: hidden;
+    padding: 8px 20px; padding-bottom: calc(env(safe-area-inset-bottom) + 10px);
 }
-.active-header-section { flex-shrink: 0; text-align: center; margin-bottom: 20px; }
-.workspace { flex-shrink: 0; margin-bottom: 20px; }
-.active-controls-area { display: flex; flex-direction: column; gap: 15px; margin-bottom: 20px; }
+.active-top { flex-shrink: 0; text-align: center; }
+.active-top .badge { margin-top: 2px; }
+.ex-name-row { display: flex; justify-content: center; align-items: center; gap: 8px; }
+.active-focus {
+    flex: 1 1 auto; min-height: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 6px 0;
+}
+.active-bottom { flex-shrink: 0; }
+.workspace { flex-shrink: 0; margin-bottom: 14px; }
+.active-controls-area { display: flex; flex-direction: column; gap: 12px; margin-bottom: 8px; }
 .main-action-box { width: 100%; }
 .next-preview-text { text-align: center; color: var(--text-sec); font-size: 0.95rem; margin-bottom: 12px; font-weight: 500; animation: fadeIn 0.3s ease; }
-.sub-actions-footer { margin-top: auto; display: flex; justify-content: space-between; padding: 12px 4px 4px 4px; gap: 10px; }
+.sub-actions-footer { display: flex; justify-content: space-between; padding: 6px 4px 0; gap: 10px; }
+/* רצועת הסטטיסטיקה מוסתרת בזמן מנוחה — הזרקור על הטיימר */
+.active-container.resting #last-stat-strip { display: none !important; }
+
 
 @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 
@@ -1133,3 +1145,104 @@ body.theme-male::before {
 /* ── Stepper value bump ── */
 .stepper-val.bump { animation: stepBump 0.22s var(--ease-spring); }
 @keyframes stepBump { 0% { transform: scale(1); } 45% { transform: scale(1.16); color: var(--primary); } 100% { transform: scale(1); } }
+
+/* ════════════════════════════════════════════════════════════════
+   ROUND 3 — Luxurious rest timer + market-grade controls
+   ════════════════════════════════════════════════════════════════ */
+
+/* ── Rest timer — big, always visible, premium ── */
+.rest-panel { display: flex; flex-direction: column; align-items: center; gap: 14px; width: 100%; animation: restIn 0.4s var(--ease-out); }
+@keyframes restIn { from { opacity: 0; transform: scale(0.94); } to { opacity: 1; transform: none; } }
+.rest-ring-lg { width: clamp(132px, 23vh, 216px); height: clamp(132px, 23vh, 216px); position: relative; }
+/* בזמן מנוחה: מסתירים את שורת הפעולות המשנית כדי לפנות מקום לטיימר */
+.active-container.resting .sub-actions-footer { display: none; }
+.rest-ring-lg svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.rest-ring-lg .bg-ring { stroke: rgba(255,255,255,0.06); stroke-width: 6.5; }
+.rest-ring-lg .prog-ring { stroke-width: 6.5; filter: drop-shadow(0 0 7px rgba(var(--primary-rgb),0.5)); }
+.rest-ring-lg.done .prog-ring { stroke: var(--success); filter: drop-shadow(0 0 10px rgba(var(--success-rgb),0.55)); }
+.rest-ring-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; }
+.rest-ring-lg .timer-text {
+    position: static; inset: auto;
+    font-size: clamp(2.6rem, 10vw, 3.4rem); font-weight: var(--fw-bold);
+    letter-spacing: -1.5px; font-variant-numeric: tabular-nums; line-height: 1;
+}
+.rest-ring-lg .rest-caption { margin-top: 4px; font-size: 0.8rem; color: var(--text-sec); font-weight: var(--fw-medium); letter-spacing: 0.3px; }
+.rest-controls { display: flex; align-items: center; justify-content: center; gap: 16px; }
+.rest-upnext { font-size: 0.86rem; color: var(--text-sec); font-weight: var(--fw-medium); min-width: 96px; text-align: center; }
+.rest-adj-btn {
+    background: rgba(255,255,255,0.05); color: var(--text);
+    border: 1px solid rgba(255,255,255,0.13); border-top-color: rgba(255,255,255,0.20);
+    border-radius: var(--radius-pill); padding: 9px 16px; min-width: 60px;
+    font-family: inherit; font-weight: var(--fw-semibold); font-size: 0.92rem;
+    font-variant-numeric: tabular-nums; cursor: pointer;
+    box-shadow: var(--elev-1);
+    transition: transform var(--dur-fast) var(--ease-spring), background var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
+}
+.rest-adj-btn:active { transform: scale(0.9); background: rgba(var(--primary-rgb),0.16); border-color: rgba(var(--primary-rgb),0.5); color: var(--primary); }
+
+/* ════════ Market-grade buttons & controls ════════ */
+
+/* Primary — substantial, glossy, tactile */
+.btn-primary {
+    border-radius: var(--radius-md); letter-spacing: 0.3px;
+    background: linear-gradient(177deg, var(--primary) 0%, var(--primary-2) 92%);
+    box-shadow:
+        inset 0 0 0 1px rgba(var(--primary-rgb),0.30),
+        inset 0 1px 0 rgba(255,255,255,0.40),
+        0 0 20px rgba(var(--primary-rgb),0.22),
+        0 8px 22px rgba(0,0,0,0.42);
+    transition: transform var(--dur-fast) var(--ease-spring), filter var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out);
+}
+.btn-primary:active {
+    transform: scale(0.975); filter: brightness(1.06);
+    box-shadow: inset 0 0 0 1px rgba(var(--primary-rgb),0.35), inset 0 1px 0 rgba(255,255,255,0.4), 0 0 14px rgba(var(--primary-rgb),0.28), 0 3px 12px rgba(0,0,0,0.4);
+}
+.btn-primary.big-btn { padding: 19px; font-size: var(--fs-lg); border-radius: var(--radius-lg); }
+
+/* Outline / quiet / ghost / tool — unified spring press */
+.btn-outline, .btn-quiet { border-radius: var(--radius-md); transition: transform var(--dur-fast) var(--ease-spring), background var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out); }
+.btn-outline:active, .btn-quiet:active { transform: scale(0.98); }
+.text-link { transition: transform var(--dur-fast) var(--ease-spring), background var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out); }
+.text-link:active { transform: scale(0.96); }
+.btn-tool, .btn-tool-outline, .btn-tool-danger { transition: transform var(--dur-fast) var(--ease-spring), background var(--dur-fast) var(--ease-out); }
+.btn-tool:active, .btn-tool-outline:active, .btn-tool-danger:active { transform: scale(0.95); }
+
+/* Steppers — larger, premium glass, satisfying press */
+.input-card {
+    background: var(--surface-2); border: 1px solid var(--border-dim); border-top-color: var(--border-top);
+    border-radius: var(--radius-lg); box-shadow: var(--elev-1); backdrop-filter: none; -webkit-backdrop-filter: none;
+}
+.stepper-btn {
+    width: 54px; height: 54px; font-size: 1.85rem; font-weight: 300;
+    background: rgba(255,255,255,0.055); color: var(--text);
+    border: 1px solid rgba(255,255,255,0.14); border-top-color: rgba(255,255,255,0.22);
+    box-shadow: var(--elev-1), inset 0 1px 0 rgba(255,255,255,0.08);
+    backdrop-filter: none; -webkit-backdrop-filter: none;
+    transition: transform 0.12s var(--ease-spring), background 0.12s var(--ease-out), border-color 0.12s var(--ease-out), color 0.12s var(--ease-out), box-shadow 0.12s var(--ease-out);
+}
+.stepper-btn:active {
+    background: rgba(var(--primary-rgb),0.18); border-color: rgba(var(--primary-rgb),0.55);
+    color: var(--primary); transform: scale(0.9);
+    box-shadow: 0 0 18px rgba(var(--primary-rgb),0.32);
+}
+
+/* Feel buttons — larger touch target */
+.feel-btn { width: 54px; height: 54px; }
+.feeling-row { gap: 22px; }
+
+/* Neon play (stopwatch) — refined */
+.btn-neon-play { box-shadow: 0 0 18px rgba(var(--success-rgb),0.22), var(--elev-1); transition: transform var(--dur-fast) var(--ease-spring), box-shadow var(--dur-fast); }
+.btn-neon-play:active { transform: scale(0.92); }
+
+/* ── Active screen — compact for short devices (no scroll guarantee) ── */
+@media (max-height: 720px) {
+    #screen-active #ex-name { font-size: 1.5rem; }
+    #screen-active .active-top .badge { padding: 4px 14px; font-size: 0.8rem; }
+    #screen-active .workspace { margin-bottom: 10px; }
+    #screen-active .input-card { padding: 12px; }
+    #screen-active .stepper-btn { width: 48px; height: 48px; font-size: 1.6rem; }
+    #screen-active .feel-btn { width: 48px; height: 48px; }
+    #screen-active .active-controls-area { gap: 9px; }
+    .rest-ring-lg { width: clamp(120px, 21vh, 180px); height: clamp(120px, 21vh, 180px); }
+    .rest-panel { gap: 10px; }
+}
