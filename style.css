@@ -1155,7 +1155,7 @@ body.theme-male::before {
 /* ── Rest timer — big, always visible, premium ── */
 .rest-panel { display: flex; flex-direction: column; align-items: center; gap: 14px; width: 100%; animation: restIn 0.4s var(--ease-out); }
 @keyframes restIn { from { opacity: 0; transform: scale(0.94); } to { opacity: 1; transform: none; } }
-.rest-ring-lg { width: clamp(138px, 22vh, 200px); height: clamp(138px, 22vh, 200px); position: relative; }
+.rest-ring-lg { width: clamp(156px, 26vh, 232px); height: clamp(156px, 26vh, 232px); position: relative; }
 .rest-ring-lg svg { width: 100%; height: 100%; transform: rotate(-90deg); overflow: visible; }
 .rest-ring-lg .bg-ring { stroke: rgba(255,255,255,0.055); stroke-width: 3; }
 .rest-ring-lg .prog-ring { stroke-width: 3; stroke-linecap: round; filter: drop-shadow(0 0 6px rgba(var(--primary-rgb),0.45)); transition: stroke 0.6s var(--ease-out), stroke-dashoffset 1s linear; }
@@ -1245,3 +1245,21 @@ body.theme-male::before {
     .rest-ring-lg { width: clamp(120px, 21vh, 180px); height: clamp(120px, 21vh, 180px); }
     .rest-panel { gap: 10px; }
 }
+
+/* ── Overview — first exercise is tappable to start the workout ── */
+.list-item.start-item {
+    cursor: pointer;
+    border-color: rgba(var(--primary-rgb),0.38); border-top-color: rgba(var(--primary-rgb),0.52);
+    background: rgba(var(--primary-rgb),0.07);
+    box-shadow: var(--elev-1), 0 0 18px rgba(var(--primary-rgb),0.10);
+    transition: transform var(--dur-fast) var(--ease-spring), background var(--dur-fast) var(--ease-out);
+}
+.list-item.start-item:active { transform: scale(0.99); background: rgba(var(--primary-rgb),0.13); }
+.overview-start-hint { font-size: 0.76rem; color: var(--primary); font-weight: var(--fw-semibold); margin-top: 3px; }
+.overview-start-cue {
+    width: 42px; height: 42px; border-radius: 50%; flex-shrink: 0;
+    background: linear-gradient(180deg, var(--primary), var(--primary-2)); color: var(--btn-fg);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 0 16px rgba(var(--primary-rgb),0.35), inset 0 1px 0 rgba(255,255,255,0.4);
+}
+.overview-start-cue svg { width: 17px; height: 17px; margin-inline-start: 2px; }
