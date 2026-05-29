@@ -16,7 +16,7 @@ const CONFIG = {
     VERSION: '1.8.2'
 };
 
-const CURRENT_VERSION = '1.8.3-0'; // חייב להיות זהה ל-version.json
+const CURRENT_VERSION = '1.8.3-1'; // חייב להיות זהה ל-version.json
 
 const FEEL_MAP_TEXT = { 'easy': 'קל', 'good': 'בינוני', 'hard': 'קשה' };
 
@@ -96,6 +96,7 @@ const app = {
 
     init: function() {
         try {
+            this.applyVersionLabel();
             this.initProfile();
             this.loadData();
             this.checkActiveWorkout();
@@ -376,6 +377,13 @@ const app = {
     },
 
     /* --- NAVIGATION --- */
+    // ── הזרקת מספר גרסה לתצוגה — תמיד מסונכרן עם CURRENT_VERSION ─────────────
+    applyVersionLabel: function() {
+        const tag = document.getElementById('version-tag');
+        if (tag) tag.textContent = 'GymStart V' + CURRENT_VERSION;
+        document.title = 'GymStart V' + CURRENT_VERSION;
+    },
+
     // ── Toast — הודעות לא-חוסמות (מחליף alert) ──────────────────────────────
     toast: function(msg, type) {
         const host = document.getElementById('toast-host');
