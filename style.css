@@ -1041,3 +1041,95 @@ body.theme-male::before {
     transition: all var(--dur-base) var(--ease-out);
 }
 .onboarding-dots .dot.active { background: var(--primary); width: 20px; border-radius: 4px; box-shadow: 0 0 8px rgba(var(--primary-rgb),0.4); }
+
+/* ════════════════════════════════════════════════════════════════
+   LEVEL-UP — Bottom nav, hero home, dramatic active screen
+   ════════════════════════════════════════════════════════════════ */
+
+/* ── Bottom Tab Bar ── */
+.tab-bar {
+    flex-shrink: 0; display: flex; align-items: stretch;
+    background: rgba(9,10,12,0.82);
+    border-top: 1px solid rgba(255,255,255,0.07);
+    backdrop-filter: blur(28px) saturate(180%); -webkit-backdrop-filter: blur(28px) saturate(180%);
+    padding-bottom: env(safe-area-inset-bottom);
+    z-index: var(--z-nav);
+}
+.tab-bar.hidden { display: none; }
+.tab-item {
+    flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px;
+    padding: 9px 0 7px; background: none; border: none; cursor: pointer;
+    color: var(--text-ter); font-family: inherit; font-size: 0.66rem; font-weight: var(--fw-medium);
+    position: relative; transition: color var(--dur-fast) var(--ease-out);
+    -webkit-tap-highlight-color: transparent;
+}
+.tab-item svg { width: 24px; height: 24px; transition: transform var(--dur-base) var(--ease-spring); }
+.tab-item.active { color: var(--primary); }
+.tab-item.active svg { transform: translateY(-1px) scale(1.05); filter: drop-shadow(0 0 7px rgba(var(--primary-rgb),0.45)); }
+.tab-item.active::before {
+    content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+    width: 26px; height: 3px; border-radius: 0 0 3px 3px;
+    background: var(--primary); box-shadow: 0 0 8px var(--primary);
+}
+.tab-item:active svg { transform: scale(0.88); }
+
+/* ── Home — greeting ── */
+#screen-home .scroll-content { overflow-y: auto; padding-top: 8px; padding-bottom: 16px; }
+#screen-home .fixed-footer { padding-bottom: var(--space-4); }
+.home-greeting { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin: 6px 0 18px; }
+.home-greet-text h1 { font-size: var(--fs-2xl); margin: 0; font-weight: var(--fw-bold); letter-spacing: -0.6px; line-height: 1.1; }
+.home-greet-text p { margin: 5px 0 0; color: var(--text-sec); font-size: var(--fs-base); }
+.streak-chip {
+    display: inline-flex; align-items: center; gap: 5px; flex-shrink: 0;
+    background: linear-gradient(135deg, rgba(255,160,80,0.16), rgba(255,110,60,0.10));
+    border: 1px solid rgba(255,160,80,0.35); color: #ffb066;
+    border-radius: var(--radius-pill); padding: 7px 13px;
+    font-weight: var(--fw-bold); font-size: 0.95rem; font-variant-numeric: tabular-nums;
+    box-shadow: 0 0 14px rgba(255,140,60,0.14);
+}
+.streak-flame { width: 15px; height: 15px; }
+
+/* ── Home — hero progress ring ── */
+.hero-ring-card { display: flex; align-items: center; gap: 18px; margin-bottom: 14px; padding: 18px 20px; }
+.ring-wrap { position: relative; width: 116px; height: 116px; flex-shrink: 0; }
+.progress-ring-svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.ring-bg { fill: none; stroke: rgba(255,255,255,0.07); stroke-width: 9; }
+.ring-prog {
+    fill: none; stroke: var(--primary); stroke-width: 9; stroke-linecap: round;
+    stroke-dasharray: 327; stroke-dashoffset: 327;
+    transition: stroke-dashoffset 0.9s var(--ease-out);
+    filter: drop-shadow(0 0 5px rgba(var(--primary-rgb),0.4));
+}
+.ring-prog.full { stroke: var(--success); filter: drop-shadow(0 0 6px rgba(var(--success-rgb),0.45)); }
+.ring-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.ring-num { font-size: 2rem; font-weight: var(--fw-bold); line-height: 1; font-variant-numeric: tabular-nums; }
+.ring-den { font-size: 1rem; color: var(--text-ter); font-weight: var(--fw-semibold); }
+.ring-lbl { font-size: 0.7rem; color: var(--text-sec); margin-top: 3px; letter-spacing: 0.5px; }
+.ring-side { flex: 1; min-width: 0; }
+.ring-side-title { font-size: var(--fs-md); font-weight: var(--fw-semibold); }
+.ring-side-sub { font-size: var(--fs-sm); color: var(--text-sec); margin-top: 4px; line-height: 1.4; }
+.ring-side-stat { margin-top: 12px; display: flex; align-items: baseline; gap: 6px; }
+.rss-val { font-size: 1.5rem; font-weight: var(--fw-bold); color: var(--primary); font-variant-numeric: tabular-nums; }
+.rss-lbl { font-size: 0.72rem; color: var(--text-sec); }
+
+/* ── Home — mini stats ── */
+.home-mini-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+.mini-stat { padding: 14px 6px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.mini-val { font-size: 1.5rem; font-weight: var(--fw-bold); color: var(--text); font-variant-numeric: tabular-nums; line-height: 1; }
+.mini-lbl { font-size: 0.66rem; color: var(--text-sec); text-align: center; }
+
+/* ── Home — secondary links ── */
+.home-links { display: flex; gap: 10px; margin-top: 6px; }
+.home-links .btn-ghost { margin-top: 0; flex: 1; }
+
+/* ── Active — session progress ── */
+.session-progress { margin-bottom: 14px; }
+.sp-segments { display: flex; gap: 5px; margin-bottom: 7px; }
+.sp-seg { flex: 1; height: 4px; border-radius: 2px; background: rgba(255,255,255,0.10); transition: background var(--dur-base) var(--ease-out), opacity var(--dur-base) var(--ease-out); }
+.sp-seg.done { background: var(--primary); box-shadow: 0 0 6px rgba(var(--primary-rgb),0.4); }
+.sp-seg.current { background: var(--primary); opacity: 0.5; }
+.sp-text { font-size: 0.74rem; color: var(--text-sec); text-align: center; font-weight: var(--fw-medium); letter-spacing: 0.3px; }
+
+/* ── Stepper value bump ── */
+.stepper-val.bump { animation: stepBump 0.22s var(--ease-spring); }
+@keyframes stepBump { 0% { transform: scale(1); } 45% { transform: scale(1.16); color: var(--primary); } 100% { transform: scale(1); } }
