@@ -16,7 +16,7 @@ const CONFIG = {
     VERSION: '1.8.2'
 };
 
-const CURRENT_VERSION = '1.8.3-1'; // חייב להיות זהה ל-version.json
+const CURRENT_VERSION = '1.8.4-0'; // חייב להיות זהה ל-version.json
 
 const FEEL_MAP_TEXT = { 'easy': 'קל', 'good': 'בינוני', 'hard': 'קשה' };
 
@@ -188,13 +188,7 @@ const app = {
             el.href = iconHref;
         });
 
-        // ברכה ראשית
-        const greeting = document.getElementById('greeting');
-        if (greeting) {
-            greeting.textContent = isMale ? 'ברוך הבא' : 'ברוכה הבאה';
-            const sub = greeting.nextElementSibling;
-            if (sub) sub.textContent = isMale ? 'מוכן לאימון?' : 'מוכנה לאימון?';
-        }
+        // הברכה והתת-כותרת מנוהלות ב-renderHome (לפי שעה ומצב שבועי)
         // placeholder הערת מאמן
         const tipInput = document.getElementById('tip-input');
         if (tipInput) tipInput.placeholder = isMale ? 'כתוב הערה למתאמן...' : 'כתוב הערה למתאמנת...';
@@ -524,14 +518,36 @@ const app = {
         const adminBtn = document.getElementById('btn-admin-home');
         if (screenId === 'screen-home') {
             backBtn.style.visibility = 'hidden';
-            if(adminBtn) adminBtn.style.display = 'flex';
             this.stopAllTimers();
             this._stopWorkoutTimer();
             this.state.active.on = false;
         } else {
             backBtn.style.visibility = 'visible';
-            if(adminBtn) adminBtn.style.display = 'none';
         }
+        // סרגל ניהול בנאבבר מיותר — הניווט עובר דרך ה-tab bar
+        if (adminBtn) adminBtn.style.display = 'none';
+        this.updateChrome(screenId);
+    },
+
+    // ── Bottom tab bar — ניווט ראשי ─────────────────────────────────────────
+    tabNav: function(key) {
+        this.haptic(5);
+        if (key === 'home') this.nav('screen-home');
+        else if (key === 'workout') this.nav('screen-program-select');
+        else if (key === 'history') this.showHistory();
+        else if (key === 'settings') this.openAdminHome();
+    },
+
+    // עדכון מצב ה-chrome (tab bar + tab פעיל) לפי המסך הנוכחי
+    updateChrome: function(screenId) {
+        const bar = document.getElementById('tab-bar');
+        if (!bar) return;
+        // מסכים ממוקדים — מסתירים את סרגל הניווט
+        const hideOn = ['screen-active', 'screen-summary', 'screen-overview'];
+        bar.classList.toggle('hidden', hideOn.includes(screenId));
+        const map = { 'screen-home': 'tab-home', 'screen-program-select': 'tab-workout', 'screen-history': 'tab-history' };
+        const activeTab = map[screenId];
+        bar.querySelectorAll('.tab-item').forEach(t => t.classList.toggle('active', t.id === activeTab));
     },
 
     goBack: function() {
@@ -697,6 +713,19 @@ const app = {
     },
 
     renderHome: function() {
+        const isMale = this.state.activeProfile === 'male';
+
+        // ── ברכה לפי שעה ──
+        const greetEl = document.getElementById('greeting');
+        const subEl = document.getElementById('home-subtitle');
+        const hr = new Date().getHours();
+        let timeWord;
+        if (hr < 12) timeWord = 'בוקר טוב';
+        else if (hr < 17) timeWord = 'צהריים טובים';
+        else if (hr < 21) timeWord = 'ערב טוב';
+        else timeWord = 'לילה טוב';
+        if (greetEl) greetEl.textContent = timeWord;
+
         // אימון אחרון
         const lastEl = document.getElementById('last-workout-display');
         if (this.state.history.length > 0) {
@@ -707,36 +736,51 @@ const app = {
             lastEl.innerText = "טרם בוצע";
         }
 
-        // ── Dashboard ──
+        // ── נתונים ──
         const weekly  = this.calcWeeklyWorkouts();
         const target  = this._getWeeklyTarget();
         const streak  = this.calcStreak();
         const total   = this.state.history.length;
         const days    = this._calcDaysSince();
         const avg     = this._calcAvgTime();
+        const isFull  = weekly >= target;
 
-        // כרטיס 1: אימונים + עקביות
-        const pct    = Math.min(100, Math.round(weekly / target * 100));
-        const isFull = weekly >= target;
-        const wv = document.getElementById('home-weekly-val');
-        wv.textContent = weekly;
-        wv.className = 'dash-stat-val' + (isFull ? ' dash-val-full' : '');
-        document.getElementById('home-weekly-sub').textContent = 'מתוך ' + target;
-        const bar = document.getElementById('home-weekly-bar');
-        bar.style.width = pct + '%';
-        bar.className = 'dash-progress-fill' + (isFull ? ' full' : '');
+        // תת-כותרת מעודדת
+        if (subEl) {
+            if (isFull) subEl.textContent = isMale ? 'כל הכבוד! השלמת את היעד השבועי 🎉' : 'כל הכבוד! השלמת את היעד השבועי 🎉';
+            else if (weekly > 0) subEl.textContent = `עוד ${target - weekly} אימונים ליעד השבועי`;
+            else subEl.textContent = isMale ? 'מוכן לאימון של היום?' : 'מוכנה לאימון של היום?';
+        }
+
+        // ── טבעת התקדמות שבועית ──
+        const CIRC = 327; // 2πr, r=52
+        const pct = Math.min(1, target > 0 ? weekly / target : 0);
+        const ring = document.getElementById('home-ring-prog');
+        if (ring) {
+            ring.style.strokeDashoffset = CIRC - (CIRC * pct);
+            ring.classList.toggle('full', isFull);
+        }
+        document.getElementById('home-weekly-val').textContent = weekly;
+        document.getElementById('home-weekly-target').textContent = target;
+        const msgEl = document.getElementById('home-weekly-msg');
+        if (msgEl) {
+            if (isFull) msgEl.textContent = 'היעד הושלם — מעולה!';
+            else if (weekly === 0) msgEl.textContent = 'בואי נתחיל את השבוע!';
+            else msgEl.textContent = `${weekly} מתוך ${target} — ממשיכות!`;
+        }
+
+        // רצף שבועות + chip
         document.getElementById('home-streak-val').textContent = streak;
+        const chip = document.getElementById('home-streak-chip');
+        if (chip) {
+            chip.style.display = streak > 0 ? 'inline-flex' : 'none';
+            document.getElementById('home-streak-num').textContent = streak;
+        }
 
-        // streak badge
-        const badge = document.getElementById('home-streak-badge');
-        badge.style.display = streak > 0 ? 'inline-flex' : 'none';
-        document.getElementById('home-streak-num').textContent = streak;
-
-        // כרטיס 2: ימים מאז + סה"כ + ממוצע
-        document.getElementById('home-days-since').textContent   = days !== null ? days : '—';
+        // מיני-סטטים
+        document.getElementById('home-days-since').textContent = days !== null ? days : '—';
         document.getElementById('home-total-workouts').textContent = total;
-        const avgEl = document.getElementById('home-avg-time');
-        avgEl.innerHTML = avg !== null ? `${avg}<span class="dash-stat-unit">דק׳</span>` : '—';
+        document.getElementById('home-avg-time').textContent = avg !== null ? avg : '—';
     },
 
     calcStreak: function() {
@@ -856,6 +900,23 @@ const app = {
         this.nav('screen-active');
     },
 
+    // עדכון סרגל התקדמות הסשן — "תרגיל X מתוך Y"
+    _updateSessionProgress: function() {
+        const total = this.state.active.sessionExercises.length;
+        const cur = this.state.active.exIdx;
+        const segWrap = document.getElementById('sp-segments');
+        const txt = document.getElementById('sp-text');
+        if (segWrap) {
+            let segs = '';
+            for (let i = 0; i < total; i++) {
+                const cls = i < cur ? 'sp-seg done' : (i === cur ? 'sp-seg current' : 'sp-seg');
+                segs += `<div class="${cls}"></div>`;
+            }
+            segWrap.innerHTML = segs;
+        }
+        if (txt) txt.textContent = `תרגיל ${cur + 1} מתוך ${total}`;
+    },
+
     loadActiveExercise: function() {
         const exInst = this.state.active.sessionExercises[this.state.active.exIdx];
         const exDef = this.getExerciseDef(exInst.id);
@@ -863,6 +924,7 @@ const app = {
         this.state.active.totalSets = exInst.sets || 3;
         document.getElementById('ex-name').innerText = exInst.name;
         document.getElementById('set-badge').innerText = `סט ${this.state.active.setIdx} / ${this.state.active.totalSets}`;
+        this._updateSessionProgress();
 
         const vidBtn = document.getElementById('ex-video-link');
         if (exDef.videoUrl && exDef.videoUrl.length > 5) {
@@ -1086,8 +1148,13 @@ const app = {
         if (newW > s.wMax) newW = s.wMax;
         this.state.active.inputW = newW;
         const el = document.getElementById('stepper-weight');
-        if (el) el.innerText = newW % 1 === 0 ? newW : newW.toFixed(1);
+        if (el) { el.innerText = newW % 1 === 0 ? newW : newW.toFixed(1); this._bump(el); }
         this.haptic(8);
+    },
+
+    _bump: function(el) {
+        if (!el) return;
+        el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump');
     },
 
     stepReps: function(dir) {
@@ -1098,7 +1165,7 @@ const app = {
         if (newR > (s.rMax || 30)) newR = s.rMax || 30;
         this.state.active.inputR = newR;
         const el = document.getElementById('stepper-reps');
-        if (el) el.innerText = newR;
+        if (el) { el.innerText = newR; this._bump(el); }
         this.haptic(8);
     },
 
