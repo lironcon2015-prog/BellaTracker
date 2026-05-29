@@ -16,7 +16,7 @@ const CONFIG = {
     VERSION: '1.8.2'
 };
 
-const CURRENT_VERSION = '1.8.2-27'; // חייב להיות זהה ל-version.json
+const CURRENT_VERSION = '1.8.3-0'; // חייב להיות זהה ל-version.json
 
 const FEEL_MAP_TEXT = { 'easy': 'קל', 'good': 'בינוני', 'hard': 'קשה' };
 
@@ -108,6 +108,7 @@ const app = {
             this.renderProgramSelect();
             if(!this.state.tempActive) this.nav('screen-home');
             this.applyProfileTheme();
+            this.maybeShowOnboarding();
         } catch (e) {
             console.error(e);
             alert("שגיאה בטעינת נתונים.");
@@ -278,7 +279,7 @@ const app = {
             this.state.activeProfile = localStorage.getItem('gymstart_active_profile') || 'female';
             this.renderAuthPanel();
             this.applyProfileTheme();
-            alert('מצב מאמן פעיל. ניתן לעבור בין פרופילים.');
+            app.toast('מצב מאמן פעיל. ניתן לעבור בין פרופילים.');
         } else if (code === PIN_MALE) {
             if (confirm('מעבר לפרופיל מתאמן. הפעולה קבועה במכשיר זה. להמשיך?')) {
                 localStorage.setItem('gymstart_auth_level', '1');
@@ -286,7 +287,7 @@ const app = {
                 location.reload();
             }
         } else {
-            alert('קוד שגוי.');
+            app.toast('קוד שגוי.');
             input.value = '';
         }
     },
@@ -375,6 +376,139 @@ const app = {
     },
 
     /* --- NAVIGATION --- */
+    // ── Toast — הודעות לא-חוסמות (מחליף alert) ──────────────────────────────
+    toast: function(msg, type) {
+        const host = document.getElementById('toast-host');
+        if (!host) { console.log(msg); return; }
+        const el = document.createElement('div');
+        el.className = 'toast' + (type ? ' ' + type : '');
+        el.setAttribute('role', 'status');
+        el.textContent = msg;
+        host.appendChild(el);
+        // הסרה אוטומטית
+        const dur = Math.min(5000, Math.max(2200, String(msg).length * 70));
+        setTimeout(() => {
+            el.classList.add('hide');
+            setTimeout(() => el.remove(), 260);
+        }, dur);
+    },
+
+    // ── Haptics עקביים ──────────────────────────────────────────────────────
+    haptic: function(pattern) {
+        if (navigator.vibrate) { try { navigator.vibrate(pattern || 8); } catch(e){} }
+    },
+
+    // ── פעמון סיום מנוחה (WebAudio — ללא קובץ חיצוני) ───────────────────────
+    _restBell: function() {
+        try {
+            if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                // עדיין מרטטים, בלי צליל אם אין תנועה? צליל מותר — אך נשמור עדין
+            }
+            const Ctx = window.AudioContext || window.webkitAudioContext;
+            if (!Ctx) return;
+            this._audioCtx = this._audioCtx || new Ctx();
+            const ctx = this._audioCtx;
+            if (ctx.state === 'suspended') ctx.resume();
+            const now = ctx.currentTime;
+            [880, 1320].forEach((freq, i) => {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.value = freq;
+                const t = now + i * 0.16;
+                gain.gain.setValueAtTime(0, t);
+                gain.gain.linearRampToValueAtTime(0.18, t + 0.02);
+                gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.32);
+                osc.connect(gain); gain.connect(ctx.destination);
+                osc.start(t); osc.stop(t + 0.34);
+            });
+        } catch(e) {}
+    },
+
+    // ── Confetti — חגיגת שיא (ללא ספרייה) ───────────────────────────────────
+    fireConfetti: function() {
+        if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        let host = document.getElementById('confetti-host');
+        if (!host) {
+            host = document.createElement('div');
+            host.id = 'confetti-host';
+            document.body.appendChild(host);
+        }
+        host.innerHTML = '';
+        const colors = ['#3de8dc', '#34e07a', '#ffcf6b', '#ffffff', '#16b8ad'];
+        const N = 70;
+        for (let i = 0; i < N; i++) {
+            const p = document.createElement('div');
+            p.className = 'confetti-piece';
+            p.style.left = Math.random() * 100 + 'vw';
+            p.style.background = colors[i % colors.length];
+            const dur = 1.6 + Math.random() * 1.4;
+            p.style.animationDuration = dur + 's';
+            p.style.animationDelay = Math.random() * 0.4 + 's';
+            p.style.opacity = (0.7 + Math.random() * 0.3).toFixed(2);
+            p.style.transform = `scale(${(0.7 + Math.random() * 0.7).toFixed(2)})`;
+            host.appendChild(p);
+        }
+        setTimeout(() => { if (host) host.innerHTML = ''; }, 3600);
+    },
+
+    // ── Onboarding לפעם ראשונה ──────────────────────────────────────────────
+    _onboardSteps: [
+        { icon: '💪', title: 'ברוכה הבאה ל-GymStart', body: 'האפליקציה שתלווה אותך בכל אימון — פשוט, ברור, ובלי בלבול. בואי נכיר אותה בקצרה.' },
+        { icon: '📋', title: 'בחרי תוכנית והתחילי', body: 'במסך הבית לחצי "התחילי אימון", בחרי תוכנית, וקדימה. כל תרגיל מופיע אחד-אחד עם המשקל והחזרות.' },
+        { icon: '⚡', title: 'רשמי כל סט', body: 'עדכני משקל וחזרות עם הכפתורים, סמני איך הרגשת, ולחצי "סיום סט". נעקוב אחרי ההתקדמות שלך אוטומטית.' },
+        { icon: '🏆', title: 'תראי את ההתקדמות', body: 'בסוף כל אימון תקבלי סיכום ושיאים אישיים. ככל שתתאמני, נראה לך כמה השתפרת!' }
+    ],
+    _onboardIdx: 0,
+    maybeShowOnboarding: function() {
+        try {
+            if (localStorage.getItem('gymstart_onboarded')) return;
+            if (this.state.history && this.state.history.length > 0) {
+                localStorage.setItem('gymstart_onboarded', '1');
+                return;
+            }
+            if (this.state.tempActive || this.state.active.on) return;
+            setTimeout(() => this.openOnboarding(), 450);
+        } catch(e) {}
+    },
+    openOnboarding: function() {
+        this._onboardIdx = 0;
+        const ov = document.getElementById('onboarding-overlay');
+        const sh = document.getElementById('onboarding-sheet');
+        if (!ov || !sh) return;
+        ov.style.display = 'block';
+        sh.style.display = 'flex';
+        this._renderOnboardingStep();
+    },
+    _renderOnboardingStep: function() {
+        const step = this._onboardSteps[this._onboardIdx];
+        if (!step) return;
+        document.querySelector('#onboarding-sheet .onboarding-icon').textContent = step.icon;
+        document.getElementById('onboarding-title').textContent = step.title;
+        document.getElementById('onboarding-body').textContent = step.body;
+        const dots = document.getElementById('onboarding-dots');
+        dots.innerHTML = this._onboardSteps.map((s, i) =>
+            `<span class="dot${i === this._onboardIdx ? ' active' : ''}"></span>`).join('');
+        const isLast = this._onboardIdx === this._onboardSteps.length - 1;
+        document.getElementById('onboarding-next').textContent = isLast ? 'בואי נתחיל!' : 'הבא';
+    },
+    onboardingNext: function() {
+        this.haptic(6);
+        if (this._onboardIdx < this._onboardSteps.length - 1) {
+            this._onboardIdx++;
+            this._renderOnboardingStep();
+        } else {
+            this.closeOnboarding();
+        }
+    },
+    closeOnboarding: function() {
+        try { localStorage.setItem('gymstart_onboarded', '1'); } catch(e) {}
+        const ov = document.getElementById('onboarding-overlay');
+        const sh = document.getElementById('onboarding-sheet');
+        if (ov) ov.style.display = 'none';
+        if (sh) sh.style.display = 'none';
+    },
+
     nav: function(screenId) {
         document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
         document.getElementById(screenId).classList.add('active');
@@ -411,11 +545,13 @@ const app = {
             this._undoLastSet();
             this.state.active.setIdx = this.state.active.totalSets;
             this._restoreLoggingUI();
+            this.toast('הסט האחרון בוטל — אפשר לתקן');
         } else if (setIdx > 1) {
             // סט > 1 → חזרה לסט הקודם, ביטול הסט האחרון
             this._undoLastSet();
             this.state.active.setIdx--;
             this._restoreLoggingUI();
+            this.toast('הסט האחרון בוטל — אפשר לתקן');
         } else if (exIdx === 0) {
             // תרגיל ראשון, סט ראשון — המקרה היחיד שיוצאים
             if (confirm("לצאת מהאימון?")) {
@@ -433,6 +569,7 @@ const app = {
             this.state.active.setIdx = prevInst.sets || 3;
             this.loadActiveExercise();
             this._showDecisionUI();
+            this.toast('חזרה לתרגיל הקודם');
         }
         this.saveActiveState();
     },
@@ -688,7 +825,7 @@ const app = {
     startWorkout: function() {
         if (!this.state.routines[this.state.currentProgId] ||
             this.state.routines[this.state.currentProgId].exercises.length === 0) {
-            alert("התוכנית ריקה"); return;
+            app.toast("התוכנית ריקה — הוסיפי תרגילים דרך עריכת התוכנית", "error"); return;
         }
         const prog = this.state.routines[this.state.currentProgId];
         this.state.active = {
@@ -794,6 +931,9 @@ const app = {
                 if (hasTargetW) parts.push(`${exInst.target.w} ${unitStr}`);
                 if (hasTargetR) parts.push(`${exInst.target.r} חז'`);
                 bannerEl.querySelector('.tb-value').textContent = parts.join(' × ');
+                // איפוס מצב "הושג" לתרגיל חדש
+                bannerEl.classList.remove('achieved');
+                bannerEl.querySelector('.tb-label').textContent = 'יעד מאמן';
                 bannerEl.style.display = 'flex';
                 if (tagW) tagW.style.display = hasTargetW ? 'block' : 'none';
                 if (tagR) tagR.style.display = hasTargetR ? 'block' : 'none';
@@ -823,7 +963,7 @@ const app = {
             if (found && found.sets.length > 0) exHistory.push(found);
         }
         if (exHistory.length === 0) {
-            strip.innerHTML = '<div class="strip-no-data">אין הישג קודם</div>';
+            strip.innerHTML = '<div class="strip-first-set">✨ הסט הראשון שלך בתרגיל הזה — מכאן נתחיל לעקוב אחרי ההתקדמות שלך</div>';
             return;
         }
 
@@ -939,7 +1079,7 @@ const app = {
         this.state.active.inputW = newW;
         const el = document.getElementById('stepper-weight');
         if (el) el.innerText = newW % 1 === 0 ? newW : newW.toFixed(1);
-        if (navigator.vibrate) navigator.vibrate(8);
+        this.haptic(8);
     },
 
     stepReps: function(dir) {
@@ -951,7 +1091,7 @@ const app = {
         this.state.active.inputR = newR;
         const el = document.getElementById('stepper-reps');
         if (el) el.innerText = newR;
-        if (navigator.vibrate) navigator.vibrate(8);
+        this.haptic(8);
     },
 
     toggleStopwatch: function() {
@@ -984,6 +1124,7 @@ const app = {
     selectFeel: function(f) {
         this.state.active.feel = f;
         this.updateFeelUI();
+        this.haptic(6);
     },
 
     updateFeelUI: function() {
@@ -999,7 +1140,7 @@ const app = {
         if (this.state.active.isStopwatch) {
             if(this.state.active.timerInterval) this.toggleStopwatch();
             w = 0; r = this.state.active.stopwatchVal;
-            if (r === 0) { alert("לא נמדד זמן"); return; }
+            if (r === 0) { app.toast("לא נמדד זמן — הפעילי את השעון", "error"); return; }
         } else {
             w = this.state.active.inputW; r = this.state.active.inputR;
         }
@@ -1011,6 +1152,22 @@ const app = {
             this.state.active.log.push(exLog);
         }
         exLog.sets.push({ w, r, feel: this.state.active.feel });
+        this.haptic(10);
+
+        // ── סימון מיידי של יעד מאמן שהושג (לא רק בסיכום) ──
+        if (exInst.target) {
+            const tW = exInst.target.w, tR = exInst.target.r;
+            const wOk = !tW || w >= tW;
+            const rOk = !tR || r >= tR;
+            const banner = document.getElementById('target-banner');
+            if (wOk && rOk && banner && banner.style.display !== 'none' && !banner.classList.contains('achieved')) {
+                banner.classList.add('achieved');
+                const lbl = banner.querySelector('.tb-label');
+                if (lbl) lbl.textContent = '✓ הושג';
+                this.toast('כל הכבוד! השגת את יעד המאמן 🎯', 'success');
+                this.haptic([14, 50, 14]);
+            }
+        }
 
         const restTime = exInst.rest || 60;
         this.startRestTimer(restTime);
@@ -1052,12 +1209,14 @@ const app = {
         const area = document.getElementById('rest-timer-area');
         const disp = document.getElementById('rest-timer-val');
         const ring = document.getElementById('rest-ring-prog');
+        if (disp) disp.classList.remove('rest-done');
         area.style.display = 'flex';
         this.state.active.restDuration = durationSec;
         if (!this.state.active.restStartTime || this.state.active.restStartTime === 0) {
             this.state.active.restStartTime = Date.now();
         }
         const MAX_OFFSET = 408;
+        this._restRang = false;
         this.state.active.restInterval = setInterval(() => {
             const elapsed = Math.floor((Date.now() - this.state.active.restStartTime) / 1000);
             let m = Math.floor(elapsed / 60);
@@ -1066,6 +1225,14 @@ const app = {
             const ratio = Math.min(elapsed / durationSec, 1);
             const offset = MAX_OFFSET - (MAX_OFFSET * ratio);
             ring.style.strokeDashoffset = offset;
+            // פעמון + רטט פעם אחת כשהמנוחה הסתיימה
+            if (ratio >= 1 && !this._restRang) {
+                this._restRang = true;
+                this._restBell();
+                this.haptic([60, 40, 60]);
+                if (disp) disp.classList.add('rest-done');
+                this.toast('זמן מנוחה הסתיים — קדימה לסט הבא! 💪', 'success');
+            }
         }, 100);
         this.saveActiveState();
     },
@@ -1200,6 +1367,12 @@ const app = {
         this.renderWinCard(this.state.active.summary);
         this.renderAchievedTargets(achievedTargets);
         this.nav('screen-summary');
+        // חגיגת שיא — confetti אם שיפרה תרגיל או השיגה יעד מאמן
+        const winShown = document.getElementById('win-card')?.style.display === 'block';
+        const achShown = document.getElementById('achieved-targets-card')?.style.display === 'block';
+        if (winShown || achShown) {
+            setTimeout(() => { this.fireConfetti(); this.haptic([18, 60, 18, 60, 30]); }, 220);
+        }
     },
 
     triggerPressEffect: function(btnId) {
@@ -1430,7 +1603,7 @@ const app = {
         localStorage.removeItem(CONFIG.KEYS.ACTIVE_WORKOUT);
         if (typeof FirebaseManager !== 'undefined' && FirebaseManager.isConfigured()) {
             FirebaseManager.saveArchiveToCloud().then(ok => {
-                if (!ok) alert('לא ניתן לשמור לענן. הנתונים נשמרו מקומית.');
+                if (!ok) app.toast('לא ניתן לשמור לענן. הנתונים נשמרו מקומית.');
                 window.location.reload();
             });
         } else {
@@ -1521,7 +1694,7 @@ const app = {
 
     /* --- ADMIN --- */
     openAdminHome: function() {
-        if (this.state.active.on) { alert("לא ניתן להיכנס לניהול בזמן אימון פעיל."); return; }
+        if (this.state.active.on) { app.toast("לא ניתן להיכנס לניהול בזמן אימון פעיל.", "error"); return; }
         document.getElementById('admin-modal').style.display = 'flex';
         document.getElementById('admin-view-home').style.display = 'flex';
         document.getElementById('admin-view-edit').style.display = 'none';
@@ -1963,7 +2136,7 @@ const app = {
         reader.onload = function(e) {
             try {
                 const json = JSON.parse(e.target.result);
-                if (json.type !== 'config') { alert("קובץ שגוי."); return; }
+                if (json.type !== 'config') { app.toast("קובץ שגוי.", "error"); return; }
                 if(confirm("עדכון תוכניות יחליף את ההגדרות ואת מאגר התרגילים. להמשיך?")) {
                     app.state.routines = json.routines;
                     if(json.exercises) app.state.exercises = json.exercises;
@@ -1971,10 +2144,10 @@ const app = {
                     if (typeof FirebaseManager !== 'undefined' && FirebaseManager.isConfigured()) {
                         FirebaseManager.saveConfigToCloud();
                     }
-                    alert("ההגדרות עודכנו בהצלחה!");
+                    app.toast("ההגדרות עודכנו בהצלחה!", "success");
                     location.reload();
                 }
-            } catch(err) { alert("קובץ לא תקין"); }
+            } catch(err) { app.toast("קובץ לא תקין", "error"); }
         };
         reader.readAsText(file);
         input.value = '';
@@ -2001,9 +2174,9 @@ const app = {
                         FirebaseManager.saveArchiveToCloud();
                     }
                     app.showHistory();
-                    alert("ההיסטוריה עודכנה.");
+                    app.toast("ההיסטוריה עודכנה.", "success");
                 }
-            } catch(err) { alert("שגיאה בקובץ"); }
+            } catch(err) { app.toast("שגיאה בקובץ", "error"); }
         };
         reader.readAsText(file);
         input.value = '';
@@ -2027,12 +2200,12 @@ const app = {
         const traineeWord = this.state.activeProfile === 'male' ? 'המתאמן' : 'המתאמנת';
         if (typeof FirebaseManager !== 'undefined' && FirebaseManager.isConfigured()) {
             FirebaseManager.saveConfigToCloud().then(ok => {
-                alert(ok
+                app.toast(ok
                     ? `✓ הקונפיג עודכן ונשלח לענן!\n${traineeWord} יכול/ה ללחוץ "קבל עדכון מהמאמן".`
                     : 'הקונפיג נשמר מקומית, אך הייתה שגיאה בשליחה לענן.');
             });
         } else {
-            alert(`הקונפיג נשמר.\nלא מוגדר חיבור ענן — ייצא ידנית כדי לשלוח ל${traineeWord}.`);
+            app.toast(`הקונפיג נשמר.\nלא מוגדר חיבור ענן — ייצא ידנית כדי לשלוח ל${traineeWord}.`);
         }
     },
 
@@ -2163,7 +2336,7 @@ const app = {
     },
 
     copySelectedHistory: function() {
-        if(this.state.historySelection.length === 0) { alert("לא נבחר אימון"); return; }
+        if(this.state.historySelection.length === 0) { app.toast("לא נבחר אימון", "error"); return; }
         let fullTxt = "";
         const sortedSel = [...this.state.historySelection].sort((a,b) => a-b);
         sortedSel.forEach((idx, i) => {
@@ -2315,7 +2488,7 @@ const app = {
             });
         }
 
-        if (filtered.length === 0) { alert("לא נמצאו אימונים בטווח זה."); return; }
+        if (filtered.length === 0) { app.toast("לא נמצאו אימונים בטווח זה.", "error"); return; }
 
         let fullTxt = '';
         filtered.sort((a,b) => (a.timestamp||0) - (b.timestamp||0)).forEach((h, i) => {
@@ -2341,22 +2514,22 @@ const app = {
                     window.location.reload(true);
                 }
             } else {
-                alert('האפליקציה מעודכנת (v' + CURRENT_VERSION + ')');
+                app.toast('האפליקציה מעודכנת (v' + CURRENT_VERSION + ')');
             }
         } catch(e) {
-            alert('לא ניתן לבדוק עדכונים. בדקי חיבור לאינטרנט.');
+            app.toast('לא ניתן לבדוק עדכונים. בדקי חיבור לאינטרנט.');
         }
     },
 
     /* --- UTILITIES --- */
     copyText: function(txt) {
         if (navigator.clipboard) {
-            navigator.clipboard.writeText(txt).then(() => alert("הועתק!"));
+            navigator.clipboard.writeText(txt).then(() => app.toast("הועתק!", "success"));
         } else {
             const ta = document.createElement('textarea');
             ta.value = txt;
             document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
-            alert("הועתק!");
+            app.toast("הועתק!", "success");
         }
     }
 };
@@ -2426,18 +2599,18 @@ const FirebaseManager = {
     },
 
     async loadArchiveFromCloud() {
-        if (!this.init()) { alert('Firebase לא מוגדר.'); return; }
+        if (!this.init()) { app.toast('Firebase לא מוגדר.'); return; }
         try {
             const archiveDoc = app.state.activeProfile === 'male' ? 'archive_male' : 'archive';
             const historyKey = app.state.activeProfile === 'male' ? 'gymstart_history_male' : CONFIG.KEYS.HISTORY;
             const doc = await this._db.collection('gymstart_data').doc(archiveDoc).get();
-            if (!doc.exists || !doc.data().items) { alert('לא נמצאה היסטוריה בענן.'); return; }
+            if (!doc.exists || !doc.data().items) { app.toast('לא נמצאה היסטוריה בענן.'); return; }
             localStorage.setItem(historyKey, JSON.stringify(doc.data().items));
             // דגל — בטעינה הבאה app.init יציג badge אם יש יעדים שלא אושרו
             localStorage.setItem('gymstart_check_ach_on_load', '1');
-            alert('ההיסטוריה שוחזרה מהענן!');
+            app.toast('ההיסטוריה שוחזרה מהענן!');
             location.reload();
-        } catch(e) { alert('שגיאה בטעינה: ' + e.message); }
+        } catch(e) { app.toast("שגיאה בטעינה: " + e.message, "error"); }
     },
 
     // ── Config ────────────────────────────────────────────────────────────────
@@ -2464,7 +2637,7 @@ const FirebaseManager = {
     },
 
     async loadConfigFromCloud() {
-        if (!this.init()) { alert('Firebase לא מוגדר.'); return; }
+        if (!this.init()) { app.toast('Firebase לא מוגדר.'); return; }
         try {
             const profileDoc = app.state.activeProfile === 'male' ? 'config_male' : 'config';
             const routinesKey = app.state.activeProfile === 'male' ? 'gymstart_routines_male' : CONFIG.KEYS.ROUTINES;
@@ -2473,7 +2646,7 @@ const FirebaseManager = {
                 this._db.collection('gymstart_data').doc('exercises_bank').get()
             ]);
             if (!configDoc.exists) {
-                alert('לא נמצא קונפיג בענן לפרופיל זה.\nגבה קודם מהמכשיר הנוכחי.');
+                app.toast('לא נמצא קונפיג בענן לפרופיל זה.\nגבה קודם מהמכשיר הנוכחי.');
                 return;
             }
             const data = configDoc.data();
@@ -2484,20 +2657,20 @@ const FirebaseManager = {
             } else if (data.exercises) {
                 localStorage.setItem(CONFIG.KEYS.EXERCISES, JSON.stringify(data.exercises));
             }
-            alert('הקונפיג שוחזר מהענן!');
+            app.toast('הקונפיג שוחזר מהענן!');
             location.reload();
-        } catch(e) { alert('שגיאה בטעינה: ' + e.message); }
+        } catch(e) { app.toast("שגיאה בטעינה: " + e.message, "error"); }
     },
 
     // ── Upload All ────────────────────────────────────────────────────────────
 
     async uploadAllToCloud() {
-        if (!this.init()) { alert('Firebase לא מוגדר. הגדר חיבור תחילה.'); return; }
+        if (!this.init()) { app.toast('Firebase לא מוגדר. הגדר חיבור תחילה.'); return; }
         try {
             const archiveOk = await this.saveArchiveToCloud();
             const configOk  = await this.saveConfigToCloud();
-            alert(archiveOk && configOk ? 'כל הנתונים הועלו לענן!' : 'חלק מהנתונים לא הועלו. בדוק חיבור.');
-        } catch(e) { alert('שגיאה: ' + e.message); }
+            app.toast(archiveOk && configOk ? 'כל הנתונים הועלו לענן!' : 'חלק מהנתונים לא הועלו. בדוק חיבור.');
+        } catch(e) { app.toast("שגיאה: " + e.message, "error"); }
     }
 };
 
@@ -2525,7 +2698,7 @@ function closeFirebaseModal() {
 
 function saveFirebaseConfig() {
     const raw = (document.getElementById('fb-config-paste').value || '').trim();
-    if (!raw) { alert('יש להדביק את בלוק ה-firebaseConfig.'); return; }
+    if (!raw) { app.toast('יש להדביק את בלוק ה-firebaseConfig.'); return; }
 
     let jsonStr = raw;
     // נרמול גרשיים מתולתלים (iOS/WhatsApp) לגרשיים ישרים
@@ -2537,16 +2710,16 @@ function saveFirebaseConfig() {
 
     let cfg;
     try { cfg = JSON.parse(jsonStr); }
-    catch(e) { alert('פורמט לא תקין. ודא שהדבקת את הבלוק המלא מ-Firebase Console.'); return; }
+    catch(e) { app.toast('פורמט לא תקין. ודא שהדבקת את הבלוק המלא מ-Firebase Console.'); return; }
 
-    if (!cfg.apiKey || !cfg.projectId) { alert('חסרים apiKey או projectId.'); return; }
+    if (!cfg.apiKey || !cfg.projectId) { app.toast('חסרים apiKey או projectId.'); return; }
 
     FirebaseManager.saveConfig(cfg);
     FirebaseManager._initialized = false;
     FirebaseManager._db = null;
     closeFirebaseModal();
     updateFirebaseStatus();
-    alert('חיבור Firebase נשמר!');
+    app.toast('חיבור Firebase נשמר!');
 }
 
 function confirmClearFirebase() {
