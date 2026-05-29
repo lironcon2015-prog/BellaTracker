@@ -16,7 +16,7 @@ const CONFIG = {
     VERSION: '1.8.2'
 };
 
-const CURRENT_VERSION = '1.8.6-2'; // חייב להיות זהה ל-version.json
+const CURRENT_VERSION = '1.8.6-3'; // חייב להיות זהה ל-version.json
 
 const FEEL_MAP_TEXT = { 'easy': 'קל', 'good': 'בינוני', 'hard': 'קשה' };
 
@@ -700,16 +700,26 @@ const app = {
             }
             const targetClass = hasTarget ? 'has-target' : '';
             const numClass = hasTarget ? 'has-target' : '';
-            list.innerHTML += `<div class="list-item ${targetClass}">
+            // התרגיל הראשון — לחיץ ומתחיל את האימון (אינטואיטיבי)
+            const isFirst = i === 0;
+            const clickAttr = isFirst ? ' onclick="app.startWorkout()"' : '';
+            const startClass = isFirst ? ' start-item' : '';
+            const subLine = isFirst
+                ? `<div class="overview-start-hint">לחצי כדי להתחיל מכאן</div>`
+                : `<div class="overview-ex-sub">${ex.sets} סטים • ${unitLabel}</div>`;
+            const rightSide = isFirst
+                ? `<span class="overview-start-cue"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M8 5.5v13a1 1 0 0 0 1.5.87l11-6.5a1 1 0 0 0 0-1.74l-11-6.5A1 1 0 0 0 8 5.5z"></path></svg></span>`
+                : `<span class="overview-sets-tag">${ex.sets}×</span>`;
+            list.innerHTML += `<div class="list-item ${targetClass}${startClass}"${clickAttr}>
                 <div style="display:flex;align-items:center;gap:12px;flex:1;">
                     <span class="overview-num ${numClass}">${i+1}</span>
                     <div>
                         <div class="overview-ex-name">${ex.name}</div>
-                        <div class="overview-ex-sub">${ex.sets} סטים • ${unitLabel}</div>
+                        ${subLine}
                         ${targetLine}
                     </div>
                 </div>
-                <span class="overview-sets-tag">${ex.sets}×</span>
+                ${rightSide}
             </div>`;
         });
     },
