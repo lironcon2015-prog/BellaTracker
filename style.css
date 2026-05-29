@@ -181,27 +181,27 @@ body.theme-male::before {
     backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
 }
 
-/* ── Active screen — timer always in view; secondary actions scroll below ── */
+/* ── Active screen — natural flow with air; secondary actions scroll below ── */
 .active-container {
-    display: flex; flex-direction: column; min-height: 100%; overflow-y: auto;
-    padding: 8px 20px; padding-bottom: calc(env(safe-area-inset-bottom) + 10px);
+    display: block; height: 100%; overflow-y: auto;
+    padding: 14px 20px; padding-bottom: calc(env(safe-area-inset-bottom) + 28px);
 }
-.active-top { flex-shrink: 0; text-align: center; }
-.active-top .badge { margin-top: 2px; }
+.active-top { text-align: center; }
+.active-top .badge { margin-top: 4px; }
 .ex-name-row { display: flex; justify-content: center; align-items: center; gap: 8px; }
 .active-focus {
-    flex: 1 1 auto; min-height: 0;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    padding: 6px 0;
+    display: flex; flex-direction: column; align-items: center; gap: 18px;
+    padding: 48px 0 52px;
 }
-.active-bottom { flex-shrink: 0; }
-.workspace { flex-shrink: 0; margin-bottom: 14px; }
-.active-controls-area { display: flex; flex-direction: column; gap: 12px; margin-bottom: 8px; }
+.workspace { margin-bottom: 28px; }
+.active-controls-area { display: flex; flex-direction: column; gap: 24px; margin-bottom: 28px; }
 .main-action-box { width: 100%; }
 .next-preview-text { text-align: center; color: var(--text-sec); font-size: 0.95rem; margin-bottom: 12px; font-weight: 500; animation: fadeIn 0.3s ease; }
-.sub-actions-footer { display: flex; justify-content: space-between; padding: 6px 4px 0; gap: 10px; }
+.sub-actions-footer { display: flex; justify-content: space-between; padding: 4px; gap: 12px; margin-top: 36px; }
+.active-focus #last-stat-strip { align-self: stretch; width: 100%; margin-top: 0; }
 /* רצועת הסטטיסטיקה מוסתרת בזמן מנוחה — הזרקור על הטיימר */
 .active-container.resting #last-stat-strip { display: none !important; }
+
 
 
 @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
