@@ -1440,3 +1440,44 @@ body.theme-male::before {
 .stats-empty-icon { font-size: 3.2rem; margin-bottom: 14px; filter: drop-shadow(0 0 16px rgba(var(--primary-rgb),0.35)); }
 .stats-empty h3 { font-size: var(--fs-lg); font-weight: var(--fw-bold); margin: 0 0 8px; }
 .stats-empty p { font-size: var(--fs-sm); color: var(--text-sec); line-height: 1.5; margin: 0; }
+
+/* ════════════════════════════════════════════════════════════════
+   LIVE WORKOUT FX — PR celebration, ready pulse, energized progress
+   ════════════════════════════════════════════════════════════════ */
+
+/* ── New personal-record flash ── */
+.pr-flash {
+    display: none; width: fit-content; margin: 9px auto 0;
+    background: var(--accent-grad); color: #fff;
+    font-weight: var(--fw-black); font-size: 0.92rem; letter-spacing: 0.2px;
+    padding: 8px 18px; border-radius: var(--radius-pill);
+    box-shadow: 0 0 24px rgba(var(--primary-rgb),0.55), inset 0 1px 0 rgba(255,255,255,0.4);
+    text-shadow: 0 1px 2px rgba(0,0,0,0.25);
+}
+.pr-flash.show { display: block; animation: prPop 0.55s var(--ease-spring); }
+@keyframes prPop {
+    0%   { opacity: 0; transform: scale(0.6) translateY(-4px); }
+    60%  { transform: scale(1.12); }
+    100% { opacity: 1; transform: scale(1); }
+}
+
+/* ── Exercise name entrance ── */
+.ex-enter { animation: exEnter 0.42s var(--ease-out); }
+@keyframes exEnter { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: none; } }
+
+/* ── Rest timer — energized "ready" state ── */
+.rest-ring-lg.done { animation: readyPulse 1.15s var(--ease-out) infinite; }
+@keyframes readyPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.035); } }
+.rest-ring-lg.done .rest-eyebrow { font-weight: var(--fw-black); }
+
+/* ── Session progress — gradient + pulsing current ── */
+.sp-seg.done { background: var(--accent-grad); box-shadow: 0 0 7px rgba(var(--primary-rgb),0.45); }
+.sp-seg.current { background: var(--accent-grad); opacity: 1; animation: segPulse 1.4s var(--ease-out) infinite; }
+@keyframes segPulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 0.9; } }
+
+/* ── Set badge — subtle gradient identity ── */
+#set-badge {
+    background: var(--accent-grad-soft);
+    border-color: rgba(var(--primary-rgb),0.35);
+    color: #fff;
+}

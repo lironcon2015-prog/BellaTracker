@@ -384,4 +384,85 @@
             try { app.renderHomeInsights(); } catch (e) {}
         };
     }
+
+    // ───────────────────────────── חוויית אימון חי — אפקטים ─────────────────────────────
+    // תוספות ויזואליות בלבד; קוראות state וכותבות לאלמנטים חדשים. אינן נוגעות ב-state-machine.
+    Object.assign(app, {
+
+        // נקרא רק כשסט נרשם בפועל — בודק אם הסט האחרון הוא שיא אישי חדש
+        _afterSetLogged: function () {
+            try {
+                const a = this.state.active;
+                const exInst = a.sessionExercises[a.exIdx];
+                if (!exInst) return;
+                const exLog = a.log.find(l => l.id === exInst.id);
+                if (!exLog || !exLog.sets.length) return;
+                const def = this.getExerciseDef(exInst.id);
+                const unit = (def.settings && def.settings.unit) || 'kg';
+                const repBased = unit === 'time' || unit === 'bodyweight';
+                const metricOf = set => repBased ? (Number(set.r) || 0) : (Number(set.w) || 0);
+
+                const lastSet = exLog.sets[exLog.sets.length - 1];
+                const metric = metricOf(lastSet);
+                if (metric <= 0) return;
+
+                // שיא היסטורי (אימונים קודמים)
+                let histBest = 0;
+                this.state.history.forEach(h => {
+                    const f = (h.data || []).find(e => e.id === exInst.id);
+                    if (f) (f.sets || []).forEach(s => { const m = metricOf(s); if (m > histBest) histBest = m; });
+                });
+                // שיא בתוך הסשן הנוכחי (סטים קודמים בלבד)
+                let sessBest = 0;
+                for (let i = 0; i < exLog.sets.length - 1; i++) { const m = metricOf(exLog.sets[i]); if (m > sessBest) sessBest = m; }
+
+                // חוגגים רק שיא אמיתי שעובר את כל מה שהיה — ולא בפעם הראשונה אי-פעם בתרגיל
+                if (histBest > 0 && metric > Math.max(histBest, sessBest)) {
+                    const unitLbl = repBased ? 'חזרות' : (unit === 'plates' ? 'פלטות' : 'ק״ג');
+                    this._flashPR(metric + ' ' + unitLbl);
+                }
+            } catch (e) {}
+        },
+
+        _flashPR: function (text) {
+            let pill = document.getElementById('pr-flash');
+            if (!pill) {
+                const top = document.querySelector('#screen-active .active-top');
+                if (!top) return;
+                pill = document.createElement('div');
+                pill.id = 'pr-flash';
+                pill.className = 'pr-flash';
+                top.appendChild(pill);
+            }
+            pill.innerHTML = '⭐ שיא חדש! ' + this._esc(text);
+            pill.classList.remove('show'); void pill.offsetWidth; pill.classList.add('show');
+            if (typeof this.haptic === 'function') this.haptic([20, 40, 20]);
+            if (typeof this.fireConfetti === 'function') this.fireConfetti();
+            clearTimeout(this._prTimer);
+            this._prTimer = setTimeout(() => { if (pill) pill.classList.remove('show'); }, 2600);
+        }
+    });
+
+    // ── עטיפת finishSet: חגיגת שיא אישי כשסט נרשם (אחרי הריצה המקורית) ──
+    if (typeof app.finishSet === 'function') {
+        const _origFinishSet = app.finishSet.bind(app);
+        const countSets = () => (app.state.active.log || []).reduce((n, l) => n + l.sets.length, 0);
+        app.finishSet = function () {
+            const before = countSets();
+            _origFinishSet();
+            if (countSets() > before) app._afterSetLogged();
+        };
+    }
+
+    // ── עטיפת loadActiveExercise: אנימציית כניסה לשם התרגיל ──
+    if (typeof app.loadActiveExercise === 'function') {
+        const _origLoad = app.loadActiveExercise.bind(app);
+        app.loadActiveExercise = function () {
+            _origLoad();
+            const n = document.getElementById('ex-name');
+            if (n) { n.classList.remove('ex-enter'); void n.offsetWidth; n.classList.add('ex-enter'); }
+            const pr = document.getElementById('pr-flash');
+            if (pr) pr.classList.remove('show');
+        };
+    }
 })();
