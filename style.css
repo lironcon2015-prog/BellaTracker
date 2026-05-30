@@ -13,13 +13,17 @@
     --border-dim: rgba(255,255,255,0.10);
     --border-top: rgba(255,255,255,0.18);
 
-    /* Accent — softened teal (less electric, more refined) */
-    --primary: #3de8dc;
-    --primary-rgb: 61, 232, 220;
-    --primary-2: #16b8ad;
-    --btn-fg: #00100e;
+    /* Accent — energetic rose→violet (lively, premium, Nike/Gymshark vibe) */
+    --primary: #ff4d8d;
+    --primary-rgb: 255, 77, 141;
+    --primary-2: #b832f0;
+    --primary-2-rgb: 184, 50, 240;
+    --btn-fg: #ffffff;
     --primary-dim: rgba(var(--primary-rgb), 0.10);
     --primary-glow: rgba(var(--primary-rgb), 0.28);
+    /* Signature energetic gradient — used on CTAs, rings, badges, hero numbers */
+    --accent-grad: linear-gradient(135deg, #ff6a4d 0%, #ff4d8d 42%, #b832f0 100%);
+    --accent-grad-soft: linear-gradient(135deg, rgba(255,106,77,0.18) 0%, rgba(255,77,141,0.16) 42%, rgba(184,50,240,0.18) 100%);
 
     /* Text — improved secondary contrast (WCAG-friendly) */
     --text: #f4f5f6;
@@ -52,10 +56,12 @@
     --fs-xl: 1.6rem;
     --fs-2xl: 2rem;
     --fs-3xl: 2.4rem;
+    --fs-4xl: 3.1rem;
     --fw-regular: 400;
     --fw-medium: 500;
     --fw-semibold: 600;
     --fw-bold: 700;
+    --fw-black: 800;
 
     /* Radii — modern, generous rounding */
     --radius-sm: 12px;
@@ -118,28 +124,33 @@ body, html {
     }
 }
 
-/* ── Ambient gradient layer — softened for quiet premium ── */
+/* ── Ambient gradient mesh — energetic yet OLED-safe (low alpha over black) ── */
 body::before {
     content: '';
     position: fixed; inset: 0; z-index: 0; pointer-events: none;
     background:
-        radial-gradient(ellipse at 25% 8%, rgba(var(--primary-rgb),0.08) 0%, transparent 48%),
-        radial-gradient(ellipse at 82% 92%, rgba(0,90,110,0.07) 0%, transparent 44%);
+        radial-gradient(ellipse 70% 50% at 18% -2%, rgba(255,77,141,0.13) 0%, transparent 55%),
+        radial-gradient(ellipse 65% 55% at 88% 100%, rgba(184,50,240,0.12) 0%, transparent 52%),
+        radial-gradient(circle at 100% 12%, rgba(255,106,77,0.07) 0%, transparent 38%);
 }
 
-/* ── Male profile theme — refined blue ── */
+/* ── Male profile theme — energetic electric blue→indigo ── */
 body.theme-male {
-    --primary: #4aa8ff;
-    --primary-rgb: 74, 168, 255;
-    --primary-2: #1f78d6;
+    --primary: #3b9dff;
+    --primary-rgb: 59, 157, 255;
+    --primary-2: #6a5cff;
+    --primary-2-rgb: 106, 92, 255;
     --btn-fg: #ffffff;
     --primary-dim: rgba(var(--primary-rgb), 0.10);
     --primary-glow: rgba(var(--primary-rgb), 0.28);
+    --accent-grad: linear-gradient(135deg, #38d6ff 0%, #3b9dff 42%, #6a5cff 100%);
+    --accent-grad-soft: linear-gradient(135deg, rgba(56,214,255,0.18) 0%, rgba(59,157,255,0.16) 42%, rgba(106,92,255,0.18) 100%);
 }
 body.theme-male::before {
     background:
-        radial-gradient(ellipse at 25% 8%, rgba(var(--primary-rgb),0.08) 0%, transparent 48%),
-        radial-gradient(ellipse at 82% 92%, rgba(0,80,150,0.07) 0%, transparent 44%);
+        radial-gradient(ellipse 70% 50% at 18% -2%, rgba(59,157,255,0.13) 0%, transparent 55%),
+        radial-gradient(ellipse 65% 55% at 88% 100%, rgba(106,92,255,0.12) 0%, transparent 52%),
+        radial-gradient(circle at 100% 12%, rgba(56,214,255,0.07) 0%, transparent 38%);
 }
 
 .app-container {
@@ -314,7 +325,7 @@ body.theme-male::before {
 .text-link:active { background: rgba(255,255,255,0.1); color: #fff; border-color: rgba(255,255,255,0.2); }
 
 .hero { text-align: center; margin-bottom: var(--space-6); margin-top: var(--space-5); }
-.hero h1 { font-size: var(--fs-3xl); margin: 0; font-weight: var(--fw-bold); letter-spacing: -0.8px; line-height: 1.1; }
+.hero h1 { font-size: var(--fs-3xl); margin: 0; font-weight: var(--fw-black); letter-spacing: -1px; line-height: 1.05; }
 .hero p { color: var(--text-sec); margin-top: var(--space-2); font-size: var(--fs-md); font-weight: var(--fw-regular); }
 .info-card { display: flex; align-items: center; gap: var(--space-4); margin-bottom: var(--space-5); }
 .icon-box { color: var(--primary); font-size: 1.5rem; filter: drop-shadow(0 0 6px rgba(var(--primary-rgb),0.4)); }
@@ -362,7 +373,7 @@ body.theme-male::before {
 .dash-progress-wrap { width: 100%; height: 3px; background: rgba(255,255,255,0.08); border-radius: 2px; margin-top: 4px; overflow: hidden; }
 .dash-progress-fill {
     height: 100%; border-radius: 2px;
-    background: linear-gradient(90deg, var(--primary), rgba(0,200,180,0.7));
+    background: var(--accent-grad);
     transition: width 0.4s ease;
 }
 .dash-progress-fill.full { background: linear-gradient(90deg, var(--success), rgba(0,200,100,0.7)); }
@@ -462,7 +473,7 @@ body.theme-male::before {
 }
 .admin-home-scroll { flex: 1; overflow-y: auto; min-height: 0; }
 
-.page-title { font-size: var(--fs-xl); margin-bottom: var(--space-5); font-weight: var(--fw-bold); letter-spacing: -0.5px; }
+.page-title { font-size: var(--fs-xl); margin-bottom: var(--space-5); font-weight: var(--fw-black); letter-spacing: -0.7px; }
 .card-grid { display: grid; gap: 12px; }
 
 /* ── Program Card ── */
@@ -1091,7 +1102,7 @@ body.theme-male::before {
 #screen-home .scroll-content { overflow-y: auto; padding-top: 8px; padding-bottom: 16px; }
 #screen-home .fixed-footer { padding-bottom: var(--space-4); }
 .home-greeting { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin: 6px 0 18px; }
-.home-greet-text h1 { font-size: var(--fs-2xl); margin: 0; font-weight: var(--fw-bold); letter-spacing: -0.6px; line-height: 1.1; }
+.home-greet-text h1 { font-size: var(--fs-2xl); margin: 0; font-weight: var(--fw-black); letter-spacing: -0.8px; line-height: 1.05; }
 .home-greet-text p { margin: 5px 0 0; color: var(--text-sec); font-size: var(--fs-base); }
 .streak-chip {
     display: inline-flex; align-items: center; gap: 5px; flex-shrink: 0;
@@ -1116,7 +1127,11 @@ body.theme-male::before {
 }
 .ring-prog.full { stroke: var(--success); filter: drop-shadow(0 0 6px rgba(var(--success-rgb),0.45)); }
 .ring-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-.ring-num { font-size: 2rem; font-weight: var(--fw-bold); line-height: 1; font-variant-numeric: tabular-nums; }
+.ring-num {
+    font-size: 2.3rem; font-weight: var(--fw-black); line-height: 1; font-variant-numeric: tabular-nums;
+    background: var(--accent-grad); -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent; color: var(--primary);
+}
 .ring-den { font-size: 1rem; color: var(--text-ter); font-weight: var(--fw-semibold); }
 .ring-lbl { font-size: 0.7rem; color: var(--text-sec); margin-top: 3px; letter-spacing: 0.5px; }
 .ring-side { flex: 1; min-width: 0; }
@@ -1182,20 +1197,27 @@ body.theme-male::before {
 .btn-primary {
     border-radius: var(--radius-pill); letter-spacing: 0.3px;
     display: flex; align-items: center; justify-content: center; text-align: center;
-    background: linear-gradient(177deg, var(--primary) 0%, var(--primary-2) 92%);
+    background: var(--accent-grad);
     box-shadow:
-        inset 0 0 0 1px rgba(var(--primary-rgb),0.30),
+        inset 0 0 0 1px rgba(255,255,255,0.12),
         inset 0 1px 0 rgba(255,255,255,0.40),
-        0 0 20px rgba(var(--primary-rgb),0.22),
+        0 0 22px rgba(var(--primary-rgb),0.28),
         0 8px 22px rgba(0,0,0,0.42);
     transition: transform var(--dur-fast) var(--ease-spring), filter var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out);
 }
 .btn-primary::after { border-radius: var(--radius-pill) var(--radius-pill) 0 0; }
 .btn-primary:active {
-    transform: scale(0.975); filter: brightness(1.06);
-    box-shadow: inset 0 0 0 1px rgba(var(--primary-rgb),0.35), inset 0 1px 0 rgba(255,255,255,0.4), 0 0 14px rgba(var(--primary-rgb),0.28), 0 3px 12px rgba(0,0,0,0.4);
+    transform: scale(0.975); filter: brightness(1.08) saturate(1.1);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.18), inset 0 1px 0 rgba(255,255,255,0.4), 0 0 16px rgba(var(--primary-rgb),0.34), 0 3px 12px rgba(0,0,0,0.4);
 }
-.btn-primary.big-btn { padding: 19px; font-size: var(--fs-lg); border-radius: var(--radius-pill); }
+.btn-primary.big-btn { padding: 19px; font-size: var(--fs-lg); border-radius: var(--radius-pill); animation: ctaPulse 2.6s var(--ease-out) infinite; }
+
+/* Living CTA — gentle energetic breath of glow (respects reduced-motion globally) */
+@keyframes ctaPulse {
+    0%, 100% { box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12), inset 0 1px 0 rgba(255,255,255,0.40), 0 0 18px rgba(var(--primary-rgb),0.22), 0 8px 22px rgba(0,0,0,0.42); }
+    50%      { box-shadow: inset 0 0 0 1px rgba(255,255,255,0.16), inset 0 1px 0 rgba(255,255,255,0.45), 0 0 34px rgba(var(--primary-rgb),0.42), 0 8px 26px rgba(0,0,0,0.45); }
+}
+.btn-primary.big-btn:active { animation: none; }
 
 /* Outline / quiet / ghost — fully rounded + spring press */
 .btn-outline, .btn-quiet, .btn-ghost, .btn-primary-small { border-radius: var(--radius-pill); transition: transform var(--dur-fast) var(--ease-spring), background var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out); }
@@ -1263,3 +1285,45 @@ body.theme-male::before {
     box-shadow: 0 0 16px rgba(var(--primary-rgb),0.35), inset 0 1px 0 rgba(255,255,255,0.4);
 }
 .overview-start-cue svg { width: 17px; height: 17px; margin-inline-start: 2px; }
+
+/* ════════════════════════════════════════════════════════════════
+   ENERGETIC EDITION — vivid accents, gradient identity, staged motion
+   ════════════════════════════════════════════════════════════════ */
+
+/* ── Program icon — filled energetic gradient chip (Gymshark-style) ── */
+.prog-icon {
+    background: var(--accent-grad); color: #fff; border: none;
+    box-shadow: 0 0 18px rgba(var(--primary-rgb),0.30), inset 0 1px 0 rgba(255,255,255,0.35);
+    text-shadow: 0 1px 2px rgba(0,0,0,0.25);
+}
+
+/* ── Tab active indicator — gradient bar + glow ── */
+.tab-item.active::before { background: var(--accent-grad); box-shadow: 0 0 10px rgba(var(--primary-rgb),0.6); }
+
+/* ── Badge / streak number — gradient text for vivid pop ── */
+.dash-stat-val:not(.dash-val-full) {
+    background: var(--accent-grad); -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent; filter: none;
+}
+
+/* ── Staged entrance — cards rise in sequence when a screen appears ── */
+@keyframes riseStagger { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+.screen.active .card-grid > *,
+.screen.active .home-mini-stats > *,
+.screen.active .hero-ring-card,
+.screen.active .dash-stats-wrap > * {
+    animation: riseStagger var(--dur-slow) var(--ease-out) both;
+}
+.screen.active .hero-ring-card { animation-delay: 0.02s; }
+.screen.active .card-grid > *:nth-child(1),
+.screen.active .home-mini-stats > *:nth-child(1),
+.screen.active .dash-stats-wrap > *:nth-child(1) { animation-delay: 0.05s; }
+.screen.active .card-grid > *:nth-child(2),
+.screen.active .home-mini-stats > *:nth-child(2),
+.screen.active .dash-stats-wrap > *:nth-child(2) { animation-delay: 0.11s; }
+.screen.active .card-grid > *:nth-child(3),
+.screen.active .home-mini-stats > *:nth-child(3),
+.screen.active .dash-stats-wrap > *:nth-child(3) { animation-delay: 0.17s; }
+.screen.active .card-grid > *:nth-child(4) { animation-delay: 0.23s; }
+.screen.active .card-grid > *:nth-child(5) { animation-delay: 0.29s; }
+.screen.active .card-grid > *:nth-child(n+6) { animation-delay: 0.34s; }
