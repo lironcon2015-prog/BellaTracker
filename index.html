@@ -466,6 +466,17 @@
                     </div>
                 </div>
 
+                <!-- Insights / level card → tap to open stats -->
+                <div id="home-insights-card" class="oled-card insights-home-card" onclick="app.openStats()">
+                    <div class="hi-level-badge"><span id="hi-level">1</span></div>
+                    <div class="hi-mid">
+                        <div class="hi-top"><span class="hi-title">ההתקדמות שלך</span><span class="hi-badge-chip"><span id="hi-badges">0</span> 🏅</span></div>
+                        <div class="hi-track"><div id="hi-xp-fill" class="hi-fill" style="width:0%"></div></div>
+                        <div class="hi-sub" id="hi-sub">התחילי כדי לצבור XP</div>
+                    </div>
+                    <div class="hi-arrow">›</div>
+                </div>
+
                 <!-- Last workout -->
                 <div class="oled-card info-card">
                     <div class="icon-box">
@@ -661,6 +672,14 @@
             </div>
         </div>
 
+        <!-- SCREEN 6: STATS / INSIGHTS -->
+        <div id="screen-stats" class="screen">
+            <div class="scroll-content">
+                <h2 class="page-title">ההתקדמות שלך</h2>
+                <div id="stats-content"></div>
+            </div>
+        </div>
+
         <!-- BOTTOM TAB BAR -->
         <nav class="tab-bar" id="tab-bar">
             <button class="tab-item active" id="tab-home" onclick="app.tabNav('home')" aria-label="בית">
@@ -670,6 +689,10 @@
             <button class="tab-item" id="tab-workout" onclick="app.tabNav('workout')" aria-label="אימון">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5v11"></path><path d="M4 9v6"></path><path d="M17.5 6.5v11"></path><path d="M20 9v6"></path><path d="M6.5 12h11"></path></svg>
                 <span>אימון</span>
+            </button>
+            <button class="tab-item" id="tab-stats" onclick="app.openStats()" aria-label="התקדמות">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5"></path><path d="M4 19h16"></path><path d="M8 17v-5"></path><path d="M13 17V8"></path><path d="M18 17v-8"></path></svg>
+                <span>התקדמות</span>
             </button>
             <button class="tab-item" id="tab-history" onclick="app.tabNav('history')" aria-label="היסטוריה">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7.5V12l3 1.8"></path></svg>
@@ -711,5 +734,6 @@
     <div id="toast-host" aria-live="polite" aria-atomic="false"></div>
 
     <script src="script.js"></script>
+    <script src="insights.js"></script>
 </body>
 </html>
