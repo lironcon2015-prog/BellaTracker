@@ -16,7 +16,7 @@ const CONFIG = {
     VERSION: '1.8.2'
 };
 
-const CURRENT_VERSION = '1.8.6-5'; // חייב להיות זהה ל-version.json
+const CURRENT_VERSION = '2.0.0-1'; // חייב להיות זהה ל-version.json
 
 const FEEL_MAP_TEXT = { 'easy': 'קל', 'good': 'בינוני', 'hard': 'קשה' };
 
@@ -437,7 +437,7 @@ const app = {
             document.body.appendChild(host);
         }
         host.innerHTML = '';
-        const colors = ['#3de8dc', '#34e07a', '#ffcf6b', '#ffffff', '#16b8ad'];
+        const colors = ['#ff4d8d', '#b832f0', '#ff6a4d', '#ffcf6b', '#ffffff', '#3b9dff'];
         const N = 70;
         for (let i = 0; i < N; i++) {
             const p = document.createElement('div');
