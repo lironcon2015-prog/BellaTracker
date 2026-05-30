@@ -1481,3 +1481,77 @@ body.theme-male::before {
     border-color: rgba(var(--primary-rgb),0.35);
     color: #fff;
 }
+
+/* ════════════════════════════════════════════════════════════════
+   SETTINGS & HISTORY — alignment to the energetic design line
+   ════════════════════════════════════════════════════════════════ */
+
+/* ── Section headers (settings + history) — heavier, with gradient tick ── */
+.admin-view .modal-header h3 { font-weight: var(--fw-black); letter-spacing: -0.5px; font-size: var(--fs-lg); margin: 0; }
+.admin-section-label { display: flex; align-items: center; gap: 8px; color: var(--text-sec); }
+.admin-section-label::before {
+    content: ''; width: 3px; height: 13px; border-radius: 2px;
+    background: var(--accent-grad); box-shadow: 0 0 6px rgba(var(--primary-rgb),0.4);
+}
+
+/* ── Tool card icon → filled gradient chip (matches app identity) ── */
+.admin-action-icon {
+    background: var(--accent-grad); border: none; color: #fff;
+    box-shadow: 0 0 16px rgba(var(--primary-rgb),0.30), inset 0 1px 0 rgba(255,255,255,0.32);
+}
+.admin-action-card { border-top-color: rgba(var(--primary-rgb),0.30); transition: transform var(--dur-fast) var(--ease-spring), background var(--dur-fast) var(--ease-out); }
+.admin-action-card:active { transform: scale(0.99); }
+
+/* ── Data buttons — spring press; "upload all" becomes the hero gradient action ── */
+.admin-data-btn { transition: transform var(--dur-fast) var(--ease-spring), background var(--dur-fast) var(--ease-out); }
+.admin-data-btn:active { transform: scale(0.96); }
+.admin-data-accent {
+    background: var(--accent-grad); border: none;
+    box-shadow: 0 0 20px rgba(var(--primary-rgb),0.30), inset 0 1px 0 rgba(255,255,255,0.30);
+}
+.admin-data-accent .admin-data-label { color: #fff; }
+
+/* ── Settings stepper value — gradient numeral ── */
+.admin-settings-card .step-val {
+    background: var(--accent-grad); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+}
+
+/* ── History — month headers ── */
+#screen-history .page-header { align-items: center; }
+.month-header {
+    border-top-color: rgba(var(--primary-rgb),0.20);
+    transition: transform var(--dur-fast) var(--ease-spring), background var(--dur-fast) var(--ease-out);
+}
+.month-header:active { transform: scale(0.99); }
+.month-count {
+    background: rgba(255,255,255,0.06); border: 1px solid var(--border-dim);
+    border-radius: var(--radius-pill); padding: 2px 11px; color: var(--text-sec); font-weight: var(--fw-medium);
+}
+.month-chevron { filter: drop-shadow(0 0 5px rgba(var(--primary-rgb),0.5)); }
+
+/* ── History — entry rows with gradient edge accent + tactile press ── */
+.hist-item-row { transition: transform var(--dur-fast) var(--ease-spring), background var(--dur-fast) var(--ease-out); }
+.hist-item-row::after {
+    content: ''; position: absolute; right: 0; top: 0; bottom: 0; width: 3px;
+    background: linear-gradient(to bottom, rgba(var(--primary-rgb),0.75), rgba(var(--primary-rgb),0.10));
+    border-radius: 0 14px 14px 0; pointer-events: none;
+}
+.gs-hist-row-inner { cursor: pointer; }
+.hist-item-row:active { transform: scale(0.995); background: var(--surface-3); }
+.gs-prog-badge {
+    background: var(--accent-grad-soft); border-color: rgba(var(--primary-rgb),0.30); color: #fff;
+}
+
+/* ── History — range trigger aligned to identity ── */
+.btn-range-trigger {
+    background: var(--accent-grad-soft); border-color: rgba(var(--primary-rgb),0.30);
+    transition: transform var(--dur-fast) var(--ease-spring), background var(--dur-fast) var(--ease-out);
+}
+.btn-range-trigger:active { transform: scale(0.99); }
+
+/* ── History — staged entrance for month groups ── */
+.screen.active .history-list-container > * { animation: riseStagger var(--dur-slow) var(--ease-out) both; }
+.screen.active .history-list-container > *:nth-child(1) { animation-delay: 0.04s; }
+.screen.active .history-list-container > *:nth-child(2) { animation-delay: 0.10s; }
+.screen.active .history-list-container > *:nth-child(3) { animation-delay: 0.16s; }
+.screen.active .history-list-container > *:nth-child(n+4) { animation-delay: 0.21s; }
