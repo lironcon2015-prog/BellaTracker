@@ -16,9 +16,18 @@ const CONFIG = {
     VERSION: '1.8.2'
 };
 
-const CURRENT_VERSION = '2.2.0-3'; // חייב להיות זהה ל-version.json
+const CURRENT_VERSION = '2.3.0-1'; // חייב להיות זהה ל-version.json
 
 const FEEL_MAP_TEXT = { 'easy': 'קל', 'good': 'בינוני', 'hard': 'קשה' };
+
+// ── פרופילים ──────────────────────────────────────────────────────────────────
+// suffix מצורף למפתחות LocalStorage ולמסמכי Firestore (config/archive).
+// female הוא הפרופיל ההיסטורי — מפתחות legacy ללא סיומת, אסור לשנות.
+const PROFILES = {
+    female: { name: 'בלה',   icon: '👩', isMale: false, suffix: '' },
+    male:   { name: 'איתמר', icon: '👨', isMale: true,  suffix: '_male' },
+    yamit:  { name: 'ימית',  icon: '👩', isMale: false, suffix: '_yamit' }
+};
 
 // BASE EXERCISES — plank/side_plank משודרגים ל-unit:'time'
 const BASE_BANK_INIT = [
@@ -124,8 +133,8 @@ const app = {
         const r = localStorage.getItem(keys.ROUTINES);
         let loadedRoutines = r ? JSON.parse(r) : null;
         if (!loadedRoutines) {
-            if (this.state.activeProfile === 'male') {
-                // פרופיל זכר מתחיל ריק — אין תוכניות ברירת מחדל
+            if (this.state.activeProfile !== 'female') {
+                // פרופילים נוספים (איתמר, ימית) מתחילים ריקים — אין תוכניות ברירת מחדל
                 this.state.routines = {};
             } else {
                 this.state.routines = JSON.parse(JSON.stringify(DEFAULT_ROUTINES_V17));
@@ -160,21 +169,28 @@ const app = {
 
     getActiveKeys: function() {
         const p = this.state.activeProfile;
+        // female = מפתחות legacy ללא סיומת (אסור לשנות — אובדן נתונים)
+        if (p === 'female') {
+            return { ROUTINES: CONFIG.KEYS.ROUTINES, HISTORY: CONFIG.KEYS.HISTORY };
+        }
+        const suffix = (PROFILES[p] || PROFILES.female).suffix;
         return {
-            ROUTINES: p === 'male' ? 'gymstart_routines_male' : CONFIG.KEYS.ROUTINES,
-            HISTORY:  p === 'male' ? 'gymstart_history_male'  : CONFIG.KEYS.HISTORY
+            ROUTINES: 'gymstart_routines' + suffix,
+            HISTORY:  'gymstart_history' + suffix
         };
     },
 
     initProfile: function() {
         const level = parseInt(localStorage.getItem('gymstart_auth_level') || '0');
         this.state.authLevel = level;
+        const saved = localStorage.getItem('gymstart_active_profile');
         if (level === 0) {
             this.state.activeProfile = 'female';
         } else if (level === 1) {
-            this.state.activeProfile = 'male';
+            // מכשיר נעול לפרופיל מתאמן/ת — fallback ל-male לתאימות לאחור
+            this.state.activeProfile = (saved && PROFILES[saved]) ? saved : 'male';
         } else if (level === 2) {
-            this.state.activeProfile = localStorage.getItem('gymstart_active_profile') || 'female';
+            this.state.activeProfile = (saved && PROFILES[saved]) ? saved : 'female';
         }
     },
 
@@ -242,12 +258,18 @@ const app = {
                     </div>
                 </div>`;
         } else if (level === 1) {
+            const prof = PROFILES[p] || PROFILES.male;
             panel.innerHTML = `
                 <div class="oled-card compact" style="display:flex;align-items:center;gap:10px;">
-                    <span style="font-size:1.2em;">👤</span>
-                    <span style="color:var(--primary);">מחובר כמתאמן</span>
+                    <span style="font-size:1.2em;">${prof.icon}</span>
+                    <span style="color:var(--primary);">${prof.isMale ? 'מחובר כמתאמן' : 'מחוברת כמתאמנת'} — ${prof.name}</span>
                 </div>`;
         } else if (level === 2) {
+            const profileBtns = Object.keys(PROFILES).map(id => {
+                const prof = PROFILES[id];
+                const on = p === id;
+                return `<button onclick="app.switchProfile('${id}')" style="flex:1;padding:10px 4px;border-radius:10px;border:1.5px solid ${on?'var(--primary)':'rgba(255,255,255,0.15)'};background:${on?'var(--primary-dim)':'transparent'};color:${on?'var(--primary)':'#aaa'};font-family:var(--font);font-size:0.88rem;cursor:pointer;">${prof.icon} ${prof.name}</button>`;
+            }).join('');
             panel.innerHTML = `
                 <div class="oled-card compact">
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
@@ -255,15 +277,15 @@ const app = {
                         <span style="font-size:0.8rem;color:var(--text-sec);">מצב מאמן 🔑</span>
                     </div>
                     <div style="display:flex;gap:8px;">
-                        <button onclick="app.switchProfile('female')" style="flex:1;padding:10px 4px;border-radius:10px;border:1.5px solid ${p==='female'?'var(--primary)':'rgba(255,255,255,0.15)'};background:${p==='female'?'var(--primary-dim)':'transparent'};color:${p==='female'?'var(--primary)':'#aaa'};font-family:var(--font);font-size:0.88rem;cursor:pointer;">👩 בלה</button>
-                        <button onclick="app.switchProfile('male')" style="flex:1;padding:10px 4px;border-radius:10px;border:1.5px solid ${p==='male'?'var(--primary)':'rgba(255,255,255,0.15)'};background:${p==='male'?'var(--primary-dim)':'transparent'};color:${p==='male'?'var(--primary)':'#aaa'};font-family:var(--font);font-size:0.88rem;cursor:pointer;">👨 איתמר</button>
+                        ${profileBtns}
                     </div>
                 </div>`;
         }
     },
 
     submitAuthCode: function() {
-        const PIN_MALE  = '1111';
+        // קוד מתאמן/ת — נועל את המכשיר לפרופיל הספציפי
+        const TRAINEE_PINS = { '1111': 'male', '2222': 'yamit' };
         const PIN_ADMIN = '9999';
         const input = document.getElementById('auth-pin-input');
         if (!input) return;
@@ -271,14 +293,18 @@ const app = {
         if (code === PIN_ADMIN) {
             localStorage.setItem('gymstart_auth_level', '2');
             this.state.authLevel = 2;
-            this.state.activeProfile = localStorage.getItem('gymstart_active_profile') || 'female';
+            const saved = localStorage.getItem('gymstart_active_profile');
+            this.state.activeProfile = (saved && PROFILES[saved]) ? saved : 'female';
             this.renderAuthPanel();
             this.applyProfileTheme();
             app.toast('מצב מאמן פעיל. ניתן לעבור בין פרופילים.');
-        } else if (code === PIN_MALE) {
-            if (confirm('מעבר לפרופיל מתאמן. הפעולה קבועה במכשיר זה. להמשיך?')) {
+        } else if (TRAINEE_PINS[code]) {
+            const profId = TRAINEE_PINS[code];
+            const prof = PROFILES[profId];
+            const word = prof.isMale ? 'מתאמן' : 'מתאמנת';
+            if (confirm(`מעבר לפרופיל ${word} (${prof.name}). הפעולה קבועה במכשיר זה. להמשיך?`)) {
                 localStorage.setItem('gymstart_auth_level', '1');
-                localStorage.setItem('gymstart_active_profile', 'male');
+                localStorage.setItem('gymstart_active_profile', profId);
                 location.reload();
             }
         } else {
@@ -853,14 +879,19 @@ const app = {
         return Math.round(withTime.reduce((s,h) => s + h.duration, 0) / withTime.length);
     },
 
+    _getSettingsKey: function() {
+        // female = מפתח legacy ללא סיומת
+        return 'gymstart_v1_settings' + (PROFILES[this.state.activeProfile] || PROFILES.female).suffix;
+    },
+
     _getWeeklyTarget: function() {
-        const key = this.state.activeProfile === 'male' ? 'gymstart_v1_settings_male' : 'gymstart_v1_settings';
+        const key = this._getSettingsKey();
         try { return JSON.parse(localStorage.getItem(key) || '{}').weeklyTarget || 3; }
         catch(e) { return 3; }
     },
 
     _setWeeklyTarget: function(n) {
-        const key = this.state.activeProfile === 'male' ? 'gymstart_v1_settings_male' : 'gymstart_v1_settings';
+        const key = this._getSettingsKey();
         try {
             const s = JSON.parse(localStorage.getItem(key) || '{}');
             s.weeklyTarget = n;
@@ -2257,6 +2288,45 @@ const app = {
         input.value = '';
     },
 
+    /* --- FULL BACKUP — קובץ אחד עם כל הנתונים כולל חיבור ה-Firebase --- */
+
+    exportFullBackup: function() {
+        // צילום מלא של כל מפתחות האפליקציה ב-LocalStorage —
+        // כולל gymstart_firebase_config (מפתחות החיבור לענן)
+        const keys = {};
+        for (let i = 0; i < localStorage.length; i++) {
+            const k = localStorage.key(i);
+            if (k && k.indexOf('gymstart_') === 0) keys[k] = localStorage.getItem(k);
+        }
+        const data = {
+            type: 'full_backup',
+            ver: CURRENT_VERSION,
+            date: new Date().toLocaleDateString(),
+            keys: keys
+        };
+        this.downloadJSON(data, `gymstart_full_backup_${Date.now()}.json`);
+        app.toast('קובץ שחזור מלא נוצר — שמרי אותו במקום בטוח (כולל את חיבור ה-Firebase).');
+    },
+
+    importFullBackup: function(input) {
+        const file = input.files[0]; if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const json = JSON.parse(e.target.result);
+                if (json.type !== 'full_backup' || !json.keys) {
+                    app.toast('קובץ שגוי — נדרש קובץ שחזור מלא.', 'error'); return;
+                }
+                if (!confirm('שחזור מלא יחליף את כל נתוני האפליקציה במכשיר זה, כולל חיבור ה-Firebase. להמשיך?')) return;
+                Object.keys(json.keys).forEach(k => localStorage.setItem(k, json.keys[k]));
+                app.toast('השחזור הושלם!', 'success');
+                location.reload();
+            } catch(err) { app.toast('קובץ לא תקין', 'error'); }
+        };
+        reader.readAsText(file);
+        input.value = '';
+    },
+
     exportHistory: function() {
         const data = { type: 'history', ver: CONFIG.VERSION, history: this.state.history };
         this.downloadJSON(data, `gymstart_history_${Date.now()}.json`);
@@ -2683,12 +2753,17 @@ const FirebaseManager = {
         }
     },
 
+    // סיומת מסמכי Firestore לפי הפרופיל הפעיל ('' לבלה, '_male', '_yamit')
+    _docSuffix() {
+        return (PROFILES[app.state.activeProfile] || PROFILES.female).suffix;
+    },
+
     // ── Archive ───────────────────────────────────────────────────────────────
 
     async saveArchiveToCloud() {
         if (!this.init()) return false;
         try {
-            const archiveDoc = app.state.activeProfile === 'male' ? 'archive_male' : 'archive';
+            const archiveDoc = 'archive' + this._docSuffix();
             // JSON round-trip מסנן undefined שגורם ל-Firestore לזרוק שגיאה
             const cleanHistory = JSON.parse(JSON.stringify(app.state.history));
             await this._db.collection('gymstart_data').doc(archiveDoc).set({
@@ -2705,8 +2780,8 @@ const FirebaseManager = {
     async loadArchiveFromCloud() {
         if (!this.init()) { app.toast('Firebase לא מוגדר.'); return; }
         try {
-            const archiveDoc = app.state.activeProfile === 'male' ? 'archive_male' : 'archive';
-            const historyKey = app.state.activeProfile === 'male' ? 'gymstart_history_male' : CONFIG.KEYS.HISTORY;
+            const archiveDoc = 'archive' + this._docSuffix();
+            const historyKey = app.getActiveKeys().HISTORY;
             const doc = await this._db.collection('gymstart_data').doc(archiveDoc).get();
             if (!doc.exists || !doc.data().items) { app.toast('לא נמצאה היסטוריה בענן.'); return; }
             localStorage.setItem(historyKey, JSON.stringify(doc.data().items));
@@ -2722,13 +2797,13 @@ const FirebaseManager = {
     async saveConfigToCloud() {
         if (!this.init()) return false;
         try {
-            const profileDoc = app.state.activeProfile === 'male' ? 'config_male' : 'config';
+            const profileDoc = 'config' + this._docSuffix();
             // תוכניות אימון — נפרד לפי פרופיל
             await this._db.collection('gymstart_data').doc(profileDoc).set({
                 routines: app.state.routines,
                 updatedAt: Date.now()
             });
-            // מאגר תרגילים — משותף לשני הפרופילים
+            // מאגר תרגילים — משותף לכל הפרופילים
             await this._db.collection('gymstart_data').doc('exercises_bank').set({
                 exercises: app.state.exercises,
                 updatedAt: Date.now()
@@ -2743,8 +2818,8 @@ const FirebaseManager = {
     async loadConfigFromCloud() {
         if (!this.init()) { app.toast('Firebase לא מוגדר.'); return; }
         try {
-            const profileDoc = app.state.activeProfile === 'male' ? 'config_male' : 'config';
-            const routinesKey = app.state.activeProfile === 'male' ? 'gymstart_routines_male' : CONFIG.KEYS.ROUTINES;
+            const profileDoc = 'config' + this._docSuffix();
+            const routinesKey = app.getActiveKeys().ROUTINES;
             const [configDoc, exDoc] = await Promise.all([
                 this._db.collection('gymstart_data').doc(profileDoc).get(),
                 this._db.collection('gymstart_data').doc('exercises_bank').get()
