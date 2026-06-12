@@ -16,7 +16,7 @@ const CONFIG = {
     VERSION: '1.8.2'
 };
 
-const CURRENT_VERSION = '2.3.0-1'; // חייב להיות זהה ל-version.json
+const CURRENT_VERSION = '2.3.0-2'; // חייב להיות זהה ל-version.json
 
 const FEEL_MAP_TEXT = { 'easy': 'קל', 'good': 'בינוני', 'hard': 'קשה' };
 
@@ -2320,6 +2320,31 @@ const app = {
                 if (!confirm('שחזור מלא יחליף את כל נתוני האפליקציה במכשיר זה, כולל חיבור ה-Firebase. להמשיך?')) return;
                 Object.keys(json.keys).forEach(k => localStorage.setItem(k, json.keys[k]));
                 app.toast('השחזור הושלם!', 'success');
+                location.reload();
+            } catch(err) { app.toast('קובץ לא תקין', 'error'); }
+        };
+        reader.readAsText(file);
+        input.value = '';
+    },
+
+    // שחזור מפתחות ה-Firebase בלבד מתוך קובץ שחזור מלא — לא נוגע בשאר הנתונים
+    importFirebaseKeysOnly: function(input) {
+        const file = input.files[0]; if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const json = JSON.parse(e.target.result);
+                const cfgStr = (json.type === 'full_backup' && json.keys)
+                    ? json.keys[FirebaseManager.KEY_FIREBASE_CONFIG]
+                    : null;
+                if (!cfgStr) { app.toast('לא נמצאו מפתחות Firebase בקובץ.', 'error'); return; }
+                let cfg;
+                try { cfg = JSON.parse(cfgStr); } catch(e2) { cfg = null; }
+                if (!cfg || !cfg.apiKey || !cfg.projectId) {
+                    app.toast('מפתחות ה-Firebase בקובץ אינם תקינים.', 'error'); return;
+                }
+                localStorage.setItem(FirebaseManager.KEY_FIREBASE_CONFIG, cfgStr);
+                app.toast('חיבור ה-Firebase שוחזר! שאר הנתונים לא שונו.', 'success');
                 location.reload();
             } catch(err) { app.toast('קובץ לא תקין', 'error'); }
         };
