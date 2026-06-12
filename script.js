@@ -16,7 +16,7 @@ const CONFIG = {
     VERSION: '1.8.2'
 };
 
-const CURRENT_VERSION = '2.3.1-1'; // חייב להיות זהה ל-version.json
+const CURRENT_VERSION = '2.3.1-2'; // חייב להיות זהה ל-version.json
 
 const FEEL_MAP_TEXT = { 'easy': 'קל', 'good': 'בינוני', 'hard': 'קשה' };
 
@@ -2338,6 +2338,20 @@ const app = {
         input.value = '';
     },
 
+    // ייצוא מפתחות ה-Firebase בלבד — קובץ קטן לחיבור מכשיר חדש לענן
+    exportFirebaseKeys: function() {
+        const cfgStr = localStorage.getItem(FirebaseManager.KEY_FIREBASE_CONFIG);
+        if (!cfgStr) { app.toast('אין חיבור Firebase מוגדר במכשיר זה.', 'error'); return; }
+        const data = {
+            type: 'firebase_keys',
+            ver: CURRENT_VERSION,
+            date: new Date().toLocaleDateString(),
+            keys: { [FirebaseManager.KEY_FIREBASE_CONFIG]: cfgStr }
+        };
+        this.downloadJSON(data, `gymstart_firebase_keys_${Date.now()}.json`);
+        app.toast('קובץ מפתחות Firebase נוצר — שמור במקום בטוח.');
+    },
+
     // שחזור מפתחות ה-Firebase בלבד מתוך קובץ שחזור מלא — לא נוגע בשאר הנתונים
     importFirebaseKeysOnly: function(input) {
         const file = input.files[0]; if (!file) return;
@@ -2345,9 +2359,9 @@ const app = {
         reader.onload = function(e) {
             try {
                 const json = JSON.parse(e.target.result);
-                const cfgStr = (json.type === 'full_backup' && json.keys)
-                    ? json.keys[FirebaseManager.KEY_FIREBASE_CONFIG]
-                    : null;
+                // תומך גם בקובץ מפתחות ייעודי וגם בקובץ גיבוי מלא
+                const isKeysFile = (json.type === 'firebase_keys' || json.type === 'full_backup') && json.keys;
+                const cfgStr = isKeysFile ? json.keys[FirebaseManager.KEY_FIREBASE_CONFIG] : null;
                 if (!cfgStr) { app.toast('לא נמצאו מפתחות Firebase בקובץ.', 'error'); return; }
                 let cfg;
                 try { cfg = JSON.parse(cfgStr); } catch(e2) { cfg = null; }
