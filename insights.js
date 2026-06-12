@@ -50,7 +50,9 @@
         },
 
         _seenKey: function () {
-            return this.state.activeProfile === 'male' ? SEEN_KEY_BASE + '_male' : SEEN_KEY_BASE;
+            // suffix לפי פרופיל ('' לבלה — מפתח legacy); fallback אם PROFILES לא נטען
+            const prof = (typeof PROFILES !== 'undefined' && PROFILES[this.state.activeProfile]) || null;
+            return SEEN_KEY_BASE + (prof ? prof.suffix : '');
         },
 
         // נפח של אימון בודד = Σ(משקל × חזרות). תרגילי זמן/משקל-גוף לא תורמים לנפח.
