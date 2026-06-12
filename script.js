@@ -16,7 +16,7 @@ const CONFIG = {
     VERSION: '1.8.2'
 };
 
-const CURRENT_VERSION = '2.3.0-2'; // חייב להיות זהה ל-version.json
+const CURRENT_VERSION = '2.3.1-1'; // חייב להיות זהה ל-version.json
 
 const FEEL_MAP_TEXT = { 'easy': 'קל', 'good': 'בינוני', 'hard': 'קשה' };
 
@@ -904,6 +904,17 @@ const app = {
         this._setWeeklyTarget(next);
         document.getElementById('admin-weekly-target').textContent = next;
         this.renderHome();
+        this._schedulePrefsSync();
+    },
+
+    // סנכרון העדפות דחוי ושקט — מאחד לחיצות מרובות לכתיבת ענן אחת
+    _schedulePrefsSync: function() {
+        if (this._prefsSyncTimer) clearTimeout(this._prefsSyncTimer);
+        this._prefsSyncTimer = setTimeout(() => {
+            if (typeof FirebaseManager !== 'undefined' && FirebaseManager.isConfigured()) {
+                FirebaseManager.savePrefsToCloud();
+            }
+        }, 1500);
     },
 
     getExerciseDef: function(exId) {
@@ -2823,9 +2834,12 @@ const FirebaseManager = {
         if (!this.init()) return false;
         try {
             const profileDoc = 'config' + this._docSuffix();
-            // תוכניות אימון — נפרד לפי פרופיל
+            // תוכניות אימון + העדפות פרופיל — נפרד לפי פרופיל
+            // (מחרוזות JSON גולמיות; null במקום undefined — Firestore דוחה undefined)
             await this._db.collection('gymstart_data').doc(profileDoc).set({
                 routines: app.state.routines,
+                settings: localStorage.getItem(app._getSettingsKey()) || null,
+                seenBadges: (typeof app._seenKey === 'function' && localStorage.getItem(app._seenKey())) || null,
                 updatedAt: Date.now()
             });
             // מאגר תרגילים — משותף לכל הפרופילים
@@ -2855,6 +2869,9 @@ const FirebaseManager = {
             }
             const data = configDoc.data();
             if (data.routines) localStorage.setItem(routinesKey, JSON.stringify(data.routines));
+            // העדפות פרופיל — יעד שבועי ודגלי הישגים שכבר נחגגו
+            if (data.settings) localStorage.setItem(app._getSettingsKey(), data.settings);
+            if (data.seenBadges && typeof app._seenKey === 'function') localStorage.setItem(app._seenKey(), data.seenBadges);
             // תרגילים: מ-exercises_bank, fallback ל-config.exercises (תאימות לאחור)
             if (exDoc.exists && exDoc.data().exercises) {
                 localStorage.setItem(CONFIG.KEYS.EXERCISES, JSON.stringify(exDoc.data().exercises));
@@ -2864,6 +2881,26 @@ const FirebaseManager = {
             app.toast('הקונפיג שוחזר מהענן!');
             location.reload();
         } catch(e) { app.toast("שגיאה בטעינה: " + e.message, "error"); }
+    },
+
+    // ── Prefs ─────────────────────────────────────────────────────────────────
+
+    // העדפות פרופיל בלבד (יעד שבועי + דגלי הישגים) — merge:true כדי לא לדרוס
+    // תוכניות בענן כשנשלח ממכשיר מתאמנת עם קונפיג ישן
+    async savePrefsToCloud() {
+        if (!this.init()) return false;
+        try {
+            const profileDoc = 'config' + this._docSuffix();
+            await this._db.collection('gymstart_data').doc(profileDoc).set({
+                settings: localStorage.getItem(app._getSettingsKey()) || null,
+                seenBadges: (typeof app._seenKey === 'function' && localStorage.getItem(app._seenKey())) || null,
+                updatedAt: Date.now()
+            }, { merge: true });
+            return true;
+        } catch(e) {
+            console.error('GymStart savePrefs:', e);
+            return false;
+        }
     },
 
     // ── Upload All ────────────────────────────────────────────────────────────

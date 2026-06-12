@@ -145,9 +145,13 @@
                             <span class="admin-data-icon">⚠️</span>
                             <span class="admin-data-label">איפוס מלא</span>
                         </button>
-                        <button class="admin-data-btn admin-data-accent" onclick="app.exportFullBackup()" style="grid-column:span 2;">
+                        <button class="admin-data-btn admin-data-accent" onclick="app.exportFullBackup()">
                             <span class="admin-data-icon">🗝️</span>
-                            <span class="admin-data-label">ייצוא קובץ שחזור מלא (כולל Firebase)</span>
+                            <span class="admin-data-label">ייצוא גיבוי מלא (כולל Firebase)</span>
+                        </button>
+                        <button class="admin-data-btn admin-data-accent" onclick="document.getElementById('file-import-full').click()">
+                            <span class="admin-data-icon">📥</span>
+                            <span class="admin-data-label">שחזור מגיבוי מלא</span>
                         </button>
                     </div>
 
@@ -369,8 +373,7 @@
         <p style="font-size:0.82rem;color:var(--text-sec);margin:0 0 18px;">בחרי מקור השחזור</p>
         <button class="btn-primary" id="btn-restore-cloud" onclick="app.closeHistoryRestoreSheet(); FirebaseManager.loadArchiveFromCloud();" style="margin-bottom:10px;">☁️ שחזר מהענן</button>
         <button class="btn-outline" onclick="app.closeHistoryRestoreSheet(); document.getElementById('file-import-history').click();" style="margin-bottom:10px;">📂 טען מקובץ</button>
-        <button class="btn-outline" onclick="app.closeHistoryRestoreSheet(); document.getElementById('file-import-full').click();" style="margin-bottom:10px;">🗝️ שחזור מלא מקובץ (כולל Firebase)</button>
-        <button class="btn-outline" onclick="app.closeHistoryRestoreSheet(); document.getElementById('file-import-fbkeys').click();" style="margin-bottom:10px;">🔑 שחזור מפתחות Firebase בלבד</button>
+        <button class="btn-outline" onclick="app.closeHistoryRestoreSheet(); document.getElementById('file-import-fbkeys').click();" style="margin-bottom:10px;">🔑 שחזור מפתחות Firebase מקובץ גיבוי</button>
         <button class="btn-outline" onclick="app.closeHistoryRestoreSheet()">ביטול</button>
     </div>
 
