@@ -22,6 +22,7 @@
     <input type="file" id="file-import-history" hidden accept=".json" onchange="app.importHistory(this)">
     <input type="file" id="file-import-config" hidden accept=".json" onchange="app.importConfig(this)">
     <input type="file" id="file-import-full" hidden accept=".json" onchange="app.importFullBackup(this)">
+    <input type="file" id="file-import-fbkeys" hidden accept=".json" onchange="app.importFirebaseKeysOnly(this)">
 
     <!-- Firebase Config Modal -->
     <div id="firebase-modal" class="modal-wrapper" style="display:none;z-index:400;">
@@ -369,6 +370,7 @@
         <button class="btn-primary" id="btn-restore-cloud" onclick="app.closeHistoryRestoreSheet(); FirebaseManager.loadArchiveFromCloud();" style="margin-bottom:10px;">☁️ שחזר מהענן</button>
         <button class="btn-outline" onclick="app.closeHistoryRestoreSheet(); document.getElementById('file-import-history').click();" style="margin-bottom:10px;">📂 טען מקובץ</button>
         <button class="btn-outline" onclick="app.closeHistoryRestoreSheet(); document.getElementById('file-import-full').click();" style="margin-bottom:10px;">🗝️ שחזור מלא מקובץ (כולל Firebase)</button>
+        <button class="btn-outline" onclick="app.closeHistoryRestoreSheet(); document.getElementById('file-import-fbkeys').click();" style="margin-bottom:10px;">🔑 שחזור מפתחות Firebase בלבד</button>
         <button class="btn-outline" onclick="app.closeHistoryRestoreSheet()">ביטול</button>
     </div>
 
