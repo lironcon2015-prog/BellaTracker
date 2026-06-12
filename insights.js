@@ -348,7 +348,11 @@
                     if (typeof this.haptic === 'function') this.haptic([18, 60, 30]);
                 }
             }
-            try { localStorage.setItem(this._seenKey(), JSON.stringify(earned)); } catch (e) {}
+            const prevStr = localStorage.getItem(this._seenKey()) || '[]';
+            const newStr = JSON.stringify(earned);
+            try { localStorage.setItem(this._seenKey(), newStr); } catch (e) {}
+            // הדגלים השתנו — דחיפה שקטה לענן כדי שישוחזרו במכשיר אחר
+            if (newStr !== prevStr && typeof this._schedulePrefsSync === 'function') this._schedulePrefsSync();
         },
 
         // ───────────────────────────── כרטיס תובנות בבית ─────────────────────────────
