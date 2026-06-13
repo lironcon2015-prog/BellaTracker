@@ -16,7 +16,7 @@ const CONFIG = {
     VERSION: '1.8.2'
 };
 
-const CURRENT_VERSION = '2.3.1-3'; // חייב להיות זהה ל-version.json
+const CURRENT_VERSION = '2.3.1-4'; // חייב להיות זהה ל-version.json
 
 const FEEL_MAP_TEXT = { 'easy': 'קל', 'good': 'בינוני', 'hard': 'קשה' };
 
@@ -180,6 +180,14 @@ const app = {
         };
     },
 
+    // מפתח ה-HISTORY של פרופיל מסוים (לא בהכרח הפעיל) — תואם getActiveKeys.
+    // female משתמש במפתח legacy ללא סיומת.
+    _historyKeyFor: function(profileId) {
+        if (profileId === 'female') return CONFIG.KEYS.HISTORY;
+        const suffix = (PROFILES[profileId] || PROFILES.female).suffix;
+        return 'gymstart_history' + suffix;
+    },
+
     initProfile: function() {
         const level = parseInt(localStorage.getItem('gymstart_auth_level') || '0');
         this.state.authLevel = level;
@@ -279,9 +287,9 @@ const app = {
                     <div style="display:flex;gap:8px;">
                         ${profileBtns}
                     </div>
-                    <button class="admin-data-btn admin-data-accent" style="width:100%;margin-top:12px;" onclick="app.exportAllTraineesHistory()">
-                        <span class="admin-data-icon">📥</span>
-                        <span class="admin-data-label">משוך היסטוריה מכל המתאמנים</span>
+                    <button class="admin-data-btn admin-data-accent" style="width:100%;margin-top:12px;" onclick="app.syncAllTraineesHistory()">
+                        <span class="admin-data-icon">⬇</span>
+                        <span class="admin-data-label">שחזר היסטוריה מכל המתאמנים</span>
                     </button>
                 </div>`;
         }
@@ -2305,27 +2313,22 @@ const app = {
 
     /* --- FULL BACKUP — קובץ אחד עם כל הנתונים כולל חיבור ה-Firebase --- */
 
-    // כלי מאמן: משיכת היסטוריית האימונים של כל המתאמנים מהענן והורדתה כקובץ.
-    // זמין רק במצב מאמן (authLevel === 2).
-    exportAllTraineesHistory: async function() {
+    // כלי מאמן: שחזור היסטוריית כל המתאמנים מהענן בלחיצה אחת.
+    // מושך עבור כל פרופיל את ההיסטוריה מהענן וכותב למפתח המקומי שלו, כך
+    // שבמעבר בין פרופילים המאמן רואה נתונים מעודכנים. זמין רק במצב מאמן.
+    syncAllTraineesHistory: async function() {
         if (this.state.authLevel < 2) { app.toast('פעולה זמינה במצב מאמן בלבד.'); return; }
         if (typeof FirebaseManager === 'undefined' || !FirebaseManager.isConfigured()) {
             app.toast('Firebase לא מוגדר. הגדר חיבור תחילה.', 'error'); return;
         }
         app.toast('מושך היסטוריה מכל המתאמנים...');
-        const all = await FirebaseManager.fetchAllArchives();
-        if (!all) return;
-        const trainees = Object.values(all);
-        const totalWorkouts = trainees.reduce((s, t) => s + t.history.length, 0);
-        const data = {
-            type: 'all_trainees_history',
-            ver: CURRENT_VERSION,
-            exportedAt: new Date().toLocaleString(),
-            totalWorkouts: totalWorkouts,
-            trainees: all
-        };
-        this.downloadJSON(data, `gymstart_all_trainees_history_${Date.now()}.json`);
-        app.toast(`נמשכו ${totalWorkouts} אימונים מ-${trainees.length} מתאמנים.`, 'success');
+        const res = await FirebaseManager.restoreAllArchivesToLocal();
+        if (!res) return;
+        const updated = res.profiles.filter(p => p.ok).length;
+        if (!updated) { app.toast('לא נמצאה היסטוריה בענן לאף פרופיל.', 'error'); return; }
+        app.toast(`עודכנו ${updated} פרופילים — ${res.totalWorkouts} אימונים. מרענן...`, 'success');
+        // reload כדי שמסך ההיסטוריה של הפרופיל הפעיל יתרנדר מחדש מהנתונים החדשים
+        setTimeout(() => location.reload(), 1300);
     },
 
     exportFullBackup: function() {
@@ -2869,30 +2872,33 @@ const FirebaseManager = {
         } catch(e) { app.toast("שגיאה בטעינה: " + e.message, "error"); }
     },
 
-    // ── כלי מאמן: משיכת היסטוריה מכל הפרופילים (מתאמנים) ──────────────────────
-    // קורא את מסמך archive<suffix> של כל פרופיל מ-Firestore ומחזיר אובייקט
-    // ממופתח לפי id הפרופיל. לשימוש המאמן בלבד (authLevel === 2).
-    async fetchAllArchives() {
+    // ── כלי מאמן: שחזור היסטוריה מהענן לכל הפרופילים בלחיצה אחת ───────────────
+    // עובר על כל הפרופילים, קורא את מסמך archive<suffix> מ-Firestore וכותב
+    // אותו למפתח ה-HISTORY המקומי של אותו פרופיל. כך מעבר בין פרופילים מציג
+    // היסטוריה מעודכנת. לשימוש המאמן בלבד (authLevel === 2).
+    async restoreAllArchivesToLocal() {
         if (!this.init()) { app.toast('Firebase לא מוגדר.'); return null; }
-        const result = {};
+        const profiles = [];
+        let totalWorkouts = 0;
         for (const id of Object.keys(PROFILES)) {
             const prof = PROFILES[id];
             const archiveDoc = 'archive' + prof.suffix;
+            const historyKey = app._historyKeyFor(id);
+            let count = 0, ok = false;
             try {
                 const doc = await this._db.collection('gymstart_data').doc(archiveDoc).get();
-                const data = doc.exists ? doc.data() : null;
-                result[id] = {
-                    profile: id,
-                    name: prof.name,
-                    history: (data && data.items) ? data.items : [],
-                    updatedAt: (data && data.updatedAt) || null
-                };
+                if (doc.exists && Array.isArray(doc.data().items)) {
+                    localStorage.setItem(historyKey, JSON.stringify(doc.data().items));
+                    count = doc.data().items.length;
+                    totalWorkouts += count;
+                    ok = true;
+                }
             } catch(e) {
-                console.error('GymStart fetchAllArchives ' + id, e);
-                result[id] = { profile: id, name: prof.name, history: [], updatedAt: null, error: e.message };
+                console.error('GymStart restoreAllArchives ' + id, e);
             }
+            profiles.push({ id, name: prof.name, count, ok });
         }
-        return result;
+        return { profiles, totalWorkouts };
     },
 
     // ── Config ────────────────────────────────────────────────────────────────
