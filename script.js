@@ -16,7 +16,7 @@ const CONFIG = {
     VERSION: '1.8.2'
 };
 
-const CURRENT_VERSION = '2.3.1-2'; // חייב להיות זהה ל-version.json
+const CURRENT_VERSION = '2.3.1-3'; // חייב להיות זהה ל-version.json
 
 const FEEL_MAP_TEXT = { 'easy': 'קל', 'good': 'בינוני', 'hard': 'קשה' };
 
@@ -279,6 +279,10 @@ const app = {
                     <div style="display:flex;gap:8px;">
                         ${profileBtns}
                     </div>
+                    <button class="admin-data-btn admin-data-accent" style="width:100%;margin-top:12px;" onclick="app.exportAllTraineesHistory()">
+                        <span class="admin-data-icon">📥</span>
+                        <span class="admin-data-label">משוך היסטוריה מכל המתאמנים</span>
+                    </button>
                 </div>`;
         }
     },
@@ -2301,6 +2305,29 @@ const app = {
 
     /* --- FULL BACKUP — קובץ אחד עם כל הנתונים כולל חיבור ה-Firebase --- */
 
+    // כלי מאמן: משיכת היסטוריית האימונים של כל המתאמנים מהענן והורדתה כקובץ.
+    // זמין רק במצב מאמן (authLevel === 2).
+    exportAllTraineesHistory: async function() {
+        if (this.state.authLevel < 2) { app.toast('פעולה זמינה במצב מאמן בלבד.'); return; }
+        if (typeof FirebaseManager === 'undefined' || !FirebaseManager.isConfigured()) {
+            app.toast('Firebase לא מוגדר. הגדר חיבור תחילה.', 'error'); return;
+        }
+        app.toast('מושך היסטוריה מכל המתאמנים...');
+        const all = await FirebaseManager.fetchAllArchives();
+        if (!all) return;
+        const trainees = Object.values(all);
+        const totalWorkouts = trainees.reduce((s, t) => s + t.history.length, 0);
+        const data = {
+            type: 'all_trainees_history',
+            ver: CURRENT_VERSION,
+            exportedAt: new Date().toLocaleString(),
+            totalWorkouts: totalWorkouts,
+            trainees: all
+        };
+        this.downloadJSON(data, `gymstart_all_trainees_history_${Date.now()}.json`);
+        app.toast(`נמשכו ${totalWorkouts} אימונים מ-${trainees.length} מתאמנים.`, 'success');
+    },
+
     exportFullBackup: function() {
         // צילום מלא של כל מפתחות האפליקציה ב-LocalStorage —
         // כולל gymstart_firebase_config (מפתחות החיבור לענן)
@@ -2840,6 +2867,32 @@ const FirebaseManager = {
             app.toast('ההיסטוריה שוחזרה מהענן!');
             location.reload();
         } catch(e) { app.toast("שגיאה בטעינה: " + e.message, "error"); }
+    },
+
+    // ── כלי מאמן: משיכת היסטוריה מכל הפרופילים (מתאמנים) ──────────────────────
+    // קורא את מסמך archive<suffix> של כל פרופיל מ-Firestore ומחזיר אובייקט
+    // ממופתח לפי id הפרופיל. לשימוש המאמן בלבד (authLevel === 2).
+    async fetchAllArchives() {
+        if (!this.init()) { app.toast('Firebase לא מוגדר.'); return null; }
+        const result = {};
+        for (const id of Object.keys(PROFILES)) {
+            const prof = PROFILES[id];
+            const archiveDoc = 'archive' + prof.suffix;
+            try {
+                const doc = await this._db.collection('gymstart_data').doc(archiveDoc).get();
+                const data = doc.exists ? doc.data() : null;
+                result[id] = {
+                    profile: id,
+                    name: prof.name,
+                    history: (data && data.items) ? data.items : [],
+                    updatedAt: (data && data.updatedAt) || null
+                };
+            } catch(e) {
+                console.error('GymStart fetchAllArchives ' + id, e);
+                result[id] = { profile: id, name: prof.name, history: [], updatedAt: null, error: e.message };
+            }
+        }
+        return result;
     },
 
     // ── Config ────────────────────────────────────────────────────────────────
