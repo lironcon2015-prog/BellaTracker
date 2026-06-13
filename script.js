@@ -16,7 +16,7 @@ const CONFIG = {
     VERSION: '1.8.2'
 };
 
-const CURRENT_VERSION = '2.3.1-4'; // חייב להיות זהה ל-version.json
+const CURRENT_VERSION = '2.3.1-5'; // חייב להיות זהה ל-version.json
 
 const FEEL_MAP_TEXT = { 'easy': 'קל', 'good': 'בינוני', 'hard': 'קשה' };
 
@@ -119,6 +119,8 @@ const app = {
             if(!this.state.tempActive) this.nav('screen-home');
             this.applyProfileTheme();
             this.maybeShowOnboarding();
+            // בדיקת עדכון גרסה אוטומטית בכל כניסה — לא חוסם את טעינת הממשק
+            this.autoCheckForUpdate();
         } catch (e) {
             console.error(e);
             alert("שגיאה בטעינת נתונים.");
@@ -2754,9 +2756,39 @@ const app = {
     },
 
     /* --- CHECK FOR UPDATE ───────────────────────────────────────────────── */
+
+    // בדיקה אוטומטית ושקטה בכל כניסה — אם יש גרסה חדשה, מנקה cache, מעדכן
+    // Service Worker ומרענן. לא מציגה כלום אם האפליקציה מעודכנת.
+    autoCheckForUpdate: async function() {
+        // לא מפריעים באמצע אימון פעיל — נבדוק בכניסה הבאה
+        if (this.state.active && this.state.active.on) return;
+        try {
+            const res = await fetch('./version.json?t=' + Date.now(), { cache: 'no-store' });
+            if (!res.ok) return;
+            const data = await res.json();
+            if (!data.version || data.version === CURRENT_VERSION) return;
+            // מניעת לולאת רענון: אם כבר ניסינו לעדכן לגרסה הזו בסשן הזה — עצור
+            const GUARD = 'gymstart_update_attempt';
+            if (sessionStorage.getItem(GUARD) === data.version) return;
+            sessionStorage.setItem(GUARD, data.version);
+            app.toast('מתקין עדכון לגרסה ' + data.version + '...');
+            if ('caches' in window) {
+                const keys = await caches.keys();
+                await Promise.all(keys.map(k => caches.delete(k)));
+            }
+            if ('serviceWorker' in navigator) {
+                const regs = await navigator.serviceWorker.getRegistrations();
+                await Promise.all(regs.map(r => r.update().catch(() => {})));
+            }
+            setTimeout(() => window.location.reload(true), 700);
+        } catch(e) {
+            // כשל שקט — לא מפריעים למשתמש בכניסה (למשל offline)
+        }
+    },
+
     checkForUpdate: async function() {
         try {
-            const res = await fetch('./version.json?t=' + Date.now());
+            const res = await fetch('./version.json?t=' + Date.now(), { cache: 'no-store' });
             if (!res.ok) throw new Error('network error');
             const data = await res.json();
             if (data.version && data.version !== CURRENT_VERSION) {
