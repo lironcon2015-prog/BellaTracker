@@ -16,7 +16,7 @@ const CONFIG = {
     VERSION: '1.8.2'
 };
 
-const CURRENT_VERSION = '2.3.1-6'; // חייב להיות זהה ל-version.json
+const CURRENT_VERSION = '2.3.1-7'; // חייב להיות זהה ל-version.json
 
 const FEEL_MAP_TEXT = { 'easy': 'קל', 'good': 'בינוני', 'hard': 'קשה' };
 
@@ -33,10 +33,11 @@ const PROFILES = {
 // מקור אמת יחיד לתמות. cls ריק = ברירת המחדל ב-:root (ללא מחלקת body).
 // מנותק מהמגדר/פרופיל — כל משתמש בוחר תמה בנפרד (נשמר ב-settings פר-פרופיל).
 const THEMES = {
-    rose:  { name: 'ורוד',  cls: '',            swatch: '#ff4d8d' }, // ברירת מחדל (בת)
-    coral: { name: 'אפרסק', cls: 'theme-coral', swatch: '#ff7a7a' }, // בת
-    blue:  { name: 'כחול',  cls: 'theme-male',  swatch: '#3b9dff' }, // בן
-    green: { name: 'ירוק',  cls: 'theme-green', swatch: '#22c55e' }  // בן
+    rose:   { name: 'ורוד',  cls: '',             swatch: '#ff4d8d' }, // ברירת מחדל (בת)
+    coral:  { name: 'אפרסק', cls: 'theme-coral',  swatch: '#ff7a7a' }, // בת
+    purple: { name: 'סגול',  cls: 'theme-purple', swatch: '#a855f7' }, // בת
+    blue:   { name: 'כחול',  cls: 'theme-male',   swatch: '#3b9dff' }, // בן
+    green:  { name: 'ירוק',  cls: 'theme-green',  swatch: '#22c55e' }  // בן
 };
 
 // BASE EXERCISES — plank/side_plank משודרגים ל-unit:'time'
