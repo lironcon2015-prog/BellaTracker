@@ -16,7 +16,7 @@ const CONFIG = {
     VERSION: '1.8.2'
 };
 
-const CURRENT_VERSION = '2.3.1-5'; // חייב להיות זהה ל-version.json
+const CURRENT_VERSION = '2.3.1-6'; // חייב להיות זהה ל-version.json
 
 const FEEL_MAP_TEXT = { 'easy': 'קל', 'good': 'בינוני', 'hard': 'קשה' };
 
@@ -27,6 +27,16 @@ const PROFILES = {
     female: { name: 'בלה',   icon: '👩', isMale: false, suffix: '' },
     male:   { name: 'איתמר', icon: '👨', isMale: true,  suffix: '_male' },
     yamit:  { name: 'ימית',  icon: '👩', isMale: false, suffix: '_yamit' }
+};
+
+// ── ערכות צבעים ────────────────────────────────────────────────────────────────
+// מקור אמת יחיד לתמות. cls ריק = ברירת המחדל ב-:root (ללא מחלקת body).
+// מנותק מהמגדר/פרופיל — כל משתמש בוחר תמה בנפרד (נשמר ב-settings פר-פרופיל).
+const THEMES = {
+    rose:  { name: 'ורוד',  cls: '',            swatch: '#ff4d8d' }, // ברירת מחדל (בת)
+    coral: { name: 'אפרסק', cls: 'theme-coral', swatch: '#ff7a7a' }, // בת
+    blue:  { name: 'כחול',  cls: 'theme-male',  swatch: '#3b9dff' }, // בן
+    green: { name: 'ירוק',  cls: 'theme-green', swatch: '#22c55e' }  // בן
 };
 
 // BASE EXERCISES — plank/side_plank משודרגים ל-unit:'time'
@@ -100,6 +110,8 @@ const app = {
         historySelection:[],
         viewHistoryIdx: null,
         activeProfile: 'female',
+        gender: 'female',   // העדפת שפה מגדרית — עצמאית מהפרופיל
+        theme: 'rose',      // העדפת ערכת צבעים — עצמאית מהמגדר
         authLevel: 0
     },
 
@@ -202,13 +214,25 @@ const app = {
         } else if (level === 2) {
             this.state.activeProfile = (saved && PROFILES[saved]) ? saved : 'female';
         }
+        // טעינת העדפות מגדר+תמה פר-פרופיל (עם ברירות מחדל לאחור)
+        this.state.gender = this._getGenderPref();
+        this.state.theme  = this._getThemePref();
+    },
+
+    // ── Helper: האם השפה מגדר זכר ──────────────────────────────────────────────
+    isMale: function() {
+        return this.state.gender === 'male';
     },
 
     applyProfileTheme: function() {
-        const isMale = this.state.activeProfile === 'male';
-        document.body.classList.toggle('theme-male', isMale);
+        const isMale = this.isMale();
 
-        // החלפת אייקון דינמית (favicon + apple-touch-icon)
+        // החלת ערכת צבעים — הסרת כל מחלקות התמה ואז הוספת הנבחרת
+        Object.values(THEMES).forEach(t => { if (t.cls) document.body.classList.remove(t.cls); });
+        const themeCls = (THEMES[this.state.theme] || THEMES.rose).cls;
+        if (themeCls) document.body.classList.add(themeCls);
+
+        // החלפת אייקון דינמית (favicon + apple-touch-icon) — לפי המגדר
         const iconHref = isMale ? './icon-male.png' : './icon.png';
         document.querySelectorAll('link[rel="apple-touch-icon"], link[rel="icon"]').forEach(el => {
             el.href = iconHref;
@@ -251,6 +275,58 @@ const app = {
         if (backupP) backupP.textContent = isMale ? 'בחר יעד הגיבוי' : 'בחרי יעד הגיבוי';
         const restoreP = document.querySelector('#history-restore-sheet > p');
         if (restoreP) restoreP.textContent = isMale ? 'בחר מקור השחזור' : 'בחרי מקור השחזור';
+    },
+
+    // ── מראה ושפה — בורר מגדר (שפה) + בורר ערכת צבעים ───────────────────────────
+    renderAppearancePanel: function() {
+        const panel = document.getElementById('appearance-panel');
+        if (!panel) return;
+
+        // בורר מגדר — מתאים את שפת האפליקציה
+        const genders = [ { id: 'female', label: 'נקבה' }, { id: 'male', label: 'זכר' } ];
+        const genderBtns = genders.map(g => {
+            const on = this.state.gender === g.id;
+            return `<button onclick="app.setGender('${g.id}')" style="flex:1;padding:10px 4px;border-radius:10px;border:1.5px solid ${on?'var(--primary)':'rgba(255,255,255,0.15)'};background:${on?'var(--primary-dim)':'transparent'};color:${on?'var(--primary)':'#aaa'};font-family:var(--font);font-size:0.88rem;cursor:pointer;">${g.label}</button>`;
+        }).join('');
+
+        // בורר ערכת צבעים — swatch עגול לכל תמה
+        const themeBtns = Object.keys(THEMES).map(id => {
+            const t = THEMES[id];
+            const on = this.state.theme === id;
+            return `<button onclick="app.setTheme('${id}')" style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px 4px;border-radius:12px;border:1.5px solid ${on?'var(--primary)':'rgba(255,255,255,0.12)'};background:${on?'var(--primary-dim)':'transparent'};font-family:var(--font);cursor:pointer;flex:1;">
+                <span style="width:26px;height:26px;border-radius:50%;background:${t.swatch};box-shadow:0 0 8px ${t.swatch};border:2px solid ${on?'#fff':'rgba(255,255,255,0.2)'};"></span>
+                <span style="font-size:0.78rem;color:${on?'var(--primary)':'#aaa'};">${t.name}</span>
+            </button>`;
+        }).join('');
+
+        panel.innerHTML = `
+            <div class="oled-card compact">
+                <div style="font-weight:600;margin-bottom:8px;">שפת האפליקציה</div>
+                <div style="display:flex;gap:8px;margin-bottom:16px;">${genderBtns}</div>
+                <div style="font-weight:600;margin-bottom:8px;">ערכת צבעים</div>
+                <div style="display:flex;gap:8px;">${themeBtns}</div>
+            </div>`;
+    },
+
+    setGender: function(g) {
+        if (g !== 'male' && g !== 'female') return;
+        this.haptic(5);
+        this._setGenderPref(g);
+        this.state.gender = g;
+        this.applyProfileTheme();
+        this.renderHome();
+        this.renderAppearancePanel();
+        this._schedulePrefsSync();
+    },
+
+    setTheme: function(id) {
+        if (!THEMES[id]) return;
+        this.haptic(5);
+        this._setThemePref(id);
+        this.state.theme = id;
+        this.applyProfileTheme();
+        this.renderAppearancePanel();
+        this._schedulePrefsSync();
     },
 
     renderAuthPanel: function() {
@@ -765,7 +841,7 @@ const app = {
     },
 
     renderHome: function() {
-        const isMale = this.state.activeProfile === 'male';
+        const isMale = this.isMale();
 
         // ── ברכה לפי שעה ──
         const greetEl = document.getElementById('greeting');
@@ -909,6 +985,42 @@ const app = {
         try {
             const s = JSON.parse(localStorage.getItem(key) || '{}');
             s.weeklyTarget = n;
+            localStorage.setItem(key, JSON.stringify(s));
+        } catch(e) {}
+    },
+
+    // ── העדפת מגדר (שפה) פר-פרופיל ──────────────────────────────────────────────
+    _getGenderPref: function() {
+        const fallback = (PROFILES[this.state.activeProfile] || PROFILES.female).isMale ? 'male' : 'female';
+        try {
+            const g = JSON.parse(localStorage.getItem(this._getSettingsKey()) || '{}').gender;
+            return (g === 'male' || g === 'female') ? g : fallback;
+        } catch(e) { return fallback; }
+    },
+
+    _setGenderPref: function(g) {
+        const key = this._getSettingsKey();
+        try {
+            const s = JSON.parse(localStorage.getItem(key) || '{}');
+            s.gender = g;
+            localStorage.setItem(key, JSON.stringify(s));
+        } catch(e) {}
+    },
+
+    // ── העדפת ערכת צבעים פר-פרופיל ──────────────────────────────────────────────
+    _getThemePref: function() {
+        const fallback = (PROFILES[this.state.activeProfile] || PROFILES.female).isMale ? 'blue' : 'rose';
+        try {
+            const t = JSON.parse(localStorage.getItem(this._getSettingsKey()) || '{}').theme;
+            return THEMES[t] ? t : fallback;
+        } catch(e) { return fallback; }
+    },
+
+    _setThemePref: function(t) {
+        const key = this._getSettingsKey();
+        try {
+            const s = JSON.parse(localStorage.getItem(key) || '{}');
+            s.theme = t;
             localStorage.setItem(key, JSON.stringify(s));
         } catch(e) {}
     },
@@ -1816,7 +1928,7 @@ const app = {
     openAddCoreExercise: function() {
         this.state.userSelector.mode = 'add';
         this.renderUserSelector('core');
-        document.getElementById('user-sel-title').innerText = this.state.activeProfile === 'male' ? "הוסף תרגיל" : "הוסיפי תרגיל";
+        document.getElementById('user-sel-title').innerText = this.isMale() ? "הוסף תרגיל" : "הוסיפי תרגיל";
         document.getElementById('user-selector-modal').style.display = 'flex';
     },
 
@@ -1863,6 +1975,7 @@ const app = {
         document.getElementById('admin-view-ex-edit').style.display = 'none';
         this.renderAdminList();
         document.getElementById('admin-weekly-target').textContent = this._getWeeklyTarget();
+        this.renderAppearancePanel();
         this.renderAuthPanel();
     },
 
@@ -2453,7 +2566,7 @@ const app = {
 
     // עדכון קונפיג אוטומטי בענן לאחר כל שמירה
     _autoSyncConfig: function() {
-        const traineeWord = this.state.activeProfile === 'male' ? 'המתאמן' : 'המתאמנת';
+        const traineeWord = this.isMale() ? 'המתאמן' : 'המתאמנת';
         if (typeof FirebaseManager !== 'undefined' && FirebaseManager.isConfigured()) {
             FirebaseManager.saveConfigToCloud().then(ok => {
                 app.toast(ok
