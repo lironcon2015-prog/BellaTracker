@@ -1612,3 +1612,128 @@ body.theme-green::before {
 .screen.active .history-list-container > *:nth-child(2) { animation-delay: 0.10s; }
 .screen.active .history-list-container > *:nth-child(3) { animation-delay: 0.16s; }
 .screen.active .history-list-container > *:nth-child(n+4) { animation-delay: 0.21s; }
+
+/* ════════════════════════════════════════════════════════════
+   NUTRITION — מערכת התזונה
+   ════════════════════════════════════════════════════════════ */
+:root{
+  --macro-protein:#ff8a5c; --macro-protein-rgb:255,138,92;
+  --macro-carbs:#5cc6ff;   --macro-carbs-rgb:92,198,255;
+  --macro-fat:#ffce5c;     --macro-fat-rgb:255,206,92;
+}
+
+/* ראש כרטיס ה-hero — כותרת + צ'יפ streak בשורה */
+.ring-side-head { display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
+
+/* פסי מאקרו (מסך התזונה) */
+.macro-bars{ display:flex; flex-direction:column; gap:9px; flex:1; min-width:0; }
+.macro-bar .mb-top{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:4px; }
+.macro-bar .mb-name{ font-size:0.74rem; color:var(--text-sec); font-weight:600; }
+.macro-bar .mb-val{ font-size:0.72rem; color:var(--text-ter); font-variant-numeric:tabular-nums; }
+.macro-bar .mb-track{ height:7px; background:rgba(255,255,255,0.08); border-radius:4px; overflow:hidden; }
+.macro-bar .mb-fill{ height:100%; border-radius:4px; transition:width 0.6s var(--ease-out); }
+.mb-fill.p{ background:linear-gradient(90deg, rgba(var(--macro-protein-rgb),0.65), var(--macro-protein)); box-shadow:0 0 8px rgba(var(--macro-protein-rgb),0.4); }
+.mb-fill.c{ background:linear-gradient(90deg, rgba(var(--macro-carbs-rgb),0.65), var(--macro-carbs)); box-shadow:0 0 8px rgba(var(--macro-carbs-rgb),0.4); }
+.mb-fill.f{ background:linear-gradient(90deg, rgba(var(--macro-fat-rgb),0.65), var(--macro-fat)); box-shadow:0 0 8px rgba(var(--macro-fat-rgb),0.4); }
+
+/* פסי מאקרו זעירים (כרטיס הבית) */
+.macro-mini{ display:flex; gap:10px; margin-top:12px; }
+.macro-mini .mm{ flex:1; min-width:0; }
+.macro-mini .mm-track{ height:5px; background:rgba(255,255,255,0.08); border-radius:3px; overflow:hidden; }
+.macro-mini .mm-fill{ height:100%; border-radius:3px; transition:width 0.6s var(--ease-out); }
+.macro-mini .mm-lbl{ font-size:0.6rem; color:var(--text-sec); margin-top:4px; display:flex; justify-content:space-between; }
+.macro-mini .mm-dot{ width:7px; height:7px; border-radius:50%; display:inline-block; margin-inline-end:3px; vertical-align:middle; }
+
+/* מסך התזונה — ניווט יום */
+.nut-daynav{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin:2px 0 14px; }
+.nut-arrow{ width:40px; height:40px; border-radius:50%; flex-shrink:0; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-top-color:rgba(255,255,255,0.2); color:var(--text); font-size:1.4rem; cursor:pointer; display:flex; align-items:center; justify-content:center; font-family:inherit; }
+.nut-arrow:active{ background:rgba(var(--primary-rgb),0.15); }
+.nut-date{ flex:1; text-align:center; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:var(--radius-pill); padding:10px 14px; color:var(--text); font-weight:600; font-size:0.95rem; cursor:pointer; font-family:inherit; }
+.nut-date .caret{ color:var(--text-ter); margin-inline-start:5px; }
+
+.nut-summary{ display:flex; align-items:center; gap:18px; margin-bottom:16px; padding:18px 20px; }
+.nut-summary .ring-num{ font-size:1.9rem; }
+
+/* סקשני ארוחה */
+.meal-section{ margin-bottom:14px; }
+.meal-head{ display:flex; align-items:center; gap:10px; padding:4px 4px 10px; }
+.meal-emoji{ font-size:1.15rem; }
+.meal-name{ font-weight:700; font-size:1.02rem; }
+.meal-kcal{ margin-inline-start:auto; font-size:0.82rem; color:var(--text-sec); font-variant-numeric:tabular-nums; }
+.meal-add{ width:30px; height:30px; border-radius:50%; flex-shrink:0; background:rgba(var(--primary-rgb),0.12); border:1px solid rgba(var(--primary-rgb),0.35); color:var(--primary); font-size:1.25rem; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; font-family:inherit; }
+.meal-add:active{ transform:scale(0.9); }
+
+.food-row{ background:var(--bg-card); border:1px solid var(--border-dim); border-top-color:var(--border-top); border-radius:14px; padding:12px 14px; display:flex; align-items:center; gap:12px; margin-bottom:8px; position:relative; overflow:hidden; cursor:pointer; }
+.food-row::before{ content:''; position:absolute; top:0; left:0; right:0; height:1px; background:linear-gradient(90deg,transparent,rgba(255,255,255,0.13),transparent); }
+.food-row:active{ background:var(--surface-3); }
+.fr-main{ flex:1; min-width:0; }
+.fr-name{ font-weight:600; font-size:0.95rem; }
+.fr-sub{ font-size:0.74rem; color:var(--text-sec); margin-top:3px; }
+.fr-sub.fr-components{ color:var(--primary); }
+.fr-macros{ display:flex; gap:8px; margin-top:5px; }
+.fr-tag{ font-size:0.64rem; padding:2px 7px; border-radius:6px; font-weight:600; font-variant-numeric:tabular-nums; }
+.fr-tag.p{ color:var(--macro-protein); background:rgba(var(--macro-protein-rgb),0.12); }
+.fr-tag.c{ color:var(--macro-carbs); background:rgba(var(--macro-carbs-rgb),0.12); }
+.fr-tag.f{ color:var(--macro-fat); background:rgba(var(--macro-fat-rgb),0.12); }
+.fr-kcal{ text-align:center; flex-shrink:0; }
+.fr-kcal b{ font-size:1.05rem; font-weight:700; font-variant-numeric:tabular-nums; }
+.fr-kcal small{ display:block; font-size:0.6rem; color:var(--text-ter); }
+
+.add-meal-btn{ width:100%; background:rgba(var(--primary-rgb),0.04); border:1px dashed rgba(var(--primary-rgb),0.4); color:var(--primary); border-radius:14px; padding:12px; cursor:pointer; font-family:inherit; font-size:0.92rem; margin-top:4px; }
+
+/* שיט חיפוש */
+.search-cams{ display:flex; gap:8px; margin-bottom:12px; }
+.cam-btn{ flex:1; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:12px; padding:11px 6px; color:var(--text-sec); font-family:inherit; font-size:0.74rem; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:5px; opacity:0.55; }
+.cam-btn .ci{ font-size:1.1rem; }
+.cam-soon{ font-size:0.56rem; color:var(--text-ter); }
+
+.result-row{ background:var(--bg-card); border:1px solid var(--border-dim); border-top-color:var(--border-top); border-radius:14px; padding:13px 14px; display:flex; align-items:center; gap:12px; margin-bottom:9px; cursor:pointer; position:relative; overflow:hidden; }
+.result-row::before{ content:''; position:absolute; top:0; left:0; right:0; height:1px; background:linear-gradient(90deg,transparent,rgba(255,255,255,0.13),transparent); }
+.result-row:active{ background:var(--surface-3); }
+.rr-main{ flex:1; min-width:0; }
+.rr-name-line{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.rr-name{ font-weight:600; font-size:0.96rem; }
+.rr-kcal-line{ font-size:0.78rem; color:var(--text-sec); margin-top:5px; font-variant-numeric:tabular-nums; }
+.rr-kcal-line b{ color:var(--text); }
+.rr-add{ width:34px; height:34px; border-radius:50%; flex-shrink:0; background:rgba(var(--primary-rgb),0.12); border:1px solid rgba(var(--primary-rgb),0.35); color:var(--primary); font-size:1.4rem; line-height:1; display:flex; align-items:center; justify-content:center; }
+
+/* צ'יפ מקור + badge אומדן */
+.src-chip{ font-size:0.62rem; font-weight:700; padding:2px 9px; border-radius:var(--radius-pill); letter-spacing:0.2px; white-space:nowrap; }
+.src-chip.tzameret{ color:#5ce6b0; background:rgba(92,230,176,0.13); border:1px solid rgba(92,230,176,0.3); }
+.src-chip.off{ color:#7fb4ff; background:rgba(127,180,255,0.13); border:1px solid rgba(127,180,255,0.3); }
+.src-chip.custom{ color:var(--primary); background:rgba(var(--primary-rgb),0.12); border:1px solid rgba(var(--primary-rgb),0.3); }
+.src-chip.ai{ color:#c79bff; background:rgba(199,155,255,0.13); border:1px solid rgba(199,155,255,0.3); }
+.est-badge{ font-size:0.58rem; color:#c79bff; background:rgba(199,155,255,0.1); border:1px solid rgba(199,155,255,0.28); padding:2px 7px; border-radius:var(--radius-pill); }
+
+.sheet-title{ font-size:1.1rem; font-weight:700; margin:0 0 4px; }
+.sheet-desc{ font-size:0.8rem; color:var(--text-sec); margin:0 0 14px; }
+
+/* עורך כמות */
+.portion-qty{ display:flex; align-items:center; justify-content:center; gap:18px; margin:8px 0 14px; }
+.portion-qty .stepper-val{ font-size:2.6rem; }
+.portion-qty .pq-unit{ font-size:0.85rem; color:var(--text-sec); }
+.preview-box{ background:rgba(var(--primary-rgb),0.06); border:1px solid rgba(var(--primary-rgb),0.22); border-radius:16px; padding:14px; text-align:center; margin:14px 0; }
+.preview-kcal{ font-size:2rem; font-weight:800; line-height:1; font-variant-numeric:tabular-nums; background:var(--accent-grad); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
+.preview-kcal small{ font-size:0.8rem; color:var(--text-ter); -webkit-text-fill-color:var(--text-ter); margin-inline-start:4px; }
+.preview-macros{ display:flex; justify-content:center; gap:16px; margin-top:10px; }
+.pm{ font-size:0.8rem; font-variant-numeric:tabular-nums; }
+.pm .pm-dot{ width:8px; height:8px; border-radius:50%; display:inline-block; margin-inline-end:4px; vertical-align:middle; }
+.field-label{ font-size:0.72rem; color:var(--text-sec); text-transform:uppercase; letter-spacing:1px; margin:12px 0 7px; font-weight:700; }
+.unit-toggle{ display:flex; gap:8px; }
+.unit-toggle .ut{ flex:1; text-align:center; padding:10px; border-radius:12px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:var(--text-sec); cursor:pointer; font-size:0.9rem; }
+.unit-toggle .ut.active{ background:rgba(var(--primary-rgb),0.12); border-color:rgba(var(--primary-rgb),0.4); color:var(--primary); font-weight:700; }
+.meal-chip-row{ display:flex; gap:8px; flex-wrap:wrap; }
+
+/* Meal Builder */
+.ingredient-row{ background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:12px; padding:10px 12px; margin-bottom:8px; }
+.ing-top{ display:flex; align-items:center; gap:10px; }
+.ing-name{ flex:1; min-width:0; background:transparent; border:none; color:var(--text); font-family:inherit; font-size:0.95rem; font-weight:600; border-bottom:1px solid rgba(255,255,255,0.12); padding:3px 0; }
+.ing-grams{ width:64px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:8px; color:var(--text); text-align:center; padding:6px; font-family:inherit; font-variant-numeric:tabular-nums; }
+.ing-grams-unit{ font-size:0.72rem; color:var(--text-ter); }
+.ing-del{ width:28px; height:28px; border-radius:8px; background:rgba(255,90,90,0.1); border:1px solid rgba(255,90,90,0.3); color:var(--danger); cursor:pointer; flex-shrink:0; font-family:inherit; }
+.ing-per100{ font-size:0.68rem; color:var(--text-ter); margin-top:8px; display:flex; align-items:center; gap:5px; flex-wrap:wrap; }
+.ing-mini{ width:46px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:6px; color:var(--text); text-align:center; padding:4px 3px; font-family:inherit; font-size:0.72rem; font-variant-numeric:tabular-nums; }
+.builder-total{ background:rgba(var(--primary-rgb),0.06); border:1px solid rgba(var(--primary-rgb),0.22); border-radius:14px; padding:12px 14px; margin:12px 0; display:flex; align-items:center; justify-content:space-between; }
+.bt-kcal{ font-size:1.4rem; font-weight:800; font-variant-numeric:tabular-nums; background:var(--accent-grad); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
+.bt-macros{ font-size:0.74rem; color:var(--text-sec); font-variant-numeric:tabular-nums; }
+.add-ing-btn{ width:100%; background:rgba(var(--primary-rgb),0.04); border:1px dashed rgba(var(--primary-rgb),0.4); color:var(--primary); border-radius:12px; padding:11px; cursor:pointer; font-family:inherit; font-size:0.9rem; }

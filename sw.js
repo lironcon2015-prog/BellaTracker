@@ -1,17 +1,18 @@
 /**
  * GymStart — Service Worker
- * Version: 2.3.1-7
+ * Version: 2.4.0-1
  * Cache First strategy — עבודה אופליין מלאה.
  * העלה את CACHE_VERSION בכל עדכון קוד.
  */
 
-const CACHE_VERSION = 'gymstart-v2.3.1-7';
+const CACHE_VERSION = 'gymstart-v2.4.0-1';
 
 const FILES_TO_CACHE = [
     './index.html',
     './style.css',
     './script.js',
     './insights.js',
+    './nutrition-core.js',
     './version.json',
     './manifest.json',
     './icon.png',
@@ -45,6 +46,22 @@ self.addEventListener('fetch', event => {
     if (event.request.url.includes('version.json')) {
         event.respondWith(
             fetch(event.request).catch(() => caches.match(event.request))
+        );
+        return;
+    }
+    // ספריות/דאטה גדולים (ZXing עתידי וכו') — runtime-cache (stale-while-revalidate),
+    // לא pre-cache. נכנס לקאש בפעם הראשונה שנטען, ואז זמין offline.
+    if (event.request.url.includes('/vendor/') || event.request.url.includes('/data/')) {
+        event.respondWith(
+            caches.open(CACHE_VERSION).then(cache =>
+                cache.match(event.request).then(cached => {
+                    const network = fetch(event.request).then(res => {
+                        if (res && res.ok) cache.put(event.request, res.clone());
+                        return res;
+                    }).catch(() => cached);
+                    return cached || network;
+                })
+            )
         );
         return;
     }
