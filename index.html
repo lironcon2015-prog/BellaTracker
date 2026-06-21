@@ -440,18 +440,7 @@
         <!-- SCREEN 1: HOME -->
         <div id="screen-home" class="screen active">
             <div class="scroll-content home-scroll">
-                <div class="home-greeting">
-                    <div class="home-greet-text">
-                        <h1 id="greeting">ברוכה הבאה</h1>
-                        <p id="home-subtitle">מוכנה לאימון של היום?</p>
-                    </div>
-                    <div id="home-streak-chip" class="streak-chip" style="display:none;">
-                        <svg class="streak-flame" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 22a6 6 0 0 0 6-6c0-4-3-5.5-3-9 0 0-3 1.5-3 5 0 0-2-1-2-3.5 0 0-4 3-4 7.5a6 6 0 0 0 6 6z"/></svg>
-                        <span id="home-streak-num">0</span>
-                    </div>
-                </div>
-
-                <!-- Hero progress ring -->
+                <!-- Hero progress ring (אימונים) — צ'יפ ה-streak עבר לראש הכרטיס -->
                 <div class="oled-card hero-ring-card">
                     <div class="ring-wrap">
                         <svg viewBox="0 0 120 120" class="progress-ring-svg">
@@ -464,11 +453,48 @@
                         </div>
                     </div>
                     <div class="ring-side">
-                        <div class="ring-side-title">אימונים השבוע</div>
+                        <div class="ring-side-head">
+                            <div class="ring-side-title">אימונים השבוע</div>
+                            <div id="home-streak-chip" class="streak-chip" style="display:none;">
+                                <svg class="streak-flame" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 22a6 6 0 0 0 6-6c0-4-3-5.5-3-9 0 0-3 1.5-3 5 0 0-2-1-2-3.5 0 0-4 3-4 7.5a6 6 0 0 0 6 6z"/></svg>
+                                <span id="home-streak-num">0</span>
+                            </div>
+                        </div>
                         <div class="ring-side-sub" id="home-weekly-msg">בואי נתחיל!</div>
                         <div class="ring-side-stat">
                             <span class="rss-val" id="home-streak-val">0</span>
                             <span class="rss-lbl">שבועות ברצף</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Nutrition card (תזונה היום) → מסך התזונה -->
+                <div class="oled-card hero-ring-card" style="cursor:pointer;" onclick="Nutrition.open()">
+                    <div class="ring-wrap">
+                        <svg viewBox="0 0 120 120" class="progress-ring-svg">
+                            <circle class="ring-bg" cx="60" cy="60" r="52"></circle>
+                            <circle id="nut-home-ring" class="ring-prog" cx="60" cy="60" r="52" style="stroke-dashoffset:327"></circle>
+                        </svg>
+                        <div class="ring-center">
+                            <div class="ring-num" style="font-size:1.7rem;"><span id="nut-home-kcal">0</span></div>
+                            <div class="ring-lbl" id="nut-home-target">/0 קק"ל</div>
+                        </div>
+                    </div>
+                    <div class="ring-side">
+                        <div class="ring-side-title">תזונה היום 🍎</div>
+                        <div class="macro-mini">
+                            <div class="mm">
+                                <div class="mm-track"><div id="nut-home-mp" class="mm-fill" style="width:0%;background:var(--macro-protein);"></div></div>
+                                <div class="mm-lbl"><span><span class="mm-dot" style="background:var(--macro-protein)"></span>חלבון</span><span id="nut-home-vp">0ג</span></div>
+                            </div>
+                            <div class="mm">
+                                <div class="mm-track"><div id="nut-home-mc" class="mm-fill" style="width:0%;background:var(--macro-carbs);"></div></div>
+                                <div class="mm-lbl"><span><span class="mm-dot" style="background:var(--macro-carbs)"></span>פחמ׳</span><span id="nut-home-vc">0ג</span></div>
+                            </div>
+                            <div class="mm">
+                                <div class="mm-track"><div id="nut-home-mf" class="mm-fill" style="width:0%;background:var(--macro-fat);"></div></div>
+                                <div class="mm-lbl"><span><span class="mm-dot" style="background:var(--macro-fat)"></span>שומן</span><span id="nut-home-vf">0ג</span></div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -527,6 +553,14 @@
             <div class="scroll-content">
                 <h2 id="prog-select-title" class="page-title">בחרי תוכנית</h2>
                 <div id="prog-list-container" class="card-grid"></div>
+            </div>
+        </div>
+
+        <!-- SCREEN: NUTRITION (יומן תזונה) -->
+        <div id="screen-nutrition" class="screen">
+            <div class="scroll-content" id="nut-body" ontouchstart="Nutrition._touchStart&&Nutrition._touchStart(event)" ontouchend="Nutrition._touchEnd&&Nutrition._touchEnd(event)"></div>
+            <div class="fixed-footer" style="background:none;backdrop-filter:none;padding-bottom:calc(env(safe-area-inset-bottom) + 8px);">
+                <button class="btn-outline" onclick="Nutrition.openTargets()">⚙️ יעדים יומיים</button>
             </div>
         </div>
 
@@ -709,10 +743,6 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10l9-7 9 7"></path><path d="M5 9v11h14V9"></path><path d="M9.5 20v-6h5v6"></path></svg>
                 <span>בית</span>
             </button>
-            <button class="tab-item" id="tab-workout" onclick="app.tabNav('workout')" aria-label="אימון">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5v11"></path><path d="M4 9v6"></path><path d="M17.5 6.5v11"></path><path d="M20 9v6"></path><path d="M6.5 12h11"></path></svg>
-                <span>אימון</span>
-            </button>
             <button class="tab-item" id="tab-stats" onclick="app.openStats()" aria-label="התקדמות">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5"></path><path d="M4 19h16"></path><path d="M8 17v-5"></path><path d="M13 17V8"></path><path d="M18 17v-8"></path></svg>
                 <span>התקדמות</span>
@@ -720,6 +750,10 @@
             <button class="tab-item" id="tab-history" onclick="app.tabNav('history')" aria-label="היסטוריה">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7.5V12l3 1.8"></path></svg>
                 <span>היסטוריה</span>
+            </button>
+            <button class="tab-item" id="tab-nutrition" onclick="app.tabNav('nutrition')" aria-label="תזונה">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c-3 0-5 2.5-5 6 0 4 3 8 5 12 2-4 5-8 5-12 0-3.5-2-6-5-6z"></path><path d="M12 3v15"></path></svg>
+                <span>תזונה</span>
             </button>
             <button class="tab-item" id="tab-settings" onclick="app.tabNav('settings')" aria-label="הגדרות">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9 7 7M17 17l2.1 2.1M19.1 4.9 17 7M7 17l-2.1 2.1"></path></svg>
@@ -758,5 +792,6 @@
 
     <script src="script.js"></script>
     <script src="insights.js"></script>
+    <script src="nutrition-core.js"></script>
 </body>
 </html>

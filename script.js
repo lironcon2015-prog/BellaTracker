@@ -16,7 +16,7 @@ const CONFIG = {
     VERSION: '1.8.2'
 };
 
-const CURRENT_VERSION = '2.3.1-7'; // חייב להיות זהה ל-version.json
+const CURRENT_VERSION = '2.4.0-1'; // חייב להיות זהה ל-version.json
 
 const FEEL_MAP_TEXT = { 'easy': 'קל', 'good': 'בינוני', 'hard': 'קשה' };
 
@@ -650,7 +650,7 @@ const app = {
     tabNav: function(key) {
         this.haptic(5);
         if (key === 'home') this.nav('screen-home');
-        else if (key === 'workout') this.nav('screen-program-select');
+        else if (key === 'nutrition') { if (typeof Nutrition !== 'undefined') Nutrition.open(); }
         else if (key === 'history') this.showHistory();
         else if (key === 'settings') this.openAdminHome();
     },
@@ -662,7 +662,7 @@ const app = {
         // מסכים ממוקדים — מסתירים את סרגל הניווט
         const hideOn = ['screen-active', 'screen-summary', 'screen-overview'];
         bar.classList.toggle('hidden', hideOn.includes(screenId));
-        const map = { 'screen-home': 'tab-home', 'screen-program-select': 'tab-workout', 'screen-history': 'tab-history' };
+        const map = { 'screen-home': 'tab-home', 'screen-history': 'tab-history', 'screen-nutrition': 'tab-nutrition' };
         const activeTab = map[screenId];
         bar.querySelectorAll('.tab-item').forEach(t => t.classList.toggle('active', t.id === activeTab));
     },
@@ -910,6 +910,9 @@ const app = {
         document.getElementById('home-days-since').textContent = days !== null ? days : '—';
         document.getElementById('home-total-workouts').textContent = total;
         document.getElementById('home-avg-time').textContent = avg !== null ? avg : '—';
+
+        // כרטיס תזונה בבית
+        if (typeof Nutrition !== 'undefined' && Nutrition.renderHomeCard) Nutrition.renderHomeCard();
     },
 
     calcStreak: function() {
@@ -3059,6 +3062,10 @@ const FirebaseManager = {
                 routines: app.state.routines,
                 settings: localStorage.getItem(app._getSettingsKey()) || null,
                 seenBadges: (typeof app._seenKey === 'function' && localStorage.getItem(app._seenKey())) || null,
+                // תזונה — פר פרופיל (מחרוזות JSON גולמיות)
+                nutritionLog: (typeof Nutrition !== 'undefined' && localStorage.getItem(Nutrition._keys().LOG)) || null,
+                nutritionDaily: (typeof Nutrition !== 'undefined' && localStorage.getItem(Nutrition._keys().DAILY)) || null,
+                nutritionTargets: (typeof Nutrition !== 'undefined' && localStorage.getItem(Nutrition._keys().TARGETS)) || null,
                 updatedAt: Date.now()
             });
             // מאגר תרגילים — משותף לכל הפרופילים
@@ -3066,6 +3073,13 @@ const FirebaseManager = {
                 exercises: app.state.exercises,
                 updatedAt: Date.now()
             });
+            // מאגר מזון (FOOD_DB) — משותף לכל הפרופילים
+            if (typeof Nutrition !== 'undefined') {
+                await this._db.collection('gymstart_data').doc('food_db').set({
+                    foodDb: Nutrition.loadFoodDb(),
+                    updatedAt: Date.now()
+                });
+            }
             return true;
         } catch(e) {
             console.error('GymStart saveConfig:', e);
@@ -3073,14 +3087,34 @@ const FirebaseManager = {
         }
     },
 
+    // סנכרון תזונה אינקרמנטלי (debounced ע"י Nutrition._cloudSyncSoon) — merge כדי לא לדרוס
+    async saveNutritionToCloud() {
+        if (typeof Nutrition === 'undefined' || !this.init()) return false;
+        try {
+            const profileDoc = 'config' + this._docSuffix();
+            const k = Nutrition._keys();
+            await this._db.collection('gymstart_data').doc(profileDoc).set({
+                nutritionLog: localStorage.getItem(k.LOG) || null,
+                nutritionDaily: localStorage.getItem(k.DAILY) || null,
+                nutritionTargets: localStorage.getItem(k.TARGETS) || null,
+                updatedAt: Date.now()
+            }, { merge: true });
+            await this._db.collection('gymstart_data').doc('food_db').set({
+                foodDb: Nutrition.loadFoodDb(), updatedAt: Date.now()
+            }, { merge: true });
+            return true;
+        } catch(e) { console.error('GymStart saveNutrition:', e); return false; }
+    },
+
     async loadConfigFromCloud() {
         if (!this.init()) { app.toast('Firebase לא מוגדר.'); return; }
         try {
             const profileDoc = 'config' + this._docSuffix();
             const routinesKey = app.getActiveKeys().ROUTINES;
-            const [configDoc, exDoc] = await Promise.all([
+            const [configDoc, exDoc, foodDoc] = await Promise.all([
                 this._db.collection('gymstart_data').doc(profileDoc).get(),
-                this._db.collection('gymstart_data').doc('exercises_bank').get()
+                this._db.collection('gymstart_data').doc('exercises_bank').get(),
+                this._db.collection('gymstart_data').doc('food_db').get()
             ]);
             if (!configDoc.exists) {
                 app.toast('לא נמצא קונפיג בענן לפרופיל זה.\nגבה קודם מהמכשיר הנוכחי.');
@@ -3091,6 +3125,14 @@ const FirebaseManager = {
             // העדפות פרופיל — יעד שבועי ודגלי הישגים שכבר נחגגו
             if (data.settings) localStorage.setItem(app._getSettingsKey(), data.settings);
             if (data.seenBadges && typeof app._seenKey === 'function') localStorage.setItem(app._seenKey(), data.seenBadges);
+            // תזונה — פר פרופיל + מאגר מזון משותף
+            if (typeof Nutrition !== 'undefined') {
+                const k = Nutrition._keys();
+                if (data.nutritionLog)     localStorage.setItem(k.LOG, data.nutritionLog);
+                if (data.nutritionDaily)   localStorage.setItem(k.DAILY, data.nutritionDaily);
+                if (data.nutritionTargets) localStorage.setItem(k.TARGETS, data.nutritionTargets);
+                if (foodDoc.exists && foodDoc.data().foodDb) localStorage.setItem(k.FOODDB, JSON.stringify(foodDoc.data().foodDb));
+            }
             // תרגילים: מ-exercises_bank, fallback ל-config.exercises (תאימות לאחור)
             if (exDoc.exists && exDoc.data().exercises) {
                 localStorage.setItem(CONFIG.KEYS.EXERCISES, JSON.stringify(exDoc.data().exercises));

@@ -1,0 +1,5 @@
+# ארטיפקטי רינדור/מוקאפ מקומיים — לא חלק מהאפליקציה
+app-*.png
+mockup-*.png
+mockup-nutrition.html
+node_modules/
