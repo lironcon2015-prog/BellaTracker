@@ -1326,6 +1326,29 @@ body.theme-green::before {
     .rest-panel { gap: 10px; }
 }
 
+/* ════════════════════════════════════════════════════════════════
+   תאימות מסכים צרים — iPhone 15 / 15 Pro / 14 Pro / mini (≤414px)
+   Pro Max (430px) לא מושפע — מעל ה-breakpoint
+   ════════════════════════════════════════════════════════════════ */
+@media (max-width: 414px) {
+    /* — הקטנת padding אופקי גלובלי 20px → 14px — */
+    .navbar { padding-left: 14px; padding-right: 14px; }
+    .scroll-content { padding-left: 14px; padding-right: 14px; }
+    .fixed-footer { padding-left: 14px; padding-right: 14px; }
+    .active-container { padding-left: 14px; padding-right: 14px; }
+
+    /* — תיקון מרכזי: steppers/input-cards שלא יחרגו מהכרטיס — */
+    .inputs-row { gap: 8px; }
+    .input-card { padding: 12px 10px; }
+    .stepper-row { gap: 2px; }
+    .stepper-val { font-size: 1.9rem; min-width: 40px; }
+    .stepper-btn { width: 42px; height: 42px; font-size: 1.5rem; }
+
+    /* — הידוקים הגנתיים — */
+    .feeling-row { gap: 16px; }
+    .home-links { gap: 12px; }
+}
+
 /* ── Overview — first exercise is tappable to start the workout ── */
 .list-item.start-item {
     cursor: pointer;
