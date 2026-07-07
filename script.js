@@ -16,7 +16,7 @@ const CONFIG = {
     VERSION: '1.8.2'
 };
 
-const CURRENT_VERSION = '2.5.0-3'; // חייב להיות זהה ל-version.json
+const CURRENT_VERSION = '2.5.0-4'; // חייב להיות זהה ל-version.json
 
 const FEEL_MAP_TEXT = { 'easy': 'קל', 'good': 'בינוני', 'hard': 'קשה' };
 
@@ -118,6 +118,7 @@ const app = {
 
     init: function() {
         try {
+            this._initViewportHeightFix();
             this.applyVersionLabel();
             this.initProfile();
             this.loadData();
@@ -138,6 +139,24 @@ const app = {
             console.error(e);
             alert("שגיאה בטעינת נתונים.");
         }
+    },
+
+    // ── תיקון באג iOS standalone: בפתיחה קרה (cold start) גובה ה-viewport
+    //    מדווח שגוי ו-100dvh לא תמיד מתעדכן אחרי שהמערכת מתקנת — נשאר פס
+    //    שחור בתחתית באופן אקראי. מסנכרנים את הגובה האמיתי ל-CSS var. ──
+    _initViewportHeightFix: function() {
+        const root = document.documentElement;
+        const apply = () => {
+            const h = window.innerHeight;
+            if (h > 0) root.style.setProperty('--app-height', h + 'px');
+        };
+        apply();
+        // iOS מדווח את הגובה המתוקן רק רגע אחרי ההשקה — בדיקות חוזרות
+        [150, 400, 1000].forEach(ms => setTimeout(apply, ms));
+        window.addEventListener('resize', apply);
+        window.addEventListener('orientationchange', () => setTimeout(apply, 80));
+        window.addEventListener('pageshow', apply);
+        if (window.visualViewport) window.visualViewport.addEventListener('resize', apply);
     },
 
     loadData: function() {
