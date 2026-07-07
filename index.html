@@ -104,28 +104,24 @@
 
                     <!-- כלים -->
                     <div class="admin-section-label">כלים</div>
-                    <div class="admin-action-card" onclick="app.openExerciseManager()">
-                        <div class="admin-action-icon">📚</div>
-                        <div class="admin-action-text">
-                            <div class="admin-action-title">ניהול מאגר תרגילים</div>
-                            <div class="admin-action-sub">ערוך, הוסף ומחק תרגילים</div>
-                        </div>
-                        <div class="admin-action-arrow">›</div>
+                    <div class="settings-group">
+                        <button class="settings-row" onclick="app.openExerciseManager()">
+                            <span class="sr-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5v11M17.5 6.5v11M3 9v6M21 9v6M6.5 12h11"/></svg></span>
+                            <span class="sr-text"><span class="sr-title">ניהול מאגר תרגילים</span><span class="sr-sub">ערוך, הוסף ומחק תרגילים</span></span>
+                            <span class="sr-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></span>
+                        </button>
                     </div>
 
                     <!-- תוכניות -->
-                    <div class="admin-section-label" style="margin-top:18px;">תוכניות אימון</div>
+                    <div class="admin-section-label" style="margin-top:22px;">תוכניות אימון</div>
                     <div id="admin-prog-list" class="vertical-stack"></div>
                     <button class="btn-dashed" onclick="app.createNewProgram()" style="margin-top:8px;">+ צור תוכנית חדשה</button>
 
                     <!-- הגדרות -->
-                    <div class="admin-section-label" style="margin-top:18px;">הגדרות</div>
-                    <div class="admin-settings-card">
-                        <div class="admin-setting-row">
-                            <div>
-                                <div class="admin-setting-label">יעד אימונים שבועי</div>
-                                <div class="admin-setting-sub">שבוע ישראלי — ראשון עד שבת</div>
-                            </div>
+                    <div class="admin-section-label" style="margin-top:22px;">הגדרות</div>
+                    <div class="settings-group">
+                        <div class="settings-row static">
+                            <span class="sr-text"><span class="sr-title">יעד אימונים שבועי</span><span class="sr-sub">שבוע ישראלי — ראשון עד שבת</span></span>
                             <div class="stepper">
                                 <button class="step-btn" onclick="app.adjustWeeklyTarget(-1)">−</button>
                                 <span class="step-val" id="admin-weekly-target">3</span>
@@ -135,67 +131,84 @@
                     </div>
 
                     <!-- ניהול נתונים -->
-                    <div class="admin-section-label" style="margin-top:18px;">ניהול נתונים</div>
-                    <div class="admin-data-grid">
-                        <button class="admin-data-btn" onclick="app.exportConfig()">
-                            <span class="admin-data-icon">📤</span>
-                            <span class="admin-data-label">ייצוא קונפיג</span>
+                    <div class="admin-section-label" style="margin-top:22px;">ניהול נתונים</div>
+                    <div class="settings-group">
+                        <button class="settings-row" onclick="app.exportFullBackup()">
+                            <span class="sr-icon accent"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4"/><polyline points="6 10 12 4 18 10"/><path d="M4 20h16"/></svg></span>
+                            <span class="sr-text"><span class="sr-title">ייצוא גיבוי מלא</span><span class="sr-sub">כולל מפתחות Firebase</span></span>
+                            <span class="sr-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></span>
                         </button>
-                        <button class="admin-data-btn admin-data-danger" onclick="app.factoryReset()">
-                            <span class="admin-data-icon">⚠️</span>
-                            <span class="admin-data-label">איפוס מלא</span>
+                        <button class="settings-row" onclick="document.getElementById('file-import-full').click()">
+                            <span class="sr-icon accent"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v12"/><polyline points="6 10 12 16 18 10"/><path d="M4 20h16"/></svg></span>
+                            <span class="sr-text"><span class="sr-title">שחזור מגיבוי מלא</span></span>
+                            <span class="sr-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></span>
                         </button>
-                        <button class="admin-data-btn admin-data-accent" onclick="app.exportFullBackup()">
-                            <span class="admin-data-icon">🗝️</span>
-                            <span class="admin-data-label">ייצוא גיבוי מלא (כולל Firebase)</span>
+                        <button class="settings-row" onclick="app.exportConfig()">
+                            <span class="sr-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span>
+                            <span class="sr-text"><span class="sr-title">ייצוא קונפיג</span></span>
+                            <span class="sr-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></span>
                         </button>
-                        <button class="admin-data-btn admin-data-accent" onclick="document.getElementById('file-import-full').click()">
-                            <span class="admin-data-icon">📥</span>
-                            <span class="admin-data-label">שחזור מגיבוי מלא</span>
+                        <button class="settings-row" onclick="app.exportFirebaseKeys()">
+                            <span class="sr-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="3.5"/><path d="M10.5 12.5L19 4"/><path d="M15 6l3 3"/></svg></span>
+                            <span class="sr-text"><span class="sr-title">ייצוא מפתחות Firebase</span></span>
+                            <span class="sr-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></span>
                         </button>
-                        <button class="admin-data-btn" onclick="app.exportFirebaseKeys()">
-                            <span class="admin-data-icon">🔑</span>
-                            <span class="admin-data-label">ייצוא מפתחות Firebase</span>
+                        <button class="settings-row" onclick="document.getElementById('file-import-fbkeys').click()">
+                            <span class="sr-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="3.5"/><path d="M10.5 12.5L19 4"/><path d="M13 8l3 3"/><path d="M17 4l3 3"/></svg></span>
+                            <span class="sr-text"><span class="sr-title">שחזור מפתחות Firebase</span></span>
+                            <span class="sr-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></span>
                         </button>
-                        <button class="admin-data-btn" onclick="document.getElementById('file-import-fbkeys').click()">
-                            <span class="admin-data-icon">🔓</span>
-                            <span class="admin-data-label">שחזור מפתחות Firebase</span>
+                    </div>
+                    <div class="settings-group" style="margin-top:10px;">
+                        <button class="settings-row" onclick="app.factoryReset()">
+                            <span class="sr-icon danger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>
+                            <span class="sr-text"><span class="sr-title sr-danger">איפוס מלא</span><span class="sr-sub">מחיקת כל הנתונים מהמכשיר</span></span>
+                            <span class="sr-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></span>
                         </button>
                     </div>
 
                     <!-- סנכרון ענן -->
-                    <div class="admin-section-label" style="margin-top:18px;">סנכרון ענן</div>
+                    <div class="admin-section-label" style="margin-top:22px;">סנכרון ענן</div>
                     <div id="firebase-status-admin" style="font-size:0.8em;margin-bottom:8px;"></div>
-                    <div class="admin-data-grid" style="grid-template-columns:1fr 1fr;">
-                        <button class="admin-data-btn admin-data-up" onclick="FirebaseManager.saveArchiveToCloud().then(ok=>alert(ok?'היסטוריה גובתה!':'שגיאה'))">
-                            <span class="admin-data-icon">⬆</span>
-                            <span class="admin-data-label">גבה היסטוריה</span>
+                    <div class="settings-group">
+                        <button class="settings-row" onclick="FirebaseManager.uploadAllToCloud()">
+                            <span class="sr-icon accent"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19a4.5 4.5 0 1 0-.9-8.9 6 6 0 0 0-11.5 1.7A3.8 3.8 0 0 0 6 19z"/><path d="M12 12v5"/><polyline points="9.5 14.5 12 12 14.5 14.5"/></svg></span>
+                            <span class="sr-text"><span class="sr-title">העלה הכל לענן</span><span class="sr-sub">היסטוריה, תוכניות והגדרות</span></span>
+                            <span class="sr-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></span>
                         </button>
-                        <button class="admin-data-btn admin-data-down" onclick="FirebaseManager.loadArchiveFromCloud()">
-                            <span class="admin-data-icon">⬇</span>
-                            <span class="admin-data-label">שחזר היסטוריה</span>
+                        <button class="settings-row" onclick="FirebaseManager.saveArchiveToCloud().then(ok=>alert(ok?'היסטוריה גובתה!':'שגיאה'))">
+                            <span class="sr-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V6"/><polyline points="7 11 12 6 17 11"/><path d="M4 20h16"/></svg></span>
+                            <span class="sr-text"><span class="sr-title">גבה היסטוריה</span></span>
+                            <span class="sr-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></span>
                         </button>
-                        <button class="admin-data-btn admin-data-up" onclick="FirebaseManager.saveConfigToCloud().then(ok=>alert(ok?'קונפיג גובה!':'שגיאה'))">
-                            <span class="admin-data-icon">⬆</span>
-                            <span class="admin-data-label">גבה קונפיג</span>
+                        <button class="settings-row" onclick="FirebaseManager.loadArchiveFromCloud()">
+                            <span class="sr-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6v10"/><polyline points="7 11 12 16 17 11"/><path d="M4 20h16"/></svg></span>
+                            <span class="sr-text"><span class="sr-title">שחזר היסטוריה</span></span>
+                            <span class="sr-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></span>
                         </button>
-                        <button class="admin-data-btn admin-data-down" onclick="FirebaseManager.loadConfigFromCloud()">
-                            <span class="admin-data-icon">⬇</span>
-                            <span class="admin-data-label">שחזר קונפיג</span>
+                        <button class="settings-row" onclick="FirebaseManager.saveConfigToCloud().then(ok=>alert(ok?'קונפיג גובה!':'שגיאה'))">
+                            <span class="sr-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V6"/><polyline points="7 11 12 6 17 11"/><path d="M4 20h16"/></svg></span>
+                            <span class="sr-text"><span class="sr-title">גבה קונפיג</span></span>
+                            <span class="sr-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></span>
                         </button>
-                        <button class="admin-data-btn admin-data-accent" onclick="FirebaseManager.uploadAllToCloud()" style="grid-column:span 2;">
-                            <span class="admin-data-icon">☁️</span>
-                            <span class="admin-data-label">העלה הכל לענן</span>
+                        <button class="settings-row" onclick="FirebaseManager.loadConfigFromCloud()">
+                            <span class="sr-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6v10"/><polyline points="7 11 12 16 17 11"/><path d="M4 20h16"/></svg></span>
+                            <span class="sr-text"><span class="sr-title">שחזר קונפיג</span></span>
+                            <span class="sr-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></span>
+                        </button>
+                        <button class="settings-row" onclick="openFirebaseModal()">
+                            <span class="sr-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="8" x2="20" y2="8"/><line x1="4" y1="16" x2="20" y2="16"/><circle cx="9" cy="8" r="2.2"/><circle cx="15" cy="16" r="2.2"/></svg></span>
+                            <span class="sr-text"><span class="sr-title">הגדרת חיבור Firebase</span></span>
+                            <span class="sr-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></span>
                         </button>
                     </div>
-                    <button class="admin-firebase-btn" onclick="openFirebaseModal()">⚙ הגדרת חיבור Firebase</button>
 
                     <!-- מראה ושפה -->
-                    <div class="admin-section-label" style="margin-top:18px;">מראה ושפה</div>
+                    <div class="admin-section-label" style="margin-top:22px;">מראה ושפה</div>
                     <div id="appearance-panel"></div>
 
                     <!-- פרופיל ואימות -->
-                    <div class="admin-section-label" style="margin-top:18px;">פרופיל</div>
+                    <div class="admin-section-label" style="margin-top:22px;">פרופיל</div>
                     <div id="auth-panel"></div>
                     <div style="height:16px;"></div>
 
@@ -560,7 +573,10 @@
         <div id="screen-nutrition" class="screen">
             <div class="scroll-content" id="nut-body" ontouchstart="Nutrition._touchStart&&Nutrition._touchStart(event)" ontouchend="Nutrition._touchEnd&&Nutrition._touchEnd(event)"></div>
             <div class="fixed-footer" style="background:none;backdrop-filter:none;padding-top:6px;padding-bottom:8px;">
-                <button class="btn-outline" onclick="Nutrition.openTargets()">⚙️ יעדים יומיים</button>
+                <button class="btn-outline btn-with-icon" onclick="Nutrition.openTargets()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1"/></svg>
+                    יעדים יומיים
+                </button>
             </div>
         </div>
 
@@ -699,7 +715,7 @@
                     </div>
                     <div id="win-list"></div>
                 </div>
-                <div id="summary-text" class="summary-box"></div>
+                <div id="summary-cards"></div>
             </div>
             <div class="fixed-footer">
                 <button class="btn-primary big-btn" onclick="app.finishAndCopy()">סיים, העתק ושמור</button>
@@ -712,19 +728,24 @@
                 <div class="page-header">
                     <h2 class="page-title">היסטוריה</h2>
                     <div class="header-tools">
-                        <button class="btn-tool" onclick="app.openHistoryBackupSheet()">גיבוי</button>
-                        <button class="btn-tool" onclick="app.openHistoryRestoreSheet()">שחזור</button>
+                        <button class="hist-icon-btn" onclick="app.openHistoryBackupSheet()" aria-label="גיבוי">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V6"/><polyline points="7 11 12 6 17 11"/><path d="M4 20h16"/></svg>
+                            <span>גיבוי</span>
+                        </button>
+                        <button class="hist-icon-btn" onclick="app.openHistoryRestoreSheet()" aria-label="שחזור">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6v10"/><polyline points="7 11 12 16 17 11"/><path d="M4 20h16"/></svg>
+                            <span>שחזור</span>
+                        </button>
                     </div>
                 </div>
                 <div class="bulk-tools">
                     <button class="btn-tool-outline" onclick="app.selectAllHistory()">בחר הכל</button>
-                    <div style="display:flex; gap:10px;">
+                    <div style="display:flex; gap:8px;">
+                        <button class="btn-tool-outline" onclick="app.openRangeSheet()">לפי טווח</button>
                         <button class="btn-tool-outline" onclick="app.copySelectedHistory()">העתק</button>
                         <button id="btn-del-selected" class="btn-tool-danger" onclick="app.deleteSelectedHistory()" disabled>מחק</button>
                     </div>
                 </div>
-                <!-- כפתור העתקה לפי טווח -->
-                <button class="btn-range-trigger" onclick="app.openRangeSheet()">העתק לפי טווח</button>
                 <div id="history-list" class="history-list-container"></div>
             </div>
         </div>

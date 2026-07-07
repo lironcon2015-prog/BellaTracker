@@ -286,7 +286,7 @@ const Nutrition = {
 
     _foodRowHtml(e, idx) {
         const sub = e.components && e.components.length
-            ? `🍱 ${e.components.length} מרכיבים${e.time?' · '+e.time:''}`
+            ? `${e.components.length} מרכיבים${e.time?' · '+e.time:''}`
             : `${e.brand?e.brand+' · ':''}${this._r0(this._entryGrams(e))}${e.unit==='serving'?(' '+(e.qty)+' מנות'):'ג'}${e.time?' · '+e.time:''}`;
         return `<div class="food-row" onclick="Nutrition.editEntry('${e.meal}',${idx})">
             <div class="fr-main"><div class="fr-name">${e.name}</div>
@@ -367,11 +367,11 @@ const Nutrition = {
               <button class="seg-btn-gs" data-tab="recent" onclick="Nutrition._searchTab('recent',this)">אחרונים</button>
               <button class="seg-btn-gs" data-tab="fav" onclick="Nutrition._searchTab('fav',this)">מועדפים</button>
             </div>
-            <input id="nut-search-input" class="search-input" placeholder="🔍 חפשי מזון..." oninput="Nutrition._onSearchInput(this.value)">
+            <input id="nut-search-input" class="search-input" placeholder="חפשי מזון..." oninput="Nutrition._onSearchInput(this.value)">
             <div class="search-cams">
-              <div class="cam-btn"><span class="ci">📷</span>ברקוד<span class="cam-soon">בקרוב</span></div>
-              <div class="cam-btn"><span class="ci">🏷️</span>תווית<span class="cam-soon">בקרוב</span></div>
-              <div class="cam-btn" onclick="Nutrition.openBuilder()" style="opacity:1;cursor:pointer;"><span class="ci">🍱</span>בניית מנה<span class="cam-soon">מרכיבים</span></div>
+              <div class="cam-btn"><span class="ci"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7V5h2M20 7V5h-2M4 17v2h2M20 17v2h-2M7 8v8M10.5 8v8M13.5 8v8M17 8v8"/></svg></span>ברקוד<span class="cam-soon">בקרוב</span></div>
+              <div class="cam-btn"><span class="ci"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41L12 22 2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><circle cx="7" cy="7" r="1.3"/></svg></span>תווית<span class="cam-soon">בקרוב</span></div>
+              <div class="cam-btn" onclick="Nutrition.openBuilder()" style="opacity:1;cursor:pointer;"><span class="ci"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h16a8 8 0 0 1-16 0z"/><path d="M12 12V8"/><path d="M8.5 8.5C9 6 11 5 12 5s3 1 3.5 3.5"/></svg></span>בניית מנה<span class="cam-soon">מרכיבים</span></div>
             </div>
             <div id="nut-results"></div>
           </div>
