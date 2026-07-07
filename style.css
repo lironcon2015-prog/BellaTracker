@@ -102,10 +102,11 @@ body, html {
     margin: 0; padding: 0;
     font-family: var(--font);
     background: var(--bg-main); color: var(--text);
-    /* iOS standalone: height:100% לא מכסה את המסך המלא עם black-translucent —
-       המסמך נדחף מטה בגובה ה-status bar ונשאר פס שחור בתחתית. 100dvh פותר. */
+    /* iOS standalone: height:100% לא מכסה את המסך המלא עם black-translucent.
+       בנוסף, ב-cold start הגובה מדווח שגוי באופן אקראי — לכן הגובה הסופי
+       מסונכרן מ-JS דרך --app-height (ראה _initViewportHeightFix). */
     height: 100vh;
-    height: 100dvh;
+    height: var(--app-height, 100dvh);
     overflow: hidden;
     direction: rtl; font-size: 16px;
     -webkit-font-smoothing: antialiased;
