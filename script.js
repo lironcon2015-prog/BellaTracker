@@ -16,7 +16,7 @@ const CONFIG = {
     VERSION: '1.8.2'
 };
 
-const CURRENT_VERSION = '2.4.0-5'; // חייב להיות זהה ל-version.json
+const CURRENT_VERSION = '2.5.0-1'; // חייב להיות זהה ל-version.json
 
 const FEEL_MAP_TEXT = { 'easy': 'קל', 'good': 'בינוני', 'hard': 'קשה' };
 
@@ -1637,8 +1637,7 @@ const app = {
         };
         const meta = document.getElementById('summary-meta');
         meta.innerText = `${dateStr} | ${durationMin} דקות`;
-        const textBox = document.getElementById('summary-text');
-        textBox.innerText = this.generateLogText(this.state.active.summary);
+        this.renderSummaryCards(this.state.active.summary);
         this.renderSummaryStats(this.state.active.summary);
         this.renderWinCard(this.state.active.summary);
         this.renderAchievedTargets(achievedTargets);
@@ -1839,6 +1838,32 @@ const app = {
         card.style.display = 'block';
     },
 
+    // ── כרטיסי סיכום מובנים — מחליפים את דאמפ הטקסט במסך הסיכום ──────────────
+    renderSummaryCards: function(summary) {
+        const host = document.getElementById('summary-cards');
+        if (!host) return;
+        let html = '';
+        summary.data.forEach(ex => {
+            if (ex.sets.length === 0) return;
+            const setsHtml = ex.sets.map((s, i) => {
+                const feelStr = FEEL_MAP_TEXT[s.feel] || 'טוב';
+                return `<div class="sum-set-row">
+                    <span class="sum-set-num">סט ${i+1}</span>
+                    <span class="sum-set-val">${this._formatSetDisplay(ex.id, s)}</span>
+                    <span class="sum-set-feel ${s.feel || 'good'}">${feelStr}</span>
+                </div>`;
+            }).join('');
+            html += `<div class="sum-ex-card">
+                <div class="sum-ex-head">
+                    <span class="sum-ex-name">${ex.name}</span>
+                    <span class="sum-ex-count">${ex.sets.length} סטים</span>
+                </div>
+                ${setsHtml}
+            </div>`;
+        });
+        host.innerHTML = html || '<div class="gs-empty-msg">לא תועדו סטים באימון זה</div>';
+    },
+
     // ── generateLogText — משתמש ב-_formatSetDisplay ───────────────────────────
     generateLogText: function(historyItem) {
         const pName = historyItem.programTitle || historyItem.program;
@@ -1882,7 +1907,7 @@ const app = {
         if (saveBtn) saveBtn.classList.add('btn-committed');
 
         // העתקה ל-clipboard — fire and forget
-        const txt = document.getElementById('summary-text').innerText;
+        const txt = this.generateLogText(summary);
         if (navigator.clipboard) {
             navigator.clipboard.writeText(txt).catch(() => {});
         } else {
@@ -2021,8 +2046,8 @@ const app = {
                     <p>${prog.exercises.length} תרגילים</p>
                 </div>
                 <div class="manager-actions">
-                    <button class="btn-text-action" onclick="event.stopPropagation(); app.duplicateProgram('${pid}')">שכפל</button>
-                    <button class="btn-text-action delete" onclick="event.stopPropagation(); app.deleteProgram('${pid}')">מחק</button>
+                    <button class="icon-action-btn" aria-label="שכפל" onclick="event.stopPropagation(); app.duplicateProgram('${pid}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg></button>
+                    <button class="icon-action-btn danger" aria-label="מחק" onclick="event.stopPropagation(); app.deleteProgram('${pid}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg></button>
                 </div>
             </div>`;
         });
@@ -2126,27 +2151,28 @@ const app = {
             list.innerHTML += `
             <div class="editor-row">
                 <div class="row-top">
-                    <div class="row-title">${i+1}. ${ex.name}</div>
+                    <span class="er-num">${i+1}</span>
+                    <div class="row-title">${ex.name}</div>
                     <div class="row-ctrls">
-                        <button class="ctrl-btn" onclick="app.moveEx(${i}, -1)">▲</button>
-                        <button class="ctrl-btn" onclick="app.moveEx(${i}, 1)">▼</button>
-                        <button class="ctrl-btn del" onclick="app.removeEx(${i})">×</button>
+                        <button class="icon-action-btn" aria-label="העלה" onclick="app.moveEx(${i}, -1)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 15 12 9 18 15"/></svg></button>
+                        <button class="icon-action-btn" aria-label="הורד" onclick="app.moveEx(${i}, 1)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button>
+                        <button class="icon-action-btn danger" aria-label="הסר" onclick="app.removeEx(${i})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg></button>
                     </div>
                 </div>
                 <div class="row-btm">
-                    <button class="tip-btn ${hasTip}" onclick="app.openTipModal(${i})">💡 טיפ</button>
                     <div class="stepper">
-                        <div class="step-label" style="padding-right:5px;">סטים</div>
-                        <button class="step-btn" onclick="app.updateTempEx(${i}, 'sets', -1)">-</button>
+                        <div class="step-label">סטים</div>
+                        <button class="step-btn" onclick="app.updateTempEx(${i}, 'sets', -1)">−</button>
                         <div class="step-val">${ex.sets}</div>
                         <button class="step-btn" onclick="app.updateTempEx(${i}, 'sets', 1)">+</button>
                     </div>
                     <div class="stepper">
-                        <div class="step-label" style="padding-right:5px;">מנוחה</div>
-                        <button class="step-btn" onclick="app.updateTempEx(${i}, 'rest', -15)">-</button>
+                        <div class="step-label">מנוחה</div>
+                        <button class="step-btn" onclick="app.updateTempEx(${i}, 'rest', -15)">−</button>
                         <div class="step-val">${ex.rest||60}</div>
                         <button class="step-btn" onclick="app.updateTempEx(${i}, 'rest', 15)">+</button>
                     </div>
+                    <button class="tip-btn ${hasTip}" onclick="app.openTipModal(${i})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 21h4"/><path d="M12 3a6 6 0 0 0-3.8 10.6c.7.6.8 1.4.8 2.4h6c0-1 .1-1.8.8-2.4A6 6 0 0 0 12 3z"/></svg> טיפ</button>
                 </div>
                 ${targetSectionHtml}
             </div>`;
@@ -2655,7 +2681,7 @@ const app = {
                     <span class="month-header-title">${monthLabel}</span>
                     <div class="month-meta">
                         <span class="month-count">${count} אימונים</span>
-                        <span class="month-chevron">${isCurrentMonth ? '▲' : '▼'}</span>
+                        <span class="month-chevron ${isCurrentMonth ? 'open' : ''}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
                     </div>
                 </div>
                 <div class="month-content" style="display:${isCurrentMonth ? 'flex' : 'none'}">
@@ -2686,7 +2712,7 @@ const app = {
         const isOpen = content.style.display !== 'none';
         content.style.display = isOpen ? 'none' : 'flex';
         if (content.style.display === 'flex') content.style.flexDirection = 'column';
-        chevron.innerText = isOpen ? '▼' : '▲';
+        if (chevron) chevron.classList.toggle('open', !isOpen);
     },
 
     toggleHistorySelection: function(idx, el) {
