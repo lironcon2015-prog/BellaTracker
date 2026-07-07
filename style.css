@@ -102,7 +102,11 @@ body, html {
     margin: 0; padding: 0;
     font-family: var(--font);
     background: var(--bg-main); color: var(--text);
-    height: 100%; overflow: hidden;
+    /* iOS standalone: height:100% לא מכסה את המסך המלא עם black-translucent —
+       המסמך נדחף מטה בגובה ה-status bar ונשאר פס שחור בתחתית. 100dvh פותר. */
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
     direction: rtl; font-size: 16px;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -1137,8 +1141,8 @@ body.theme-green::before {
     background: rgba(9,10,12,0.82);
     border-top: 1px solid rgba(255,255,255,0.07);
     backdrop-filter: blur(28px) saturate(180%); -webkit-backdrop-filter: blur(28px) saturate(180%);
-    /* צמוד לתחתית המסך — ה-home-indicator צף מעל שולי הסרגל */
-    padding-bottom: max(2px, calc(env(safe-area-inset-bottom) - 30px));
+    /* רקע הסרגל נמתח עד הקצה הפיזי; התוויות נשארות מעל ה-home-indicator */
+    padding-bottom: max(2px, calc(env(safe-area-inset-bottom) - 14px));
     z-index: var(--z-nav);
 }
 .tab-bar.hidden { display: none; }
