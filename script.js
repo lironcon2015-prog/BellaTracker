@@ -16,7 +16,7 @@ const CONFIG = {
     VERSION: '1.8.2'
 };
 
-const CURRENT_VERSION = '2.4.0-4'; // חייב להיות זהה ל-version.json
+const CURRENT_VERSION = '2.4.0-5'; // חייב להיות זהה ל-version.json
 
 const FEEL_MAP_TEXT = { 'easy': 'קל', 'good': 'בינוני', 'hard': 'קשה' };
 
@@ -1649,6 +1649,46 @@ const app = {
         if (winShown || achShown) {
             setTimeout(() => { this.fireConfetti(); this.haptic([18, 60, 18, 60, 30]); }, 220);
         }
+        // שמירה אוטומטית להיסטוריה — האימון נשמר גם בלי לחיצה על "סיים, העתק ושמור".
+        // חייב לרוץ אחרי renderWinCard (שמשווה מול ההיסטוריה ללא האימון הנוכחי).
+        // הבדיקה על active.on מונעת שמירה כפולה בקריאה חוזרת ל-finishWorkout.
+        if (this.state.active.on) {
+            this.state.active.on = false;
+            this._saveSummaryToHistory(this.state.active.summary);
+        }
+    },
+
+    // שמירת סיכום אימון להיסטוריה + ניקוי state פעיל + sync לענן (ללא reload)
+    _saveSummaryToHistory: function(summary) {
+        const achieved = summary.achievedTargets || [];
+        // מחיקת targets שהושגו מהרוטינה — המאמן יראה שהיעד נמחק ויידע להגדיר חדש
+        if (achieved.length > 0 && this.state.currentProgId) {
+            const routine = this.state.routines[this.state.currentProgId];
+            if (routine) {
+                achieved.forEach(at => {
+                    const ex = routine.exercises.find(e => e.id === at.id);
+                    if (ex) delete ex.target;
+                });
+            }
+        }
+        const histEntry = {
+            date: summary.date,
+            timestamp: Date.now(),
+            program: summary.program,
+            programTitle: summary.programTitle,
+            data: summary.data,
+            duration: summary.duration,
+        };
+        // אין להוסיף achievedTargets כשהוא ריק — Firestore דוחה undefined
+        if (achieved.length > 0) histEntry.achievedTargets = achieved;
+        this.state.history.push(histEntry);
+        this.saveData();
+        localStorage.removeItem(CONFIG.KEYS.ACTIVE_WORKOUT);
+        if (typeof FirebaseManager !== 'undefined' && FirebaseManager.isConfigured()) {
+            FirebaseManager.saveArchiveToCloud().then(ok => {
+                if (!ok) app.toast('לא ניתן לשמור לענן. הנתונים נשמרו מקומית.');
+            });
+        }
     },
 
     triggerPressEffect: function(btnId) {
@@ -1832,15 +1872,16 @@ const app = {
     },
 
     finishAndCopy: function() {
+        // השמירה להיסטוריה כבר בוצעה אוטומטית ב-finishWorkout — כאן רק העתקה + reload
         const summary = this.state.active.summary;
         if (!summary) return;
-        this.state.active.summary = null; // מניעת double-save בלחיצה כפולה
+        this.state.active.summary = null; // מניעת הפעלה כפולה בלחיצה כפולה
 
         // פידבק ויזואלי מיידי — נראה לחוץ עד ה-reload
         const saveBtn = document.querySelector('#screen-summary .btn-primary.big-btn');
         if (saveBtn) saveBtn.classList.add('btn-committed');
 
-        // העתקה ל-clipboard — fire and forget, לא תלוי בשמירה
+        // העתקה ל-clipboard — fire and forget
         const txt = document.getElementById('summary-text').innerText;
         if (navigator.clipboard) {
             navigator.clipboard.writeText(txt).catch(() => {});
@@ -1852,31 +1893,8 @@ const app = {
             } catch(e) {}
         }
 
-        // שמירה + sync לענן — תמיד מתבצע, לא תלוי ב-clipboard
-        const achieved = summary.achievedTargets || [];
-        // מחיקת targets שהושגו מהרוטינה — המאמן יראה שהיעד נמחק ויידע להגדיר חדש
-        if (achieved.length > 0 && this.state.currentProgId) {
-            const routine = this.state.routines[this.state.currentProgId];
-            if (routine) {
-                achieved.forEach(at => {
-                    const ex = routine.exercises.find(e => e.id === at.id);
-                    if (ex) delete ex.target;
-                });
-            }
-        }
-        const histEntry = {
-            date: summary.date,
-            timestamp: Date.now(),
-            program: summary.program,
-            programTitle: summary.programTitle,
-            data: summary.data,
-            duration: summary.duration,
-        };
-        // אין להוסיף achievedTargets כשהוא ריק — Firestore דוחה undefined
-        if (achieved.length > 0) histEntry.achievedTargets = achieved;
-        this.state.history.push(histEntry);
-        this.saveData();
-        localStorage.removeItem(CONFIG.KEYS.ACTIVE_WORKOUT);
+        // sync חוזר לענן לפני ה-reload — מבטיח שהאימון הגיע לענן גם אם
+        // ה-sync האוטומטי מ-finishWorkout עדיין באוויר (הפעולה אידמפוטנטית)
         if (typeof FirebaseManager !== 'undefined' && FirebaseManager.isConfigured()) {
             FirebaseManager.saveArchiveToCloud().then(ok => {
                 if (!ok) app.toast('לא ניתן לשמור לענן. הנתונים נשמרו מקומית.');
