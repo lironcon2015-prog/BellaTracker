@@ -7,7 +7,7 @@
 const Nutrition = {
 
     // ── קבועים ───────────────────────────────────────────────
-    MEAL_EMOJI: { 'בוקר':'🌅', 'צהריים':'☀️', 'ערב':'🌙', 'נשנוש':'🍎' },
+    MEAL_EMOJI: { 'בוקר':'', 'צהריים':'', 'ערב':'', 'נשנוש':'' },  // רוויזיה 2.6 — בלי אימוג'י; ה-span מוסתר ב-CSS
     DEFAULT_MEALS: ['בוקר','צהריים','ערב','נשנוש'],
     DEFAULT_TARGETS: { kcalTarget:1800, proteinTarget:120, carbsTarget:180, fatTarget:60, mealLabels:['בוקר','צהריים','ערב','נשנוש'] },
 
@@ -248,7 +248,7 @@ const Nutrition = {
             const items = entries.map((e,i)=>({e,i})).filter(x=>x.e.meal===meal);
             const ms = items.reduce((a,x)=>({kcal:a.kcal+(x.e.kcal||0),p:a.p+(x.e.p||0),c:a.c+(x.e.c||0),f:a.f+(x.e.f||0)}),{kcal:0,p:0,c:0,f:0});
             mealsHtml += `<div class="meal-section">
-                <div class="meal-head"><span class="meal-emoji">${this.MEAL_EMOJI[meal]||'🍽️'}</span>
+                <div class="meal-head"><span class="meal-emoji">${this.MEAL_EMOJI[meal]||''}</span>
                   <span class="meal-name">${meal}</span>
                   <span class="meal-kcal">${this._r0(ms.kcal)} קק"ל</span>
                   <button class="meal-add" onclick="Nutrition.openSearch('${meal}')">+</button></div>

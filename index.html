@@ -10,7 +10,7 @@
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="./icon.png">
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js');</script>
     <!-- Firebase SDK (Compat) -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -47,8 +47,8 @@
         <div class="sheet-handle-gs"></div>
         <h3 style="margin:0 0 6px;">קבלת עדכון מאמן</h3>
         <p style="font-size:0.82rem;color:var(--text-sec);margin:0 0 18px;">טעני קונפיגורציה שנשלחה מהמאמן</p>
-        <button class="btn-primary" onclick="closeCoachUpdateSheet(); FirebaseManager.loadConfigFromCloud();" style="margin-bottom:10px;">☁️ טעני מהענן</button>
-        <button class="btn-outline" onclick="closeCoachUpdateSheet(); document.getElementById('file-import-config').click();" style="margin-bottom:10px;">📂 טעני מקובץ</button>
+        <button class="btn-primary" onclick="closeCoachUpdateSheet(); FirebaseManager.loadConfigFromCloud();" style="margin-bottom:10px;">טעני מהענן</button>
+        <button class="btn-outline" onclick="closeCoachUpdateSheet(); document.getElementById('file-import-config').click();" style="margin-bottom:10px;">טעני מקובץ</button>
         <button class="btn-outline" onclick="closeCoachUpdateSheet()">ביטול</button>
     </div>
 
@@ -385,8 +385,8 @@
         <div class="sheet-handle-gs"></div>
         <h3 style="margin:0 0 6px;">גיבוי היסטוריה</h3>
         <p style="font-size:0.82rem;color:var(--text-sec);margin:0 0 18px;">בחרי יעד הגיבוי</p>
-        <button class="btn-primary" id="btn-backup-cloud" onclick="app.closeHistoryBackupSheet(); FirebaseManager.saveArchiveToCloud().then(ok=>alert(ok?'ההיסטוריה גובתה לענן!':'שגיאה בגיבוי לענן.'));" style="margin-bottom:10px;">☁️ גבה לענן</button>
-        <button class="btn-outline" onclick="app.closeHistoryBackupSheet(); app.exportHistory();" style="margin-bottom:10px;">📄 שמור לקובץ</button>
+        <button class="btn-primary" id="btn-backup-cloud" onclick="app.closeHistoryBackupSheet(); FirebaseManager.saveArchiveToCloud().then(ok=>alert(ok?'ההיסטוריה גובתה לענן!':'שגיאה בגיבוי לענן.'));" style="margin-bottom:10px;">גבה לענן</button>
+        <button class="btn-outline" onclick="app.closeHistoryBackupSheet(); app.exportHistory();" style="margin-bottom:10px;">שמור לקובץ</button>
         <button class="btn-outline" onclick="app.closeHistoryBackupSheet()">ביטול</button>
     </div>
 
@@ -396,9 +396,9 @@
         <div class="sheet-handle-gs"></div>
         <h3 style="margin:0 0 6px;">שחזור היסטוריה</h3>
         <p style="font-size:0.82rem;color:var(--text-sec);margin:0 0 18px;">בחרי מקור השחזור</p>
-        <button class="btn-primary" id="btn-restore-cloud" onclick="app.closeHistoryRestoreSheet(); FirebaseManager.loadArchiveFromCloud();" style="margin-bottom:10px;">☁️ שחזר מהענן</button>
-        <button class="btn-outline" onclick="app.closeHistoryRestoreSheet(); document.getElementById('file-import-history').click();" style="margin-bottom:10px;">📂 טען מקובץ</button>
-        <button class="btn-outline" onclick="app.closeHistoryRestoreSheet(); document.getElementById('file-import-fbkeys').click();" style="margin-bottom:10px;">🔑 שחזור מפתחות Firebase מקובץ גיבוי</button>
+        <button class="btn-primary" id="btn-restore-cloud" onclick="app.closeHistoryRestoreSheet(); FirebaseManager.loadArchiveFromCloud();" style="margin-bottom:10px;">שחזר מהענן</button>
+        <button class="btn-outline" onclick="app.closeHistoryRestoreSheet(); document.getElementById('file-import-history').click();" style="margin-bottom:10px;">טען מקובץ</button>
+        <button class="btn-outline" onclick="app.closeHistoryRestoreSheet(); document.getElementById('file-import-fbkeys').click();" style="margin-bottom:10px;">שחזור מפתחות Firebase מקובץ גיבוי</button>
         <button class="btn-outline" onclick="app.closeHistoryRestoreSheet()">ביטול</button>
     </div>
 
@@ -438,7 +438,7 @@
                 <button id="btn-admin-home" class="icon-btn" onclick="app.openAdminHome()" style="display:none;" aria-label="הגדרות וניהול">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 5 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
                 </button>
-                <div id="workout-timer-nav" style="display:none;">⏱ <span id="workout-timer-val">00:00</span></div>
+                <div id="workout-timer-nav" style="display:none;"><span id="workout-timer-val">00:00</span></div>
             </div>
             <div class="logo">GYM<span class="highlight">START</span></div>
             <div class="nav-right">
@@ -494,7 +494,7 @@
                         </div>
                     </div>
                     <div class="ring-side">
-                        <div class="ring-side-title">תזונה היום 🍎</div>
+                        <div class="ring-side-title">תזונה היום</div>
                         <div class="macro-mini">
                             <div class="mm">
                                 <div class="mm-track"><div id="nut-home-mp" class="mm-fill" style="width:0%;background:var(--macro-protein);"></div></div>
@@ -532,7 +532,7 @@
                 <div id="home-insights-card" class="oled-card insights-home-card" onclick="app.openStats()">
                     <div class="hi-level-badge"><span id="hi-level">1</span></div>
                     <div class="hi-mid">
-                        <div class="hi-top"><span class="hi-title">ההתקדמות שלך</span><span class="hi-badge-chip"><span id="hi-badges">0</span> 🏅</span></div>
+                        <div class="hi-top"><span class="hi-title">ההתקדמות שלך</span><span class="hi-badge-chip"><span id="hi-badges">0</span> תגים</span></div>
                         <div class="hi-track"><div id="hi-xp-fill" class="hi-fill" style="width:0%"></div></div>
                         <div class="hi-sub" id="hi-sub">התחילי כדי לצבור XP</div>
                     </div>
@@ -660,9 +660,9 @@
                     <div class="active-controls-area">
                         <div class="feeling-section">
                             <div class="feeling-row">
-                                <button class="feel-btn easy" onclick="app.selectFeel('easy')">😌</button>
-                                <button class="feel-btn good selected" onclick="app.selectFeel('good')">🙂</button>
-                                <button class="feel-btn hard" onclick="app.selectFeel('hard')">🥵</button>
+                                <button class="feel-btn easy" onclick="app.selectFeel('easy')">קל</button>
+                                <button class="feel-btn good selected" onclick="app.selectFeel('good')">טוב</button>
+                                <button class="feel-btn hard" onclick="app.selectFeel('hard')">קשה</button>
                             </div>
                             <div class="feel-label" id="feel-text">בינוני (טוב)</div>
                         </div>
@@ -697,7 +697,7 @@
                 </div>
                 <div id="achieved-targets-card" style="display:none;" class="win-card achieved-targets-card">
                     <div class="win-card-header">
-                        <div class="win-trophy">⭐</div>
+                        <div class="win-trophy"><svg viewBox="0 0 24 24"><path d="M12 3l2.7 5.6 6.1.8-4.5 4.2 1.1 6-5.4-2.9-5.4 2.9 1.1-6L3.2 9.4l6.1-.8z"/></svg></div>
                         <div>
                             <div class="win-card-title">יעדי מאמן שהושגו!</div>
                             <div id="achieved-targets-subtitle" class="win-card-subtitle"></div>
@@ -707,7 +707,7 @@
                 </div>
                 <div id="win-card" style="display:none;" class="win-card">
                     <div class="win-card-header">
-                        <div class="win-trophy">🏆</div>
+                        <div class="win-trophy"><svg viewBox="0 0 24 24"><path d="M8 21h8M12 17v4M7 4h10v6a5 5 0 0 1-10 0z"/><path d="M17 5h3a1 1 0 0 1 1 1c0 2.5-2 4-4 4M7 5H4a1 1 0 0 0-1 1c0 2.5 2 4 4 4"/></svg></div>
                         <div>
                             <div class="win-card-title">שיפור ביצועים!</div>
                             <div id="win-card-subtitle" class="win-card-subtitle"></div>
@@ -765,7 +765,7 @@
                 <span>בית</span>
             </button>
             <button class="tab-item" id="tab-stats" onclick="app.openStats()" aria-label="התקדמות">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5"></path><path d="M4 19h16"></path><path d="M8 17v-5"></path><path d="M13 17V8"></path><path d="M18 17v-8"></path></svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M22 7l-8.5 8.5-5-5L2 17"></path><path d="M16 7h6v6"></path></svg>
                 <span>התקדמות</span>
             </button>
             <button class="tab-item" id="tab-history" onclick="app.tabNav('history')" aria-label="היסטוריה">
@@ -773,7 +773,7 @@
                 <span>היסטוריה</span>
             </button>
             <button class="tab-item" id="tab-nutrition" onclick="app.tabNav('nutrition')" aria-label="תזונה">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c-3 0-5 2.5-5 6 0 4 3 8 5 12 2-4 5-8 5-12 0-3.5-2-6-5-6z"></path><path d="M12 3v15"></path></svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"></path><path d="M7 2v20"></path><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7"></path></svg>
                 <span>תזונה</span>
             </button>
             <button class="tab-item" id="tab-settings" onclick="app.tabNav('settings')" aria-label="הגדרות">
@@ -788,7 +788,7 @@
     <div id="achievements-modal" class="modal-wrapper" style="display:none; z-index:500;">
         <div class="oled-modal">
             <div class="modal-header">
-                <h3>🏆 יעדים שהושגו</h3>
+                <h3>יעדים שהושגו</h3>
             </div>
             <p style="font-size:0.82rem;color:var(--text-sec);margin:0 0 14px;">המתאמנת השיגה את היעדים הבאים:</p>
             <div id="achievements-modal-list" class="vertical-stack" style="margin-bottom:18px;"></div>
@@ -800,7 +800,7 @@
     <div id="onboarding-overlay" class="bottom-sheet-overlay" onclick="app.closeOnboarding()" style="display:none;"></div>
     <div id="onboarding-sheet" class="bottom-sheet-gs" style="display:none;">
         <div class="sheet-handle-gs"></div>
-        <div class="onboarding-icon">💪</div>
+        <div class="onboarding-icon"></div>
         <h3 id="onboarding-title" style="margin:0 0 6px;text-align:center;">ברוכה הבאה ל-GymStart</h3>
         <p id="onboarding-body" style="font-size:0.92rem;color:var(--text-sec);margin:0 0 20px;text-align:center;line-height:1.5;"></p>
         <div class="onboarding-dots" id="onboarding-dots"></div>

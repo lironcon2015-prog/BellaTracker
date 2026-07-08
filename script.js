@@ -16,7 +16,7 @@ const CONFIG = {
     VERSION: '1.8.2'
 };
 
-const CURRENT_VERSION = '2.5.0-4'; // חייב להיות זהה ל-version.json
+const CURRENT_VERSION = '2.6.0-1'; // חייב להיות זהה ל-version.json
 
 const FEEL_MAP_TEXT = { 'easy': 'קל', 'good': 'בינוני', 'hard': 'קשה' };
 
@@ -272,15 +272,15 @@ const app = {
         if (coachP) coachP.textContent = isMale ? 'טעֵן קונפיגורציה שנשלחה מהמאמן' : 'טעני קונפיגורציה שנשלחה מהמאמן';
         const coachBtns = document.querySelectorAll('#coach-update-sheet .btn-primary, #coach-update-sheet .btn-outline');
         if (coachBtns.length >= 2) {
-            coachBtns[0].textContent = isMale ? '☁️ טעֵן מהענן' : '☁️ טעני מהענן';
-            coachBtns[1].textContent = isMale ? '📂 טעֵן מקובץ' : '📂 טעני מקובץ';
+            coachBtns[0].textContent = isMale ? 'טעֵן מהענן' : 'טעני מהענן';
+            coachBtns[1].textContent = isMale ? 'טעֵן מקובץ' : 'טעני מקובץ';
         }
 
         // כפתורי התחל/התחילי אימון
         const btnStartHome = document.getElementById('btn-start-home');
         if (btnStartHome) btnStartHome.textContent = isMale ? 'התחל אימון' : 'התחילי אימון';
         const btnStartOverview = document.getElementById('btn-start-overview');
-        if (btnStartOverview) btnStartOverview.textContent = isMale ? 'התחל אימון ⚡' : 'התחילי אימון ⚡';
+        if (btnStartOverview) btnStartOverview.textContent = isMale ? 'התחל אימון' : 'התחילי אימון';
 
         // כותרת בחירת תוכנית
         const progSelectTitle = document.getElementById('prog-select-title');
@@ -380,7 +380,7 @@ const app = {
                 <div class="oled-card compact">
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
                         <span style="font-weight:600;">פרופיל פעיל</span>
-                        <span style="font-size:0.8rem;color:var(--text-sec);">מצב מאמן 🔑</span>
+                        <span style="font-size:0.8rem;color:var(--text-sec);">מצב מאמן</span>
                     </div>
                     <div style="display:flex;gap:8px;">
                         ${profileBtns}
@@ -592,10 +592,10 @@ const app = {
 
     // ── Onboarding לפעם ראשונה ──────────────────────────────────────────────
     _onboardSteps: [
-        { icon: '💪', title: 'ברוכה הבאה ל-GymStart', body: 'האפליקציה שתלווה אותך בכל אימון — פשוט, ברור, ובלי בלבול. בואי נכיר אותה בקצרה.' },
-        { icon: '📋', title: 'בחרי תוכנית והתחילי', body: 'במסך הבית לחצי "התחילי אימון", בחרי תוכנית, וקדימה. כל תרגיל מופיע אחד-אחד עם המשקל והחזרות.' },
-        { icon: '⚡', title: 'רשמי כל סט', body: 'עדכני משקל וחזרות עם הכפתורים, סמני איך הרגשת, ולחצי "סיום סט". נעקוב אחרי ההתקדמות שלך אוטומטית.' },
-        { icon: '🏆', title: 'תראי את ההתקדמות', body: 'בסוף כל אימון תקבלי סיכום ושיאים אישיים. ככל שתתאמני, נראה לך כמה השתפרת!' }
+        { icon: '', title: 'ברוכה הבאה ל-GymStart', body: 'האפליקציה שתלווה אותך בכל אימון — פשוט, ברור, ובלי בלבול. בואי נכיר אותה בקצרה.' },
+        { icon: '', title: 'בחרי תוכנית והתחילי', body: 'במסך הבית לחצי "התחילי אימון", בחרי תוכנית, וקדימה. כל תרגיל מופיע אחד-אחד עם המשקל והחזרות.' },
+        { icon: '', title: 'רשמי כל סט', body: 'עדכני משקל וחזרות עם הכפתורים, סמני איך הרגשת, ולחצי "סיום סט". נעקוב אחרי ההתקדמות שלך אוטומטית.' },
+        { icon: '', title: 'תראי את ההתקדמות', body: 'בסוף כל אימון תקבלי סיכום ושיאים אישיים. ככל שתתאמני, נראה לך כמה השתפרת!' }
     ],
     _onboardIdx: 0,
     maybeShowOnboarding: function() {
@@ -895,7 +895,7 @@ const app = {
 
         // תת-כותרת מעודדת
         if (subEl) {
-            if (isFull) subEl.textContent = isMale ? 'כל הכבוד! השלמת את היעד השבועי 🎉' : 'כל הכבוד! השלמת את היעד השבועי 🎉';
+            if (isFull) subEl.textContent = isMale ? 'כל הכבוד! השלמת את היעד השבועי' : 'כל הכבוד! השלמת את היעד השבועי';
             else if (weekly > 0) subEl.textContent = `עוד ${target - weekly} אימונים ליעד השבועי`;
             else subEl.textContent = isMale ? 'מוכן לאימון של היום?' : 'מוכנה לאימון של היום?';
         }
@@ -1149,7 +1149,7 @@ const app = {
 
         const noteEl = document.getElementById('coach-note');
         if (exInst.note) {
-            noteEl.innerText = "💡 " + exInst.note;
+            noteEl.innerText = exInst.note;
             noteEl.style.display = 'block';
         } else noteEl.style.display = 'none';
 
@@ -1238,7 +1238,7 @@ const app = {
             if (found && found.sets.length > 0) exHistory.push(found);
         }
         if (exHistory.length === 0) {
-            strip.innerHTML = '<div class="strip-first-set">✨ הסט הראשון שלך בתרגיל הזה — מכאן נתחיל לעקוב אחרי ההתקדמות שלך</div>';
+            strip.innerHTML = '<div class="strip-first-set">הסט הראשון שלך בתרגיל הזה — מכאן נתחיל לעקוב אחרי ההתקדמות שלך</div>';
             return;
         }
 
@@ -1294,7 +1294,7 @@ const app = {
         const pr = Math.max(...allBests);
         const prSessionIndex = allBests.lastIndexOf(pr);
         const isCurrentPR = (prSessionIndex === exHistory.length - 1);
-        const prLabel = isCurrentPR ? '⭐ שיא!' : `${pr} ${unitLabel}`;
+        const prLabel = isCurrentPR ? 'שיא!' : `${pr} ${unitLabel}`;
         const prColor = isCurrentPR ? 'var(--primary)' : '#777';
 
         strip.innerHTML = `
@@ -1444,7 +1444,7 @@ const app = {
                 banner.classList.add('achieved');
                 const lbl = banner.querySelector('.tb-label');
                 if (lbl) lbl.textContent = '✓ הושג';
-                this.toast('כל הכבוד! השגת את יעד המאמן 🎯', 'success');
+                this.toast('כל הכבוד! השגת את יעד המאמן', 'success');
                 this.haptic([14, 50, 14]);
             }
         }
@@ -1524,7 +1524,7 @@ const app = {
                 if (disp) disp.classList.add('rest-done');
                 if (ringWrap) ringWrap.classList.add('done');
                 if (eyebrow) eyebrow.textContent = 'מוכנה!';
-                this.toast('זמן מנוחה הסתיים — קדימה לסט הבא! 💪', 'success');
+                this.toast('זמן מנוחה הסתיים — קדימה לסט הבא!', 'success');
             }
         }, 250);
         this.saveActiveState();

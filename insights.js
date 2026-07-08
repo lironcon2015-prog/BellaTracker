@@ -12,13 +12,14 @@
     const SEEN_KEY_BASE = 'gymstart_v2_seen_badges';
 
     // קטגוריות שריר — תווית + צבע (לגרף התפלגות)
+    // רוויזיה 2.6 — פלטה מאומתת לנגישות עיוורון-צבעים על משטח כהה
     const CATS = {
-        legs:      { l: 'רגליים',  c: '#ff4d8d' },
-        chest:     { l: 'חזה',      c: '#b832f0' },
-        back:      { l: 'גב',       c: '#ff6a4d' },
-        shoulders: { l: 'כתפיים',   c: '#3b9dff' },
-        arms:      { l: 'ידיים',    c: '#ffcf6b' },
-        core:      { l: 'core',     c: '#34e07a' },
+        legs:      { l: 'רגליים',  c: '#e05a8c' },
+        chest:     { l: 'חזה',      c: '#9a6ae0' },
+        back:      { l: 'גב',       c: '#a8593a' },
+        shoulders: { l: 'כתפיים',   c: '#4a7de0' },
+        arms:      { l: 'ידיים',    c: '#c08430' },
+        core:      { l: 'core',     c: '#2f9f84' },
         other:     { l: 'אחר',      c: '#8892a0' }
     };
 
@@ -159,7 +160,7 @@
         _themeColors: function () {
             const cs = getComputedStyle(document.body);
             return {
-                p: (cs.getPropertyValue('--primary').trim() || '#ff4d8d'),
+                p: (cs.getPropertyValue('--primary').trim() || '#f27ea9'),
                 p2: (cs.getPropertyValue('--primary-2').trim() || '#b832f0')
             };
         },
@@ -257,7 +258,7 @@
 
             if (s.count === 0) {
                 host.innerHTML = '<div class="stats-empty">' +
-                    '<div class="stats-empty-icon">📊</div>' +
+                    '<div class="stats-empty-icon"><svg viewBox="0 0 24 24"><path d="M22 7l-8.5 8.5-5-5L2 17"/><path d="M16 7h6v6"/></svg></div>' +
                     '<h3>ההתקדמות שלך תופיע כאן</h3>' +
                     '<p>השלימי את האימון הראשון כדי להתחיל לראות גרפים, שיאים ותגים.</p>' +
                     '</div>';
@@ -279,7 +280,7 @@
             const badgeCells = BADGES.map(b => {
                 const earned = b.test(s);
                 return '<div class="badge-cell' + (earned ? ' earned' : ' locked') + '">' +
-                    '<div class="badge-ic">' + b.icon + '</div>' +
+                    '<div class="badge-ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="9" r="5.5"/><path d="M8.7 13.6 7 21l5-2.6L17 21l-1.7-7.4"/></svg></div>' +
                     '<div class="badge-tt">' + this._esc(b.t) + '</div>' +
                     '<div class="badge-dd">' + this._esc(b.d) + '</div>' +
                     '</div>';
@@ -325,7 +326,7 @@
                 '</div>' +
 
                 // PRs
-                '<div class="oled-card chart-card"><div class="chart-title">שיאים אישיים 🏆</div><div class="pr-list">' + prRows + '</div></div>' +
+                '<div class="oled-card chart-card"><div class="chart-title">שיאים אישיים</div><div class="pr-list">' + prRows + '</div></div>' +
 
                 // Badges
                 '<div class="chart-title badges-head">תגי הישג</div><div class="badge-grid">' + badgeCells + '</div>';
@@ -440,7 +441,7 @@
                 pill.className = 'pr-flash';
                 top.appendChild(pill);
             }
-            pill.innerHTML = '⭐ שיא חדש! ' + this._esc(text);
+            pill.innerHTML = 'שיא חדש! ' + this._esc(text);
             pill.classList.remove('show'); void pill.offsetWidth; pill.classList.add('show');
             if (typeof this.haptic === 'function') this.haptic([20, 40, 20]);
             if (typeof this.fireConfetti === 'function') this.fireConfetti();
