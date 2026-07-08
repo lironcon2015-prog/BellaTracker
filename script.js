@@ -16,7 +16,7 @@ const CONFIG = {
     VERSION: '1.8.2'
 };
 
-const CURRENT_VERSION = '2.6.0-1'; // חייב להיות זהה ל-version.json
+const CURRENT_VERSION = '2.6.1-1'; // חייב להיות זהה ל-version.json
 
 const FEEL_MAP_TEXT = { 'easy': 'קל', 'good': 'בינוני', 'hard': 'קשה' };
 
@@ -147,15 +147,19 @@ const app = {
     _initViewportHeightFix: function() {
         const root = document.documentElement;
         const apply = () => {
-            const h = window.innerHeight;
+            // visualViewport מדויק יותר מ-innerHeight ב-iOS standalone אחרי cold start
+            const vv = window.visualViewport;
+            const h = Math.max(window.innerHeight || 0, vv ? Math.round(vv.height + (vv.offsetTop || 0)) : 0);
             if (h > 0) root.style.setProperty('--app-height', h + 'px');
         };
         apply();
-        // iOS מדווח את הגובה המתוקן רק רגע אחרי ההשקה — בדיקות חוזרות
-        [150, 400, 1000].forEach(ms => setTimeout(apply, ms));
+        // iOS מדווח את הגובה המתוקן רק רגע אחרי ההשקה — בדיקות חוזרות ארוכות יותר
+        [150, 400, 1000, 2000, 3500].forEach(ms => setTimeout(apply, ms));
         window.addEventListener('resize', apply);
         window.addEventListener('orientationchange', () => setTimeout(apply, 80));
         window.addEventListener('pageshow', apply);
+        window.addEventListener('focus', apply);
+        document.addEventListener('visibilitychange', apply);
         if (window.visualViewport) window.visualViewport.addEventListener('resize', apply);
     },
 
@@ -874,14 +878,28 @@ const app = {
         else timeWord = 'לילה טוב';
         if (greetEl) greetEl.textContent = timeWord;
 
-        // אימון אחרון
+        // שם הפרופיל בברכה + שורת תאריך (רוויזיה 2.6)
+        const nameEl = document.getElementById('greet-name');
+        if (nameEl) nameEl.textContent = (PROFILES[this.state.activeProfile] || PROFILES.female).name;
+        const dateEl = document.getElementById('home-date');
+        if (dateEl) {
+            const d = new Date();
+            const dayNames = ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
+            const monthNames = ['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
+            dateEl.textContent = `יום ${dayNames[d.getDay()]} · ${d.getDate()} ב${monthNames[d.getMonth()]}`;
+        }
+
+        // אימון אחרון — שם התוכנית ככותרת, תאריך כשורת משנה
         const lastEl = document.getElementById('last-workout-display');
+        const lastMetaEl = document.getElementById('last-workout-meta');
         if (this.state.history.length > 0) {
             const last = this.state.history[this.state.history.length - 1];
             const displayName = last.programTitle || last.program;
-            lastEl.innerText = `${last.date} (${displayName})`;
+            lastEl.innerText = displayName;
+            if (lastMetaEl) lastMetaEl.textContent = last.date;
         } else {
             lastEl.innerText = "טרם בוצע";
+            if (lastMetaEl) lastMetaEl.textContent = '';
         }
 
         // ── נתונים ──
@@ -910,6 +928,13 @@ const app = {
         }
         document.getElementById('home-weekly-val').textContent = weekly;
         document.getElementById('home-weekly-target').textContent = target;
+        // פסי התקדמות שבועיים (מחליפים את הטבעת — רוויזיה 2.6)
+        const segsEl = document.getElementById('home-week-segs');
+        if (segsEl) {
+            let segsHtml = '';
+            for (let i = 0; i < target; i++) segsHtml += `<i class="${i < weekly ? 'full' : ''}"></i>`;
+            segsEl.innerHTML = segsHtml;
+        }
         const msgEl = document.getElementById('home-weekly-msg');
         if (msgEl) {
             if (isFull) msgEl.textContent = 'היעד הושלם — מעולה!';
@@ -919,6 +944,8 @@ const app = {
 
         // רצף שבועות + chip
         document.getElementById('home-streak-val').textContent = streak;
+        const streakLine = document.getElementById('home-streak-line');
+        if (streakLine) streakLine.style.display = streak > 0 ? 'inline' : 'none';
         const chip = document.getElementById('home-streak-chip');
         if (chip) {
             chip.style.display = streak > 0 ? 'inline-flex' : 'none';
@@ -2711,10 +2738,9 @@ const app = {
                             </div>
                             <div class="gs-hist-row-inner" onclick="app.showHistoryDetail(${realIdx})">
                                 <div class="gs-hist-row-top">
-                                    <span class="gs-hist-date-text">${h.date}</span>
-                                    <span class="gs-prog-badge">${h.programTitle || h.program}</span>
+                                    <span class="gs-hist-title">${h.programTitle || h.program}</span>
                                 </div>
-                                <div class="gs-hist-sub-text">${h.data.length} תרגילים • ${h.duration||'?'} דק'</div>
+                                <div class="gs-hist-sub-text">${h.date} · ${h.data.length} תרגילים · ${h.duration||'?'} דק'</div>
                             </div>
                         </div>`).join('')}
                 </div>`;
