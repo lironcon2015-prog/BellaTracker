@@ -16,7 +16,7 @@ const CONFIG = {
     VERSION: '1.8.2'
 };
 
-const CURRENT_VERSION = '2.6.1-3'; // חייב להיות זהה ל-version.json
+const CURRENT_VERSION = '2.7.0-1'; // חייב להיות זהה ל-version.json
 
 const FEEL_MAP_TEXT = { 'easy': 'קל', 'good': 'בינוני', 'hard': 'קשה' };
 
@@ -2079,19 +2079,44 @@ const app = {
     },
 
     /* --- ADMIN --- */
+    // מציג view אחד בתוך admin-modal ומסתיר את כל השאר
+    _showAdminView: function(id) {
+        const views = ['admin-view-home', 'admin-view-training', 'admin-view-prefs',
+                       'admin-view-data', 'admin-view-profile', 'admin-view-edit',
+                       'admin-view-selector', 'admin-view-ex-manager', 'admin-view-ex-edit'];
+        views.forEach(v => {
+            const el = document.getElementById(v);
+            if (el) el.style.display = (v === id) ? 'flex' : 'none';
+        });
+    },
+
     openAdminHome: function() {
         if (this.state.active.on) { app.toast("לא ניתן להיכנס לניהול בזמן אימון פעיל.", "error"); return; }
         document.getElementById('admin-modal').style.display = 'flex';
-        document.getElementById('admin-view-home').style.display = 'flex';
-        document.getElementById('admin-view-edit').style.display = 'none';
-        document.getElementById('admin-view-selector').style.display = 'none';
-        document.getElementById('admin-view-ex-manager').style.display = 'none';
-        document.getElementById('admin-view-ex-edit').style.display = 'none';
+        this._showAdminView('admin-view-home');
+    },
+
+    // ── תתי-מסכי הגדרות לפי נושאים (רוויזיה 2.7) ─────────────────────────────────
+    openAdminTraining: function() {
+        this._showAdminView('admin-view-training');
         this.renderAdminList();
+    },
+
+    openAdminPrefs: function() {
+        this._showAdminView('admin-view-prefs');
         document.getElementById('admin-weekly-target').textContent = this._getWeeklyTarget();
         const showNameChk = document.getElementById('admin-show-name');
         if (showNameChk) showNameChk.checked = this._getShowGreetNamePref();
         this.renderAppearancePanel();
+    },
+
+    openAdminData: function() {
+        this._showAdminView('admin-view-data');
+        if (typeof updateFirebaseStatus === 'function') updateFirebaseStatus();
+    },
+
+    openAdminProfile: function() {
+        this._showAdminView('admin-view-profile');
         this.renderAuthPanel();
     },
 
@@ -2146,8 +2171,7 @@ const app = {
     openAdminEdit: function(pid) {
         this.state.admin.viewProgId = pid;
         this.state.admin.tempExercises = JSON.parse(JSON.stringify(this.state.routines[pid].exercises));
-        document.getElementById('admin-view-home').style.display = 'none';
-        document.getElementById('admin-view-edit').style.display = 'flex';
+        this._showAdminView('admin-view-edit');
         document.getElementById('edit-prog-title').value = this.state.routines[pid].title;
         this.renderEditorList();
     },
@@ -2157,7 +2181,7 @@ const app = {
         this.state.routines[pid].exercises = this.state.admin.tempExercises;
         this.state.routines[pid].title = document.getElementById('edit-prog-title').value;
         this.saveData();
-        this.openAdminHome();
+        this.openAdminTraining();
         this._autoSyncConfig();
     },
 
@@ -2320,8 +2344,7 @@ const app = {
 
     /* --- EXERCISE MANAGER --- */
     openExerciseManager: function() {
-        document.getElementById('admin-view-home').style.display = 'none';
-        document.getElementById('admin-view-ex-manager').style.display = 'flex';
+        this._showAdminView('admin-view-ex-manager');
         document.getElementById('ex-mgr-search').value = '';
         this.state.admin.exManagerFilter = 'all';
         this.updateExManagerChips();

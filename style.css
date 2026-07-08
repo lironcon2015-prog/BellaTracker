@@ -789,7 +789,7 @@ body.theme-green::before {
 
 /* ── Admin ── */
 .admin-layout { padding: 0; background: rgba(0,0,0,0.96); overflow: hidden; height: 90vh; }
-.admin-view { display: flex; flex-direction: column; height: 100%; padding: 20px; overflow: hidden; }
+.admin-view { display: flex; flex-direction: column; height: 100%; padding: 20px; overflow: hidden; animation: fadeIn 0.2s ease; }
 .scroll-y { overflow-y: auto; flex: 1; min-height: 0; }
 .modal-footer-column { flex-shrink: 0; margin-top: 15px; display: flex; flex-direction: column; }
 .admin-nav-row { display: flex; justify-content: flex-end; margin-bottom: 10px; }
