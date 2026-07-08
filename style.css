@@ -13,17 +13,20 @@
     --border-dim: rgba(255,255,255,0.10);
     --border-top: rgba(255,255,255,0.18);
 
-    /* Accent — energetic rose→violet (lively, premium, Nike/Gymshark vibe) */
-    --primary: #ff4d8d;
-    --primary-rgb: 255, 77, 141;
-    --primary-2: #b832f0;
-    --primary-2-rgb: 184, 50, 240;
-    --btn-fg: #ffffff;
-    --primary-dim: rgba(var(--primary-rgb), 0.10);
+    /* Accent — רוויזיה 2.6: ורוד פסטלי רך, שטוח, ללא גרדיאנטים.
+       צבע עם תפקיד: ורוד = פעולה/אימון, טורקיז = תזונה/קלוריות. */
+    --primary: #f27ea9;
+    --primary-rgb: 242, 126, 169;
+    --primary-2: #e05a8c;
+    --primary-2-rgb: 224, 90, 140;
+    --btn-fg: #2a1019;                    /* טקסט כהה על כפתור ורוד — מודרני יותר מזוהר */
+    --primary-dim: rgba(var(--primary-rgb), 0.12);
     --primary-glow: rgba(var(--primary-rgb), 0.28);
-    /* Signature energetic gradient — used on CTAs, rings, badges, hero numbers */
-    --accent-grad: linear-gradient(135deg, #ff6a4d 0%, #ff4d8d 42%, #b832f0 100%);
-    --accent-grad-soft: linear-gradient(135deg, rgba(255,106,77,0.18) 0%, rgba(255,77,141,0.16) 42%, rgba(184,50,240,0.18) 100%);
+    --teal: #3ecfb8;
+    --teal-rgb: 62, 207, 184;
+    /* הגרדיאנטים הפכו שטוחים — כל שימושי var(--accent-grad) הקיימים מקבלים צבע אחיד */
+    --accent-grad: linear-gradient(135deg, #f27ea9 0%, #f27ea9 100%);
+    --accent-grad-soft: linear-gradient(135deg, rgba(242,126,169,0.13) 0%, rgba(242,126,169,0.13) 100%);
 
     /* Text — improved secondary contrast (WCAG-friendly) */
     --text: #f4f5f6;
@@ -71,12 +74,12 @@
     --radius-pill: 999px;
     --radius: var(--radius-lg);           /* alias — kept working */
 
-    /* Elevation — soft, low-glow shadow hierarchy */
+    /* Elevation — צל רך בלבד; זוהר (glow) שמור ל-wordmark בלבד */
     --elev-1: 0 1px 2px rgba(0,0,0,0.4), 0 4px 14px rgba(0,0,0,0.32);
     --elev-2: 0 2px 6px rgba(0,0,0,0.45), 0 10px 30px rgba(0,0,0,0.45);
     --elev-3: 0 8px 24px rgba(0,0,0,0.55), 0 24px 60px rgba(0,0,0,0.6);
-    --glow-soft: 0 0 18px rgba(var(--primary-rgb),0.22);
-    --glow-strong: 0 0 28px rgba(var(--primary-rgb),0.32);
+    --glow-soft: 0 0 0 rgba(0,0,0,0);
+    --glow-strong: 0 0 0 rgba(0,0,0,0);
 
     /* Motion */
     --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
@@ -93,7 +96,7 @@
 
     /* Effects */
     --blur: blur(24px) saturate(180%);
-    --font: 'Rubik', sans-serif;
+    --font: 'Heebo', 'Rubik', sans-serif;
 }
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; user-select: none; }
@@ -129,14 +132,11 @@ body, html {
     }
 }
 
-/* ── Ambient gradient mesh — energetic yet OLED-safe (low alpha over black) ── */
+/* ── רוויזיה 2.6: בלי mesh צבעוני ברקע — שחור OLED נקי באמת ── */
 body::before {
     content: '';
     position: fixed; inset: 0; z-index: 0; pointer-events: none;
-    background:
-        radial-gradient(ellipse 70% 50% at 18% -2%, rgba(255,77,141,0.13) 0%, transparent 55%),
-        radial-gradient(ellipse 65% 55% at 88% 100%, rgba(184,50,240,0.12) 0%, transparent 52%),
-        radial-gradient(circle at 100% 12%, rgba(255,106,77,0.07) 0%, transparent 38%);
+    background: none;
 }
 
 /* ── Male profile theme — energetic electric blue→indigo ── */
@@ -148,14 +148,11 @@ body.theme-male {
     --btn-fg: #ffffff;
     --primary-dim: rgba(var(--primary-rgb), 0.10);
     --primary-glow: rgba(var(--primary-rgb), 0.28);
-    --accent-grad: linear-gradient(135deg, #38d6ff 0%, #3b9dff 42%, #6a5cff 100%);
-    --accent-grad-soft: linear-gradient(135deg, rgba(56,214,255,0.18) 0%, rgba(59,157,255,0.16) 42%, rgba(106,92,255,0.18) 100%);
+    --accent-grad: linear-gradient(135deg, #3b9dff 0%, #3b9dff 100%);
+    --accent-grad-soft: linear-gradient(135deg, rgba(59,157,255,0.13) 0%, rgba(59,157,255,0.13) 100%);
 }
 body.theme-male::before {
-    background:
-        radial-gradient(ellipse 70% 50% at 18% -2%, rgba(59,157,255,0.13) 0%, transparent 55%),
-        radial-gradient(ellipse 65% 55% at 88% 100%, rgba(106,92,255,0.12) 0%, transparent 52%),
-        radial-gradient(circle at 100% 12%, rgba(56,214,255,0.07) 0%, transparent 38%);
+    background: none;
 }
 
 /* ── Coral theme — warm coral→peach (suited for a girl) ── */
@@ -167,14 +164,11 @@ body.theme-coral {
     --btn-fg: #ffffff;
     --primary-dim: rgba(var(--primary-rgb), 0.10);
     --primary-glow: rgba(var(--primary-rgb), 0.28);
-    --accent-grad: linear-gradient(135deg, #ff9a5a 0%, #ff7a7a 42%, #ff5fa2 100%);
-    --accent-grad-soft: linear-gradient(135deg, rgba(255,154,90,0.18) 0%, rgba(255,122,122,0.16) 42%, rgba(255,95,162,0.18) 100%);
+    --accent-grad: linear-gradient(135deg, #ff7a7a 0%, #ff7a7a 100%);
+    --accent-grad-soft: linear-gradient(135deg, rgba(255,122,122,0.13) 0%, rgba(255,122,122,0.13) 100%);
 }
 body.theme-coral::before {
-    background:
-        radial-gradient(ellipse 70% 50% at 18% -2%, rgba(255,122,122,0.13) 0%, transparent 55%),
-        radial-gradient(ellipse 65% 55% at 88% 100%, rgba(255,154,90,0.12) 0%, transparent 52%),
-        radial-gradient(circle at 100% 12%, rgba(255,95,162,0.07) 0%, transparent 38%);
+    background: none;
 }
 
 /* ── Purple theme — vivid violet→magenta (suited for a girl) ── */
@@ -186,14 +180,11 @@ body.theme-purple {
     --btn-fg: #ffffff;
     --primary-dim: rgba(var(--primary-rgb), 0.10);
     --primary-glow: rgba(var(--primary-rgb), 0.28);
-    --accent-grad: linear-gradient(135deg, #c084fc 0%, #a855f7 42%, #7c3aed 100%);
-    --accent-grad-soft: linear-gradient(135deg, rgba(192,132,252,0.18) 0%, rgba(168,85,247,0.16) 42%, rgba(124,58,237,0.18) 100%);
+    --accent-grad: linear-gradient(135deg, #a855f7 0%, #a855f7 100%);
+    --accent-grad-soft: linear-gradient(135deg, rgba(168,85,247,0.13) 0%, rgba(168,85,247,0.13) 100%);
 }
 body.theme-purple::before {
-    background:
-        radial-gradient(ellipse 70% 50% at 18% -2%, rgba(168,85,247,0.13) 0%, transparent 55%),
-        radial-gradient(ellipse 65% 55% at 88% 100%, rgba(124,58,237,0.12) 0%, transparent 52%),
-        radial-gradient(circle at 100% 12%, rgba(192,132,252,0.07) 0%, transparent 38%);
+    background: none;
 }
 
 /* ── Green theme — energetic green→emerald (suited for a boy) ── */
@@ -205,14 +196,11 @@ body.theme-green {
     --btn-fg: #ffffff;
     --primary-dim: rgba(var(--primary-rgb), 0.10);
     --primary-glow: rgba(var(--primary-rgb), 0.28);
-    --accent-grad: linear-gradient(135deg, #4ade80 0%, #22c55e 42%, #10b981 100%);
-    --accent-grad-soft: linear-gradient(135deg, rgba(74,222,128,0.18) 0%, rgba(34,197,94,0.16) 42%, rgba(16,185,129,0.18) 100%);
+    --accent-grad: linear-gradient(135deg, #22c55e 0%, #22c55e 100%);
+    --accent-grad-soft: linear-gradient(135deg, rgba(34,197,94,0.13) 0%, rgba(34,197,94,0.13) 100%);
 }
 body.theme-green::before {
-    background:
-        radial-gradient(ellipse 70% 50% at 18% -2%, rgba(34,197,94,0.13) 0%, transparent 55%),
-        radial-gradient(ellipse 65% 55% at 88% 100%, rgba(16,185,129,0.12) 0%, transparent 52%),
-        radial-gradient(circle at 100% 12%, rgba(74,222,128,0.07) 0%, transparent 38%);
+    background: none;
 }
 
 .app-container {
@@ -234,11 +222,14 @@ body.theme-green::before {
     font-size: 0.75rem; color: rgba(var(--primary-rgb),0.65); font-weight: 700;
     font-variant-numeric: tabular-nums; letter-spacing: 0.3px; white-space: nowrap;
 }
-.logo { font-weight: var(--fw-black); font-size: 1.02rem; letter-spacing: 4px; text-align: center; flex: 1; text-transform: uppercase; }
-.logo .highlight {
-    background: var(--accent-grad); -webkit-background-clip: text; background-clip: text;
-    -webkit-text-fill-color: transparent; color: var(--primary);
+/* wordmark — חתימת מותג: ורוד עם זוהר עדין. המקום היחיד באפליקציה עם glow */
+.logo {
+    font-weight: var(--fw-black); font-size: 1.02rem; letter-spacing: 4px;
+    text-align: center; flex: 1; text-transform: uppercase;
+    color: var(--primary);
+    text-shadow: 0 0 18px rgba(var(--primary-rgb),0.5);
 }
+.logo .highlight { color: var(--primary); }
 .icon-btn { background: none; border: none; color: rgba(255,255,255,0.5); padding: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 
 .screen { display: none; flex-direction: column; flex: 1; overflow: hidden; animation: fadeIn 0.2s ease; }
@@ -684,31 +675,22 @@ body.theme-green::before {
 .sw-hint { margin-top: 8px; color: var(--text-sec); font-size: 0.8rem; }
 
 /* ── Feel Buttons ── */
+/* בחירת מאמץ — מילים במקום אימוג'י (רוויזיה 2.6) */
 .feeling-section { margin-bottom: 5px; }
-.feeling-row { display: flex; justify-content: center; gap: 20px; margin-bottom: 5px; }
+.feeling-row { display: flex; justify-content: center; gap: 8px; margin-bottom: 0; }
 .feel-btn {
-    width: 48px; height: 48px; border-radius: 50%;
-    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.10);
-    font-size: 1.4rem; cursor: pointer;
-    transition: transform var(--dur-base) var(--ease-spring), background var(--dur-base) var(--ease-out), border-color var(--dur-base) var(--ease-out), box-shadow var(--dur-base) var(--ease-out);
-    display: flex; align-items: center; justify-content: center;
-    filter: saturate(0.7); opacity: 0.7;
+    flex: 1; padding: 11px 0; border-radius: 14px;
+    background: none; border: 1px solid rgba(255,255,255,0.10);
+    font-family: inherit; font-size: 0.9rem; font-weight: var(--fw-medium);
+    color: var(--text-sec); cursor: pointer; text-align: center;
+    transition: background var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
 }
-.feel-btn.selected { transform: scale(1.14); filter: saturate(1); opacity: 1; }
-/* Color-coded feeling — calm → effort */
-.feel-btn.easy.selected {
-    border-color: rgba(var(--success-rgb),0.55);
-    background: rgba(var(--success-rgb),0.14); box-shadow: 0 0 16px rgba(var(--success-rgb),0.22);
+.feel-btn.selected {
+    border-color: var(--primary); color: var(--primary);
+    background: var(--primary-dim); font-weight: var(--fw-semibold);
 }
-.feel-btn.good.selected {
-    border-color: rgba(var(--primary-rgb),0.55);
-    background: rgba(var(--primary-rgb),0.14); box-shadow: 0 0 16px rgba(var(--primary-rgb),0.22);
-}
-.feel-btn.hard.selected {
-    border-color: rgba(255,160,80,0.6);
-    background: rgba(255,160,80,0.16); box-shadow: 0 0 16px rgba(255,160,80,0.22);
-}
-.feel-label { text-align: center; color: var(--text-sec); font-size: var(--fs-base); margin-bottom: 0; height: 1.2em; font-weight: var(--fw-medium); }
+/* התווית הנפרדת מיותרת — המילה היא הכפתור עצמו */
+.feel-label { display: none; }
 
 /* ── Rest Timer ── */
 .rest-box { display: flex; flex-direction: column; align-items: center; margin-top: 15px; animation: fadeIn 0.3s ease; }
@@ -1318,9 +1300,7 @@ body.theme-green::before {
     box-shadow: 0 0 18px rgba(var(--primary-rgb),0.32);
 }
 
-/* Feel buttons — larger touch target */
-.feel-btn { width: 54px; height: 54px; }
-.feeling-row { gap: 22px; }
+/* Feel buttons — גלולות מילים: הרוחב נקבע ב-flex, אין צורך במידות קבועות */
 
 /* Neon play (stopwatch) — refined */
 .btn-neon-play { box-shadow: 0 0 18px rgba(var(--success-rgb),0.22), var(--elev-1); transition: transform var(--dur-fast) var(--ease-spring), box-shadow var(--dur-fast); }
@@ -1333,7 +1313,6 @@ body.theme-green::before {
     #screen-active .workspace { margin-bottom: 10px; }
     #screen-active .input-card { padding: 12px; }
     #screen-active .stepper-btn { width: 48px; height: 48px; font-size: 1.6rem; }
-    #screen-active .feel-btn { width: 48px; height: 48px; }
     #screen-active .active-controls-area { gap: 9px; }
     .rest-ring-lg { width: clamp(120px, 21vh, 180px); height: clamp(120px, 21vh, 180px); }
     .rest-panel { gap: 10px; }
@@ -1358,7 +1337,7 @@ body.theme-green::before {
     .stepper-btn { width: 42px; height: 42px; font-size: 1.5rem; }
 
     /* — הידוקים הגנתיים — */
-    .feeling-row { gap: 16px; }
+    .feeling-row { gap: 8px; }
     .home-links { gap: 12px; }
 }
 
@@ -1653,10 +1632,11 @@ body.theme-green::before {
 /* ════════════════════════════════════════════════════════════
    NUTRITION — מערכת התזונה
    ════════════════════════════════════════════════════════════ */
+/* צבעי מאקרו — נבדקו לנגישות עיוורון-צבעים על משטח כהה (רוויזיה 2.6) */
 :root{
-  --macro-protein:#ff8a5c; --macro-protein-rgb:255,138,92;
-  --macro-carbs:#5cc6ff;   --macro-carbs-rgb:92,198,255;
-  --macro-fat:#ffce5c;     --macro-fat-rgb:255,206,92;
+  --macro-protein:#e05a8c; --macro-protein-rgb:224,90,140;
+  --macro-carbs:#c08430;   --macro-carbs-rgb:192,132,48;
+  --macro-fat:#2f9f84;     --macro-fat-rgb:47,159,132;
 }
 
 /* ראש כרטיס ה-hero — כותרת + צ'יפ streak בשורה */
@@ -1972,3 +1952,122 @@ body.theme-green::before {
 
 /* ── טיפ מאמן — צהוב רך במקום ניאון ── */
 .note-pill { color: var(--warn); }
+
+
+/* ════════════════════════════════════════════════════════════════
+   DESIGN REVISION 2.6 — "רך, נקי, מודרני"
+   ורוד פסטלי שטוח + טורקיז לתזונה. זוהר רק ב-wordmark.
+   בלי גרדיאנטים, בלי edge-light, בלי אנימציות נשימה.
+   ════════════════════════════════════════════════════════════════ */
+
+/* ── ביטול גלובלי של קווי edge-light העליונים על כרטיסים ── */
+.oled-card::before,
+.dash-stats-row::before,
+.prog-card::before,
+.stats-strip-enhanced::before,
+.input-card::before,
+.stopwatch-box::before,
+.list-item::before,
+.hist-item-row::before,
+.month-header::before,
+.admin-settings-card::before,
+.admin-data-btn::before,
+.food-row::before,
+.result-row::before,
+.badge-cell.earned::before { display: none; }
+
+/* ── כפתור ראשי — ורוד שטוח, טקסט כהה, בלי ברק ובלי נשימה ── */
+.btn-primary {
+    background: var(--primary);
+    box-shadow: var(--elev-1);
+    text-shadow: none;
+}
+.btn-primary::after { display: none; }
+.btn-primary.big-btn { animation: none; }
+.btn-primary:active {
+    transform: scale(0.975); filter: none;
+    box-shadow: var(--elev-1);
+}
+.btn-primary-small { background: var(--primary); box-shadow: var(--elev-1); }
+
+/* ── הסרת כל ה-glow מלבד ה-wordmark ── */
+.ring-prog,
+.rest-ring-lg .prog-ring,
+.rest-ring-lg.done .prog-ring,
+.ring-prog.full,
+.prog-ring,
+.tab-item.active svg,
+.month-chevron,
+.icon-box,
+.dash-stat-val,
+.dash-stat-val.dash-val-full,
+.gs-detail-ex-name,
+.badge-cell.earned .badge-ic,
+.stats-empty-icon,
+.onboarding-icon { filter: none; }
+.tab-item.active::before { box-shadow: none; }
+.hi-level-badge, .level-ring, .prog-icon, .overview-start-cue, .sr-icon.accent,
+.admin-action-icon, .admin-data-accent {
+    box-shadow: var(--elev-1); text-shadow: none;
+}
+.hi-level-badge, .level-ring, .prog-icon { color: var(--btn-fg); }
+.pr-flash { box-shadow: var(--elev-1); text-shadow: none; color: var(--btn-fg); }
+.streak-chip { box-shadow: none; }
+.xp-fill, .hi-fill, .dash-progress-fill { box-shadow: none; }
+.mb-fill.p, .mb-fill.c, .mb-fill.f { box-shadow: none; }
+.mb-fill.p { background: var(--macro-protein); }
+.mb-fill.c { background: var(--macro-carbs); }
+.mb-fill.f { background: var(--macro-fat); }
+.custom-chk:checked { box-shadow: none; background: var(--primary); }
+.range-chip-gs.active { box-shadow: none; }
+.btn-neon-play { box-shadow: var(--elev-1); }
+.sp-seg.done { box-shadow: none; }
+.toast::before { box-shadow: none; }
+.toast.success::before { box-shadow: none; }
+.toast.error::before { box-shadow: none; }
+.month-count { background: none; border: none; }
+.list-item.start-item { box-shadow: var(--elev-1); }
+.stepper-btn { box-shadow: none; }
+.stepper-btn:active { box-shadow: none; }
+.win-card { box-shadow: var(--elev-1); }
+
+/* ── set-badge — עדין ושטוח ── */
+#set-badge { background: var(--primary-dim); color: var(--primary); }
+
+/* ── כותרות חודשים בהיסטוריה — שם החודש בוורוד, בלי קופסה כבדה ── */
+.month-header {
+    background: none; border: none;
+    padding: 12px 4px 8px;
+}
+.month-header:active { background: none; transform: none; }
+.month-header-title { color: var(--primary); font-weight: var(--fw-black); font-size: 0.95rem; }
+
+/* ── תזונה = טורקיז: טבעת, מספרים ומילוי הקלוריות ── */
+#nut-home-ring { stroke: var(--teal); }
+#screen-nutrition .nut-summary .ring-prog { stroke: var(--teal); }
+#screen-nutrition .nut-summary .ring-num {
+    background: none; -webkit-text-fill-color: var(--teal); color: var(--teal);
+}
+.preview-kcal { background: none; -webkit-text-fill-color: var(--teal); color: var(--teal); }
+.bt-kcal { background: none; -webkit-text-fill-color: var(--teal); color: var(--teal); }
+
+/* ── אימוג'י ארוחות הוסר — מסתירים את ה-span כדי לא להשאיר רווח ── */
+.meal-emoji { display: none; }
+
+/* ── תגי הישגים — SVG אחיד במקום אימוג'י ── */
+.badge-ic svg { width: 26px; height: 26px; stroke: var(--text-ter); fill: none; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+.badge-cell.earned .badge-ic svg { stroke: var(--primary); }
+
+/* ── אייקון מצב-ריק בסטטיסטיקות ── */
+.stats-empty-icon svg { width: 44px; height: 44px; stroke: var(--text-ter); fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+
+/* ── אייקון win-card (סיכום) — SVG במקום אימוג'י ── */
+.win-trophy { display: flex; align-items: center; justify-content: center; color: var(--success); }
+.win-trophy svg { width: 26px; height: 26px; stroke: currentColor; fill: none; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+.achieved-targets-card .win-trophy { color: var(--primary); }
+
+/* ── אונבורדינג — בלי אימוג'י ענק ── */
+.onboarding-icon { display: none; }
+
+/* ── ספרות טיימר המנוחה — Heebo דק, כמו במוקאפ (במקום monospace) ── */
+.rest-ring-lg .timer-text { font-family: inherit; font-weight: var(--fw-light, 300); letter-spacing: 0; }
