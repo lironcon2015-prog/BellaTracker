@@ -1,11 +1,11 @@
 /**
  * GymStart — Service Worker
- * Version: 2.6.0-1
+ * Version: 2.6.1-1
  * Cache First strategy — עבודה אופליין מלאה.
  * העלה את CACHE_VERSION בכל עדכון קוד.
  */
 
-const CACHE_VERSION = 'gymstart-v2.6.0-1';
+const CACHE_VERSION = 'gymstart-v2.6.1-1';
 
 const FILES_TO_CACHE = [
     './index.html',

@@ -264,19 +264,16 @@ const Nutrition = {
             <button class="nut-date" onclick="Nutrition.pickDate()">${dateLabel} <span class="caret">▾</span></button>
             <button class="nut-arrow" onclick="Nutrition.shiftDay(1)" ${isToday?'style="opacity:.3;pointer-events:none;"':''}>›</button>
           </div>
-          <div class="oled-card nut-summary">
-            <div class="ring-wrap" style="width:104px;height:104px;">
-              <svg viewBox="0 0 120 120" class="progress-ring-svg">
-                <circle class="ring-bg" cx="60" cy="60" r="52"></circle>
-                <circle class="ring-prog ${kpct>=1?'full':''}" cx="60" cy="60" r="52" style="stroke-dashoffset:${ringOff}"></circle>
-              </svg>
-              <div class="ring-center"><div class="ring-num">${this._r0(tot.kcal)}</div><div class="ring-lbl">מתוך ${t.kcalTarget}</div></div>
-            </div>
-            <div class="macro-bars">
-              ${macroBar('חלבון',tot.p,t.proteinTarget,'p')}
-              ${macroBar('פחמימה',tot.c,t.carbsTarget,'c')}
-              ${macroBar('שומן',tot.f,t.fatTarget,'f')}
-            </div>
+          <div class="nut-hero-gs">
+            <div class="gs-eyebrow">נותרו להיום</div>
+            <div class="nut-hero-num">${this._r0(Math.max(0, (t.kcalTarget||0) - tot.kcal))} <small>קק"ל</small></div>
+            <div class="nut-hero-sub">נאכלו ${this._r0(tot.kcal)} מתוך ${t.kcalTarget}</div>
+            <div class="nut-hero-bar"><i style="width:${Math.round(kpct*100)}%"></i></div>
+          </div>
+          <div class="macro-bars nut-macro-list">
+            ${macroBar('חלבון',tot.p,t.proteinTarget,'p')}
+            ${macroBar('פחמימה',tot.c,t.carbsTarget,'c')}
+            ${macroBar('שומן',tot.f,t.fatTarget,'f')}
           </div>
           ${mealsHtml}
           <button class="add-meal-btn" onclick="Nutrition.openSearch('${seen[0]||'בוקר'}')">+ הוסף מזון</button>
@@ -329,17 +326,23 @@ const Nutrition = {
     //  כרטיס בית
     // ════════════════════════════════════════════════════════
     renderHomeCard() {
-        const ring = document.getElementById('nut-home-ring');
-        if (!ring) return;
+        const kcalEl = document.getElementById('nut-home-kcal');
+        if (!kcalEl) return;
         const t = this.getTargets();
         const daily = this.loadDaily();
         const today = (daily.find(d=>d.date===this.todayKey())) || {calories:0,protein:0,carbs:0,fat:0};
-        const C=327, pct=Math.min(1,(today.calories||0)/(t.kcalTarget||1));
-        ring.style.strokeDashoffset = Math.round(C*(1-pct));
-        ring.classList.toggle('full', pct>=1);
+        // טבעת legacy — קיימת רק אם ה-HTML הישן עדיין בשימוש
+        const ring = document.getElementById('nut-home-ring');
+        if (ring) {
+            const C=327, pct=Math.min(1,(today.calories||0)/(t.kcalTarget||1));
+            ring.style.strokeDashoffset = Math.round(C*(1-pct));
+            ring.classList.toggle('full', pct>=1);
+        }
         const set=(id,v)=>{ const el=document.getElementById(id); if(el) el.textContent=v; };
-        set('nut-home-kcal', this._r0(today.calories));
-        set('nut-home-target', '/' + t.kcalTarget + ' קק"ל');
+        // רוויזיה 2.6 — המספר הגדול הוא "כמה נותר" (טורקיז), כמו במוקאפ
+        const remaining = Math.max(0, Math.round((t.kcalTarget||0) - (today.calories||0)));
+        set('nut-home-kcal', this._r0(remaining));
+        set('nut-home-target', 'נותרו מתוך ' + t.kcalTarget + ' קק"ל');
         const setBar=(id,val,target)=>{ const el=document.getElementById(id); if(el) el.style.width=Math.min(100,Math.round((val/(target||1))*100))+'%'; };
         setBar('nut-home-mp', today.protein, t.proteinTarget);
         setBar('nut-home-mc', today.carbs, t.carbsTarget);

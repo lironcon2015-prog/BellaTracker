@@ -453,108 +453,75 @@
         <!-- SCREEN 1: HOME -->
         <div id="screen-home" class="screen active">
             <div class="scroll-content home-scroll">
-                <!-- Hero progress ring (אימונים) — צ'יפ ה-streak עבר לראש הכרטיס -->
-                <div class="oled-card hero-ring-card">
-                    <div class="ring-wrap">
-                        <svg viewBox="0 0 120 120" class="progress-ring-svg">
-                            <circle class="ring-bg" cx="60" cy="60" r="52"></circle>
-                            <circle id="home-ring-prog" class="ring-prog" cx="60" cy="60" r="52"></circle>
-                        </svg>
-                        <div class="ring-center">
-                            <div class="ring-num"><span id="home-weekly-val">0</span><span class="ring-den">/<span id="home-weekly-target">3</span></span></div>
-                            <div class="ring-lbl">השבוע</div>
-                        </div>
-                    </div>
-                    <div class="ring-side">
-                        <div class="ring-side-head">
-                            <div class="ring-side-title">אימונים השבוע</div>
-                            <div id="home-streak-chip" class="streak-chip" style="display:none;">
-                                <svg class="streak-flame" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 22a6 6 0 0 0 6-6c0-4-3-5.5-3-9 0 0-3 1.5-3 5 0 0-2-1-2-3.5 0 0-4 3-4 7.5a6 6 0 0 0 6 6z"/></svg>
-                                <span id="home-streak-num">0</span>
-                            </div>
-                        </div>
-                        <div class="ring-side-sub" id="home-weekly-msg">בואי נתחיל!</div>
-                        <div class="ring-side-stat">
-                            <span class="rss-val" id="home-streak-val">0</span>
-                            <span class="rss-lbl">שבועות ברצף</span>
-                        </div>
-                    </div>
+                <!-- כותרת — תאריך + ברכה (רוויזיה 2.6: מבנה המוקאפ) -->
+                <div class="home-head">
+                    <div class="home-date" id="home-date"></div>
+                    <h2 class="home-greet"><span id="greeting">בוקר טוב</span>, <span id="greet-name">בלה</span></h2>
                 </div>
 
-                <!-- Nutrition card (תזונה היום) → מסך התזונה -->
-                <div class="oled-card hero-ring-card" style="cursor:pointer;" onclick="Nutrition.open()">
-                    <div class="ring-wrap">
-                        <svg viewBox="0 0 120 120" class="progress-ring-svg">
-                            <circle class="ring-bg" cx="60" cy="60" r="52"></circle>
-                            <circle id="nut-home-ring" class="ring-prog" cx="60" cy="60" r="52" style="stroke-dashoffset:327"></circle>
-                        </svg>
-                        <div class="ring-center">
-                            <div class="ring-num" style="font-size:1.7rem;"><span id="nut-home-kcal">0</span></div>
-                            <div class="ring-lbl" id="nut-home-target">/0 קק"ל</div>
-                        </div>
+                <!-- Hero — אימונים השבוע: מספר גיבור + פסי התקדמות -->
+                <div class="home-hero">
+                    <div class="gs-eyebrow">אימונים השבוע</div>
+                    <div class="hero-num-row">
+                        <span class="hero-num" id="home-weekly-val">0</span><span class="hero-of">/<span id="home-weekly-target">3</span></span>
                     </div>
-                    <div class="ring-side">
-                        <div class="ring-side-title">תזונה היום</div>
-                        <div class="macro-mini">
-                            <div class="mm">
-                                <div class="mm-track"><div id="nut-home-mp" class="mm-fill" style="width:0%;background:var(--macro-protein);"></div></div>
-                                <div class="mm-lbl"><span><span class="mm-dot" style="background:var(--macro-protein)"></span>חלבון</span><span id="nut-home-vp">0ג</span></div>
-                            </div>
-                            <div class="mm">
-                                <div class="mm-track"><div id="nut-home-mc" class="mm-fill" style="width:0%;background:var(--macro-carbs);"></div></div>
-                                <div class="mm-lbl"><span><span class="mm-dot" style="background:var(--macro-carbs)"></span>פחמ׳</span><span id="nut-home-vc">0ג</span></div>
-                            </div>
-                            <div class="mm">
-                                <div class="mm-track"><div id="nut-home-mf" class="mm-fill" style="width:0%;background:var(--macro-fat);"></div></div>
-                                <div class="mm-lbl"><span><span class="mm-dot" style="background:var(--macro-fat)"></span>שומן</span><span id="nut-home-vf">0ג</span></div>
-                            </div>
+                    <div class="gs-segs" id="home-week-segs"></div>
+                    <div class="hero-msg"><span id="home-weekly-msg">בואי נתחיל!</span><span id="home-streak-line" style="display:none;"> · רצף של <b id="home-streak-val">0</b> שבועות</span></div>
+                </div>
+
+                <div class="gs-hairline"></div>
+
+                <!-- שורת תזונה חיה → מסך התזונה -->
+                <div class="home-nut" onclick="Nutrition.open()">
+                    <div class="home-nut-top">
+                        <span class="gs-eyebrow">תזונה היום</span>
+                        <svg class="gs-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
+                    </div>
+                    <div class="home-nut-kc"><span id="nut-home-kcal" class="nut-remain">0</span> <small id="nut-home-target">נותרו מתוך 0 קק"ל</small></div>
+                    <div class="macro-mini">
+                        <div class="mm">
+                            <div class="mm-track"><div id="nut-home-mp" class="mm-fill" style="width:0%;background:var(--macro-protein);"></div></div>
+                            <div class="mm-lbl"><span>חלבון</span><span id="nut-home-vp">0ג</span></div>
+                        </div>
+                        <div class="mm">
+                            <div class="mm-track"><div id="nut-home-mc" class="mm-fill" style="width:0%;background:var(--macro-carbs);"></div></div>
+                            <div class="mm-lbl"><span>פחמ׳</span><span id="nut-home-vc">0ג</span></div>
+                        </div>
+                        <div class="mm">
+                            <div class="mm-track"><div id="nut-home-mf" class="mm-fill" style="width:0%;background:var(--macro-fat);"></div></div>
+                            <div class="mm-lbl"><span>שומן</span><span id="nut-home-vf">0ג</span></div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Mini stats -->
-                <div class="home-mini-stats">
-                    <div class="oled-card mini-stat">
-                        <div class="mini-val" id="home-total-workouts">0</div>
-                        <div class="mini-lbl">סה"כ אימונים</div>
+                <div class="gs-hairline"></div>
+
+                <!-- האימון האחרון -->
+                <div class="gs-eyebrow" style="margin-bottom:10px;">האימון האחרון</div>
+                <div class="last-card">
+                    <div class="last-badge">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16" rx="2.5"></rect><path d="M3 9.5h18M8 2.5v4M16 2.5v4"></path></svg>
                     </div>
-                    <div class="oled-card mini-stat">
-                        <div class="mini-val" id="home-days-since">—</div>
-                        <div class="mini-lbl">ימים מאז אחרון</div>
-                    </div>
-                    <div class="oled-card mini-stat">
-                        <div class="mini-val" id="home-avg-time">—</div>
-                        <div class="mini-lbl">ממוצע דק׳</div>
+                    <div class="last-info">
+                        <div class="last-title" id="last-workout-display">טוען...</div>
+                        <div class="last-meta" id="last-workout-meta"></div>
                     </div>
                 </div>
 
-                <!-- Insights / level card → tap to open stats -->
-                <div id="home-insights-card" class="oled-card insights-home-card" onclick="app.openStats()">
-                    <div class="hi-level-badge"><span id="hi-level">1</span></div>
-                    <div class="hi-mid">
-                        <div class="hi-top"><span class="hi-title">ההתקדמות שלך</span><span class="hi-badge-chip"><span id="hi-badges">0</span> תגים</span></div>
-                        <div class="hi-track"><div id="hi-xp-fill" class="hi-fill" style="width:0%"></div></div>
-                        <div class="hi-sub" id="hi-sub">התחילי כדי לצבור XP</div>
-                    </div>
-                    <div class="hi-arrow">›</div>
-                </div>
-
-                <!-- Last workout -->
-                <div class="oled-card info-card">
-                    <div class="icon-box">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16" rx="2.5"></rect><path d="M3 9.5h18M8 2.5v4M16 2.5v4"></path></svg>
-                    </div>
-                    <div>
-                        <div class="label">אימון אחרון</div>
-                        <div id="last-workout-display" class="value">טוען...</div>
-                    </div>
-                </div>
-
-                <div class="home-links">
-                    <button class="btn-ghost" onclick="openCoachUpdateSheet()">קבלת עדכון מאמן</button>
-                    <button class="btn-ghost" onclick="app.checkForUpdate()">בדוק עדכון</button>
+                <div class="home-quiet-links">
+                    <button class="text-link" onclick="openCoachUpdateSheet()">קבלת עדכון מאמן</button>
+                    <button class="text-link" onclick="app.checkForUpdate()">בדיקת עדכון</button>
                 </div>
                 <div class="version-tag" id="version-tag">GymStart</div>
+
+                <!-- אלמנטים מוסתרים — נשמרים כדי שמעדכני ה-JS הקיימים ימשיכו לעבוד ללא שינוי -->
+                <div style="display:none !important;" aria-hidden="true">
+                    <span id="home-total-workouts"></span>
+                    <span id="home-days-since"></span>
+                    <span id="home-avg-time"></span>
+                    <span id="home-streak-chip"><span id="home-streak-num"></span></span>
+                    <div id="home-insights-card"><span id="hi-level"></span><span id="hi-badges"></span><div id="hi-xp-fill"></div><div id="hi-sub"></div></div>
+                </div>
             </div>
             <div class="fixed-footer">
                 <button id="btn-start-home" class="btn-primary big-btn" onclick="app.nav('screen-program-select')">התחילי אימון</button>
