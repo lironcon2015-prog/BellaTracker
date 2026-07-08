@@ -2194,3 +2194,23 @@ body.theme-green::before {
 
 /* ── מסך בית — הכרטיסים הישנים בוטלו, ביטול אנימציות ריקות ── */
 .screen.active .home-hero { animation: riseStagger var(--dur-slow) var(--ease-out) both; }
+
+
+/* ════════════════════════════════════════════════════════════════
+   2.6.1-2 — פתרון שורש לפס השחור בתחתית (iOS standalone)
+   ────────────────────────────────────────────────────────────────
+   הבעיה: אחרי cold start מידות ה-viewport המדווחות (innerHeight,
+   dvh, visualViewport) שגויות לרגע — ולפעמים לא מתעדכנות בכלל,
+   כך שגובה מבוסס-height משאיר פס שחור מת בתחתית.
+   הפתרון: העוגן הוא position:fixed; inset:0 — אלמנט fixed נמתח
+   בין קצוות ה-viewport עצמו ועוקב אחרי כל תיקון מידות של המערכת
+   באופן אוטומטי, בלי תלות בערך מדווח וללא צורך ב-JS.
+   סנכרון ה---app-height מ-JS נשאר כרשת ביטחון ל-body.
+   ════════════════════════════════════════════════════════════════ */
+.app-container {
+    position: fixed;
+    inset: 0;
+    height: auto;   /* הגובה נגזר מ-inset (top+bottom), לא מ-height מדווח */
+    width: auto;
+    z-index: 1;
+}
