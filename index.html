@@ -99,40 +99,17 @@
                     </button>
                 </div>
 
-                <!-- Hub — תפריט נושאים (רוויזיה 2.7: חלוקה לתתי-מסכים) -->
-                <div class="admin-home-scroll">
-                    <div class="settings-group">
-                        <button class="settings-row" onclick="app.openAdminTraining()">
-                            <span class="sr-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5v11M17.5 6.5v11M3 9v6M21 9v6M6.5 12h11"/></svg></span>
-                            <span class="sr-text"><span class="sr-title">תוכניות ותרגילים</span><span class="sr-sub">תוכניות אימון ומאגר תרגילים</span></span>
-                            <span class="sr-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></span>
-                        </button>
-                        <button class="settings-row" onclick="app.openAdminPrefs()">
-                            <span class="sr-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="8" x2="20" y2="8"/><line x1="4" y1="16" x2="20" y2="16"/><circle cx="9" cy="8" r="2.2"/><circle cx="15" cy="16" r="2.2"/></svg></span>
-                            <span class="sr-text"><span class="sr-title">העדפות ומראה</span><span class="sr-sub">יעד שבועי, ברכה, שפה וערכת צבעים</span></span>
-                            <span class="sr-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></span>
-                        </button>
-                        <button class="settings-row" onclick="app.openAdminData()">
-                            <span class="sr-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19a4.5 4.5 0 1 0-.9-8.9 6 6 0 0 0-11.5 1.7A3.8 3.8 0 0 0 6 19z"/></svg></span>
-                            <span class="sr-text"><span class="sr-title">נתונים וענן</span><span class="sr-sub">גיבוי, שחזור וסנכרון Firebase</span></span>
-                            <span class="sr-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></span>
-                        </button>
-                        <button class="settings-row" onclick="app.openAdminProfile()">
-                            <span class="sr-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg></span>
-                            <span class="sr-text"><span class="sr-title">פרופיל</span><span class="sr-sub">החלפת פרופיל וקוד גישה</span></span>
-                            <span class="sr-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></span>
-                        </button>
-                    </div>
+                <!-- בורר נושאים — פילים (רוויזיה 2.7: החלפת תוכן במקום) -->
+                <div class="chip-container" style="margin:4px 0 12px;">
+                    <button class="chip active" data-tab="training" onclick="app.setAdminTab('training')">תוכניות</button>
+                    <button class="chip" data-tab="prefs" onclick="app.setAdminTab('prefs')">העדפות</button>
+                    <button class="chip" data-tab="data" onclick="app.setAdminTab('data')">נתונים</button>
+                    <button class="chip" data-tab="profile" onclick="app.setAdminTab('profile')">פרופיל</button>
                 </div>
-            </div>
+                <div class="admin-home-scroll">
 
-            <!-- VIEW 1a: תוכניות ותרגילים -->
-            <div id="admin-view-training" class="admin-view" style="display:none;">
-                <div class="modal-header">
-                    <h3>תוכניות ותרגילים</h3>
-                    <button class="text-close-btn" onclick="app.openAdminHome()">חזרה</button>
-                </div>
-                <div class="admin-home-scroll">
+                    <!-- טאב: תוכניות ותרגילים -->
+                    <div id="admin-tab-training" class="admin-tab-panel active">
                     <div class="admin-section-label">תוכניות אימון</div>
                     <div id="admin-prog-list" class="vertical-stack"></div>
                     <button class="btn-dashed" onclick="app.createNewProgram()" style="margin-top:8px;">+ צור תוכנית חדשה</button>
@@ -146,16 +123,10 @@
                         </button>
                     </div>
                     <div style="height:16px;"></div>
-                </div>
-            </div>
+                    </div>
 
-            <!-- VIEW 1b: העדפות ומראה -->
-            <div id="admin-view-prefs" class="admin-view" style="display:none;">
-                <div class="modal-header">
-                    <h3>העדפות ומראה</h3>
-                    <button class="text-close-btn" onclick="app.openAdminHome()">חזרה</button>
-                </div>
-                <div class="admin-home-scroll">
+                    <!-- טאב: העדפות ומראה -->
+                    <div id="admin-tab-prefs" class="admin-tab-panel">
                     <div class="admin-section-label">העדפות אימון</div>
                     <div class="settings-group">
                         <div class="settings-row static">
@@ -176,16 +147,10 @@
                     <div class="admin-section-label" style="margin-top:22px;">מראה ושפה</div>
                     <div id="appearance-panel"></div>
                     <div style="height:16px;"></div>
-                </div>
-            </div>
+                    </div>
 
-            <!-- VIEW 1c: נתונים וענן -->
-            <div id="admin-view-data" class="admin-view" style="display:none;">
-                <div class="modal-header">
-                    <h3>נתונים וענן</h3>
-                    <button class="text-close-btn" onclick="app.openAdminHome()">חזרה</button>
-                </div>
-                <div class="admin-home-scroll">
+                    <!-- טאב: נתונים וענן -->
+                    <div id="admin-tab-data" class="admin-tab-panel">
                     <div class="admin-section-label">גיבוי מקומי</div>
                     <div class="settings-group">
                         <button class="settings-row" onclick="app.exportFullBackup()">
@@ -259,18 +224,14 @@
                         </button>
                     </div>
                     <div style="height:16px;"></div>
-                </div>
-            </div>
+                    </div>
 
-            <!-- VIEW 1d: פרופיל -->
-            <div id="admin-view-profile" class="admin-view" style="display:none;">
-                <div class="modal-header">
-                    <h3>פרופיל</h3>
-                    <button class="text-close-btn" onclick="app.openAdminHome()">חזרה</button>
-                </div>
-                <div class="admin-home-scroll">
+                    <!-- טאב: פרופיל -->
+                    <div id="admin-tab-profile" class="admin-tab-panel">
                     <div id="auth-panel"></div>
                     <div style="height:16px;"></div>
+                    </div>
+
                 </div>
             </div>
 
