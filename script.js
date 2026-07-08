@@ -16,7 +16,7 @@ const CONFIG = {
     VERSION: '1.8.2'
 };
 
-const CURRENT_VERSION = '2.7.0-1'; // חייב להיות זהה ל-version.json
+const CURRENT_VERSION = '2.7.0-2'; // חייב להיות זהה ל-version.json
 
 const FEEL_MAP_TEXT = { 'easy': 'קל', 'good': 'בינוני', 'hard': 'קשה' };
 
@@ -2081,9 +2081,8 @@ const app = {
     /* --- ADMIN --- */
     // מציג view אחד בתוך admin-modal ומסתיר את כל השאר
     _showAdminView: function(id) {
-        const views = ['admin-view-home', 'admin-view-training', 'admin-view-prefs',
-                       'admin-view-data', 'admin-view-profile', 'admin-view-edit',
-                       'admin-view-selector', 'admin-view-ex-manager', 'admin-view-ex-edit'];
+        const views = ['admin-view-home', 'admin-view-edit', 'admin-view-selector',
+                       'admin-view-ex-manager', 'admin-view-ex-edit'];
         views.forEach(v => {
             const el = document.getElementById(v);
             if (el) el.style.display = (v === id) ? 'flex' : 'none';
@@ -2094,30 +2093,40 @@ const app = {
         if (this.state.active.on) { app.toast("לא ניתן להיכנס לניהול בזמן אימון פעיל.", "error"); return; }
         document.getElementById('admin-modal').style.display = 'flex';
         this._showAdminView('admin-view-home');
+        this.setAdminTab(this._adminTab || 'training');
     },
 
-    // ── תתי-מסכי הגדרות לפי נושאים (רוויזיה 2.7) ─────────────────────────────────
+    // ── בורר נושאים בפילים במסך ההגדרות (רוויזיה 2.7) ────────────────────────────
+    setAdminTab: function(tab) {
+        this._adminTab = tab;
+        ['training', 'prefs', 'data', 'profile'].forEach(t => {
+            const panel = document.getElementById('admin-tab-' + t);
+            if (panel) panel.classList.toggle('active', t === tab);
+        });
+        document.querySelectorAll('#admin-view-home .chip-container .chip').forEach(c => {
+            c.classList.toggle('active', c.dataset.tab === tab);
+        });
+        const sc = document.querySelector('#admin-view-home .admin-home-scroll');
+        if (sc) sc.scrollTop = 0;
+        // אתחול תוכן דינמי פר-טאב
+        if (tab === 'training') {
+            this.renderAdminList();
+        } else if (tab === 'prefs') {
+            document.getElementById('admin-weekly-target').textContent = this._getWeeklyTarget();
+            const showNameChk = document.getElementById('admin-show-name');
+            if (showNameChk) showNameChk.checked = this._getShowGreetNamePref();
+            this.renderAppearancePanel();
+        } else if (tab === 'data') {
+            if (typeof updateFirebaseStatus === 'function') updateFirebaseStatus();
+        } else if (tab === 'profile') {
+            this.renderAuthPanel();
+        }
+    },
+
+    // חזרה מעורך תוכנית / מאגר תרגילים — נוחתים על טאב התוכניות
     openAdminTraining: function() {
-        this._showAdminView('admin-view-training');
-        this.renderAdminList();
-    },
-
-    openAdminPrefs: function() {
-        this._showAdminView('admin-view-prefs');
-        document.getElementById('admin-weekly-target').textContent = this._getWeeklyTarget();
-        const showNameChk = document.getElementById('admin-show-name');
-        if (showNameChk) showNameChk.checked = this._getShowGreetNamePref();
-        this.renderAppearancePanel();
-    },
-
-    openAdminData: function() {
-        this._showAdminView('admin-view-data');
-        if (typeof updateFirebaseStatus === 'function') updateFirebaseStatus();
-    },
-
-    openAdminProfile: function() {
-        this._showAdminView('admin-view-profile');
-        this.renderAuthPanel();
+        this.openAdminHome();
+        this.setAdminTab('training');
     },
 
     closeAdmin: function() {
