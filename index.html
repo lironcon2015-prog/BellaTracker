@@ -128,6 +128,11 @@
                                 <button class="step-btn" onclick="app.adjustWeeklyTarget(1)">+</button>
                             </div>
                         </div>
+                        <label class="settings-row static" style="cursor:pointer;">
+                            <span class="sr-text"><span class="sr-title">הצגת שם בברכה</span><span class="sr-sub">״צהריים טובים, בלה״ בדף הבית</span></span>
+                            <input type="checkbox" class="target-chk" id="admin-show-name" onchange="app.setShowGreetName(this.checked)">
+                            <span class="target-toggle-track"></span>
+                        </label>
                     </div>
 
                     <!-- ניהול נתונים -->
@@ -456,7 +461,7 @@
                 <!-- כותרת — תאריך + ברכה (רוויזיה 2.6: מבנה המוקאפ) -->
                 <div class="home-head">
                     <div class="home-date" id="home-date"></div>
-                    <h2 class="home-greet"><span id="greeting">בוקר טוב</span>, <span id="greet-name">בלה</span></h2>
+                    <h2 class="home-greet"><span id="greeting">צהריים טובים</span><span id="greet-name-wrap" style="display:none;">, <span id="greet-name">בלה</span></span></h2>
                 </div>
 
                 <!-- Hero — אימונים השבוע: מספר גיבור + פסי התקדמות -->

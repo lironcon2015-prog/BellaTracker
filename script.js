@@ -16,7 +16,7 @@ const CONFIG = {
     VERSION: '1.8.2'
 };
 
-const CURRENT_VERSION = '2.6.1-2'; // חייב להיות זהה ל-version.json
+const CURRENT_VERSION = '2.6.1-3'; // חייב להיות זהה ל-version.json
 
 const FEEL_MAP_TEXT = { 'easy': 'קל', 'good': 'בינוני', 'hard': 'קשה' };
 
@@ -878,9 +878,12 @@ const app = {
         else timeWord = 'לילה טוב';
         if (greetEl) greetEl.textContent = timeWord;
 
-        // שם הפרופיל בברכה + שורת תאריך (רוויזיה 2.6)
+        // שם הפרופיל בברכה — מוצג רק אם הופעל בהגדרות (ברירת מחדל: בלי שם)
+        const showGreetName = this._getShowGreetNamePref();
+        const nameWrapEl = document.getElementById('greet-name-wrap');
+        if (nameWrapEl) nameWrapEl.style.display = showGreetName ? '' : 'none';
         const nameEl = document.getElementById('greet-name');
-        if (nameEl) nameEl.textContent = (PROFILES[this.state.activeProfile] || PROFILES.female).name;
+        if (nameEl && showGreetName) nameEl.textContent = (PROFILES[this.state.activeProfile] || PROFILES.female).name;
         const dateEl = document.getElementById('home-date');
         if (dateEl) {
             const d = new Date();
@@ -1073,6 +1076,24 @@ const app = {
             s.theme = t;
             localStorage.setItem(key, JSON.stringify(s));
         } catch(e) {}
+    },
+
+    // ── העדפת הצגת שם בברכת דף הבית — ברירת מחדל: בלי שם ─────────────────────────
+    _getShowGreetNamePref: function() {
+        try { return JSON.parse(localStorage.getItem(this._getSettingsKey()) || '{}').showGreetName === true; }
+        catch(e) { return false; }
+    },
+
+    setShowGreetName: function(v) {
+        this.haptic(5);
+        const key = this._getSettingsKey();
+        try {
+            const s = JSON.parse(localStorage.getItem(key) || '{}');
+            s.showGreetName = !!v;
+            localStorage.setItem(key, JSON.stringify(s));
+        } catch(e) {}
+        this.renderHome();
+        this._schedulePrefsSync();
     },
 
     adjustWeeklyTarget: function(delta) {
@@ -2068,6 +2089,8 @@ const app = {
         document.getElementById('admin-view-ex-edit').style.display = 'none';
         this.renderAdminList();
         document.getElementById('admin-weekly-target').textContent = this._getWeeklyTarget();
+        const showNameChk = document.getElementById('admin-show-name');
+        if (showNameChk) showNameChk.checked = this._getShowGreetNamePref();
         this.renderAppearancePanel();
         this.renderAuthPanel();
     },
