@@ -16,7 +16,7 @@ const CONFIG = {
     VERSION: '1.8.2'
 };
 
-const CURRENT_VERSION = '2.8.0-1'; // חייב להיות זהה ל-version.json
+const CURRENT_VERSION = '2.8.0-2'; // חייב להיות זהה ל-version.json
 
 const FEEL_MAP_TEXT = { 'easy': 'קל', 'good': 'בינוני', 'hard': 'קשה' };
 
@@ -144,6 +144,34 @@ const app = {
     // ── תיקון באג iOS standalone: בפתיחה קרה (cold start) גובה ה-viewport
     //    מדווח שגוי ו-100dvh לא תמיד מתעדכן אחרי שהמערכת מתקנת — נשאר פס
     //    שחור בתחתית באופן אקראי. מסנכרנים את הגובה האמיתי ל-CSS var. ──
+    // ── אבחון פס תחתון (זמני, v2.8.0-2) — מדפיס מספרי viewport אמיתיים מהמכשיר ──
+    _renderDiag: function() {
+        const el = document.getElementById('diag-overlay');
+        if (!el) return;
+        const iH = window.innerHeight || 0;
+        const vv = window.visualViewport;
+        const probe = document.getElementById('diag-probe');
+        const sab = probe ? Math.round(probe.getBoundingClientRect().height) : -1;
+        const app = document.querySelector('.app-container');
+        const tab = document.getElementById('tab-bar');
+        const appB = app ? Math.round(app.getBoundingClientRect().bottom) : -1;
+        const tabVisible = tab && getComputedStyle(tab).display !== 'none';
+        const tabB = tabVisible ? Math.round(tab.getBoundingClientRect().bottom) : null;
+        const appH = getComputedStyle(document.documentElement).getPropertyValue('--app-height').trim() || '—';
+        const L = [
+            'v' + CURRENT_VERSION,
+            'iH=' + iH,
+            'vv=' + (vv ? Math.round(vv.height) : '—') + ' off=' + (vv ? Math.round(vv.offsetTop || 0) : '—'),
+            'scr=' + (window.screen ? window.screen.height : '—') + ' cl=' + document.documentElement.clientHeight,
+            'appH=' + appH,
+            'sab=' + sab,
+            'appB=' + appB + ' GAP=' + (iH - appB),
+            'tabB=' + (tabB === null ? 'hidden' : tabB + ' tgap=' + (iH - tabB)),
+            'bodyH=' + Math.round(document.body.getBoundingClientRect().height)
+        ];
+        el.textContent = L.join('\n');
+    },
+
     _initViewportHeightFix: function() {
         const root = document.documentElement;
         const apply = () => {
@@ -151,6 +179,7 @@ const app = {
             const vv = window.visualViewport;
             const h = Math.max(window.innerHeight || 0, vv ? Math.round(vv.height + (vv.offsetTop || 0)) : 0);
             if (h > 0) root.style.setProperty('--app-height', h + 'px');
+            this._renderDiag();
         };
         apply();
         // iOS מדווח את הגובה המתוקן רק רגע אחרי ההשקה — בדיקות חוזרות ארוכות יותר

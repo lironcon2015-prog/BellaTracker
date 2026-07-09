@@ -2316,3 +2316,13 @@ body.theme-green::before {
 
 /* קישורים שקטים — מעט אוויר מעל */
 #screen-home .home-quiet-links { margin-top: 22px; }
+
+/* אבחון פס תחתון (זמני, v2.8.0-2) — יוסר עם התיקון */
+#diag-overlay {
+    position: fixed; top: calc(env(safe-area-inset-top) + 4px); inset-inline-start: 4px;
+    z-index: 99999; pointer-events: none;
+    background: rgba(0,0,0,0.7); color: #0f0;
+    font: 10px/1.35 monospace; padding: 6px 8px;
+    border: 1px solid #0f0; border-radius: 6px;
+    white-space: pre; direction: ltr; text-align: left;
+}
