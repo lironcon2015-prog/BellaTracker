@@ -18,6 +18,10 @@
 </head>
 <body>
 
+    <!-- אבחון פס תחתון (זמני, v2.8.0-2) — פרוב safe-area + תיבת קריאה. יוסר עם התיקון. -->
+    <div id="diag-probe" style="position:fixed;bottom:0;width:0;height:env(safe-area-inset-bottom);pointer-events:none;"></div>
+    <div id="diag-overlay"></div>
+
     <!-- Hidden File Inputs -->
     <input type="file" id="file-import-history" hidden accept=".json" onchange="app.importHistory(this)">
     <input type="file" id="file-import-config" hidden accept=".json" onchange="app.importConfig(this)">
