@@ -2218,3 +2218,101 @@ body.theme-green::before {
     width: auto;
     z-index: 1;
 }
+
+
+/* ════════════════════════════════════════════════════════════════
+   DESIGN REVISION 2.8 — בית "ניאון-גלאס" (בהשראת מוקאפ Stitch)
+   פלטת הצבעים נשמרת: ורוד (--primary, מתחלף עם התמה) + teal + מאקרו.
+   ללא צבעים חדשים. ═══════════════════════════════════════════════ */
+
+/* זוהרי רקע — רדיאלים סטטיים, בלי filter:blur (ביצועים ב-iOS) */
+#screen-home { position: relative; z-index: 0; }
+#screen-home::before {
+    content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+    background:
+        radial-gradient(340px 340px at 88% 3%, rgba(var(--primary-rgb), 0.15), transparent 68%),
+        radial-gradient(300px 300px at 6% 58%, rgba(var(--teal-rgb), 0.10), transparent 68%);
+}
+
+/* משטח זכוכית משותף */
+.home-card {
+    background: rgba(255, 255, 255, 0.035);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: var(--radius-xl);
+    padding: 18px;
+    backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
+    margin-top: 14px;
+}
+.home-card.home-hero { margin-top: 20px; }
+
+/* כרטיס אימונים שבועיים */
+.hh-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+.hh-title { font-size: 1.02rem; font-weight: var(--fw-bold); }
+.hh-sub { font-size: 0.78rem; color: var(--text-ter); margin-top: 3px; }
+.hh-body { display: flex; align-items: center; gap: 18px; margin-top: 16px; }
+.hh-ring { width: 108px; height: 108px; }
+.hh-ring .ring-prog { filter: drop-shadow(0 0 8px rgba(var(--primary-rgb), 0.55)); }
+.hh-ring .ring-num { font-size: 2rem; }
+.hh-side { flex: 1; min-width: 0; }
+.hh-bar-row { display: flex; justify-content: space-between; align-items: baseline; }
+.hh-bar-lbl { font-size: 0.74rem; color: var(--text-sec); font-weight: var(--fw-medium); }
+.hh-pct { font-size: 0.8rem; color: var(--primary); font-weight: var(--fw-bold); font-variant-numeric: tabular-nums; }
+.hh-bar { height: 7px; border-radius: 999px; background: rgba(255,255,255,0.08); overflow: hidden; margin-top: 7px; }
+.hh-bar i {
+    display: block; height: 100%; border-radius: 999px; width: 0;
+    background: linear-gradient(90deg, rgba(var(--primary-rgb),0.6), var(--primary));
+    box-shadow: 0 0 10px rgba(var(--primary-rgb), 0.5);
+    transition: width 0.9s var(--ease-out);
+}
+.home-hero .hero-msg { margin-top: 10px; }
+.streak-chip .streak-flame { flex-shrink: 0; }
+
+/* כרטיס תזונה */
+.hn-body { display: flex; align-items: center; gap: 14px; margin-top: 12px; }
+.hn-ring { width: 62px; height: 62px; }
+.hn-ring .ring-prog { filter: drop-shadow(0 0 6px rgba(var(--teal-rgb), 0.5)); }
+.home-nut .home-nut-kc { margin-top: 0; }
+.home-nut .macro-mini .mm-track { height: 7px; border-radius: 999px; }
+#nut-home-mp { box-shadow: 0 0 8px rgba(var(--macro-protein-rgb), 0.45); }
+#nut-home-mc { box-shadow: 0 0 8px rgba(var(--macro-carbs-rgb), 0.45); }
+#nut-home-mf { box-shadow: 0 0 8px rgba(var(--macro-fat-rgb), 0.45); }
+
+/* רשת סטטים — משתמש ב-.home-mini-stats הקיים (grid + riseStagger) */
+.home-mini-stats { margin-top: 14px; margin-bottom: 0; }
+.home-mini-stats .home-card { margin-top: 0; padding: 14px 6px; border-radius: 18px; }
+.mini-stat .ms-ic {
+    width: 20px; height: 20px; color: var(--primary);
+    filter: drop-shadow(0 0 6px rgba(var(--primary-rgb), 0.5));
+}
+
+/* אימון אחרון — זכוכית, פס ורוד בצד, חץ */
+.home-card.last-card {
+    background: rgba(255,255,255,0.035);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-inline-start: 3px solid var(--primary);
+    border-radius: var(--radius-xl);
+    padding: 15px 18px; display: flex; align-items: center; gap: 14px;
+    cursor: pointer;
+}
+.last-card:active { background: rgba(255,255,255,0.06); }
+.last-label { font-size: 0.72rem; color: var(--primary); font-weight: var(--fw-semibold); letter-spacing: 0.03em; }
+.last-card .last-title { font-size: 1.05rem; margin-top: 3px; }
+.last-meta-inline { font-variant-numeric: tabular-nums; }
+.last-arrow {
+    width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(var(--primary-rgb), 0.12); border: 1px solid rgba(var(--primary-rgb), 0.25);
+    color: var(--primary);
+}
+.last-arrow svg { width: 17px; height: 17px; }
+
+/* CTA — גרדיאנט זוהר (עוקף את ההשטחה של .btn-primary) */
+#screen-home #btn-start-home {
+    background: linear-gradient(135deg, var(--primary-2) 0%, var(--primary) 100%);
+    border-radius: var(--radius-pill);
+    box-shadow: 0 4px 24px rgba(var(--primary-rgb), 0.35), var(--elev-1);
+}
+#screen-home #btn-start-home:active { box-shadow: 0 2px 14px rgba(var(--primary-rgb), 0.3); }
+
+/* קישורים שקטים — מעט אוויר מעל */
+#screen-home .home-quiet-links { margin-top: 22px; }

@@ -479,25 +479,52 @@
                     <h2 class="home-greet"><span id="greeting">צהריים טובים</span><span id="greet-name-wrap" style="display:none;">, <span id="greet-name">בלה</span></span></h2>
                 </div>
 
-                <!-- Hero — אימונים השבוע: מספר גיבור + פסי התקדמות -->
-                <div class="home-hero">
-                    <div class="gs-eyebrow">אימונים השבוע</div>
-                    <div class="hero-num-row">
-                        <span class="hero-num" id="home-weekly-val">0</span><span class="hero-of">/<span id="home-weekly-target">3</span></span>
+                <!-- 2.8 — כרטיס אימונים שבועיים (glass + טבעת ניאון) -->
+                <div class="home-card home-hero">
+                    <div class="hh-top">
+                        <div>
+                            <div class="hh-title">אימונים שבועיים</div>
+                            <div class="hh-sub" id="home-weekly-goal-lbl">היעד שלך: 3 אימונים</div>
+                        </div>
+                        <span id="home-streak-chip" class="streak-chip" style="display:none;">
+                            <svg class="streak-flame" viewBox="0 0 24 24" fill="currentColor"><path d="M12 23c-4.97 0-8-3.2-8-7.35 0-2.4 1.15-4.53 2.61-6.29.7-.84 2.03-.35 2.07.74.03.86.28 1.68.86 2.23C9.7 9.5 11 5.5 10.23 1.9c-.18-.86.75-1.5 1.47-1 3.6 2.48 8.3 7.3 8.3 14.75C20 19.8 16.97 23 12 23z"/></svg>
+                            רצף: <b id="home-streak-num">0</b> שב׳
+                        </span>
                     </div>
-                    <div class="gs-segs" id="home-week-segs"></div>
-                    <div class="hero-msg"><span id="home-weekly-msg">בואי נתחיל!</span><span id="home-streak-line" style="display:none;"> · רצף של <b id="home-streak-val">0</b> שבועות</span></div>
+                    <div class="hh-body">
+                        <div class="ring-wrap hh-ring">
+                            <svg class="progress-ring-svg" viewBox="0 0 120 120">
+                                <circle class="ring-bg" cx="60" cy="60" r="52"></circle>
+                                <circle id="home-ring-prog" class="ring-prog" cx="60" cy="60" r="52"></circle>
+                            </svg>
+                            <div class="ring-center">
+                                <div class="ring-num" id="home-weekly-val">0</div>
+                                <div class="ring-den">מתוך <span id="home-weekly-target">3</span></div>
+                            </div>
+                        </div>
+                        <div class="hh-side">
+                            <div class="hh-bar-row"><span class="hh-bar-lbl">התקדמות נוכחית</span><span class="hh-pct" id="home-week-pct">0%</span></div>
+                            <div class="hh-bar"><i id="home-week-bar" style="width:0%;"></i></div>
+                            <div class="hero-msg"><span id="home-weekly-msg">בואי נתחיל!</span></div>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="gs-hairline"></div>
-
-                <!-- שורת תזונה חיה → מסך התזונה -->
-                <div class="home-nut" onclick="Nutrition.open()">
+                <!-- 2.8 — כרטיס תזונה יומית → מסך התזונה -->
+                <div class="home-card home-nut" onclick="Nutrition.open()">
                     <div class="home-nut-top">
-                        <span class="gs-eyebrow">תזונה היום</span>
+                        <span class="hh-title">תזונה יומית</span>
                         <svg class="gs-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
                     </div>
-                    <div class="home-nut-kc"><span id="nut-home-kcal" class="nut-remain">0</span> <small id="nut-home-target">נותרו מתוך 0 קק"ל</small></div>
+                    <div class="hn-body">
+                        <div class="ring-wrap hn-ring">
+                            <svg class="progress-ring-svg" viewBox="0 0 120 120">
+                                <circle class="ring-bg" cx="60" cy="60" r="52"></circle>
+                                <circle id="nut-home-ring" class="ring-prog" cx="60" cy="60" r="52"></circle>
+                            </svg>
+                        </div>
+                        <div class="home-nut-kc"><span id="nut-home-kcal" class="nut-remain">0</span> <small id="nut-home-target">נותרו מתוך 0 קק"ל</small></div>
+                    </div>
                     <div class="macro-mini">
                         <div class="mm">
                             <div class="mm-track"><div id="nut-home-mp" class="mm-fill" style="width:0%;background:var(--macro-protein);"></div></div>
@@ -514,17 +541,33 @@
                     </div>
                 </div>
 
-                <div class="gs-hairline"></div>
-
-                <!-- האימון האחרון -->
-                <div class="gs-eyebrow" style="margin-bottom:10px;">האימון האחרון</div>
-                <div class="last-card">
-                    <div class="last-badge">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16" rx="2.5"></rect><path d="M3 9.5h18M8 2.5v4M16 2.5v4"></path></svg>
+                <!-- 2.8 — רשת סטטיסטיקות -->
+                <div class="home-mini-stats">
+                    <div class="home-card mini-stat">
+                        <svg class="ms-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2h6"/></svg>
+                        <div class="mini-val" id="home-avg-time">—</div>
+                        <div class="mini-lbl">ממוצע דקות</div>
                     </div>
+                    <div class="home-card mini-stat">
+                        <svg class="ms-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/></svg>
+                        <div class="mini-val" id="home-days-since">—</div>
+                        <div class="mini-lbl">ימים מאז</div>
+                    </div>
+                    <div class="home-card mini-stat">
+                        <svg class="ms-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5v11M17.5 6.5v11M3 9v6M21 9v6M6.5 12h11"/></svg>
+                        <div class="mini-val" id="home-total-workouts">0</div>
+                        <div class="mini-lbl">סה"כ אימונים</div>
+                    </div>
+                </div>
+
+                <!-- 2.8 — האימון האחרון (glass, לחיץ) -->
+                <div class="home-card last-card" onclick="app.tabNav('history')">
                     <div class="last-info">
+                        <div class="last-label">אימון אחרון · <span class="last-meta-inline" id="last-workout-meta"></span></div>
                         <div class="last-title" id="last-workout-display">טוען...</div>
-                        <div class="last-meta" id="last-workout-meta"></div>
+                    </div>
+                    <div class="last-arrow">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
                     </div>
                 </div>
 
@@ -536,10 +579,7 @@
 
                 <!-- אלמנטים מוסתרים — נשמרים כדי שמעדכני ה-JS הקיימים ימשיכו לעבוד ללא שינוי -->
                 <div style="display:none !important;" aria-hidden="true">
-                    <span id="home-total-workouts"></span>
-                    <span id="home-days-since"></span>
-                    <span id="home-avg-time"></span>
-                    <span id="home-streak-chip"><span id="home-streak-num"></span></span>
+                    <span id="home-streak-line"> · רצף של <b id="home-streak-val">0</b> שבועות</span>
                     <div id="home-insights-card"><span id="hi-level"></span><span id="hi-badges"></span><div id="hi-xp-fill"></div><div id="hi-sub"></div></div>
                 </div>
             </div>

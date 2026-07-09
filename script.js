@@ -16,7 +16,7 @@ const CONFIG = {
     VERSION: '1.8.2'
 };
 
-const CURRENT_VERSION = '2.7.0-2'; // חייב להיות זהה ל-version.json
+const CURRENT_VERSION = '2.8.0-1'; // חייב להיות זהה ל-version.json
 
 const FEEL_MAP_TEXT = { 'easy': 'קל', 'good': 'בינוני', 'hard': 'קשה' };
 
@@ -944,6 +944,14 @@ const app = {
             else if (weekly === 0) msgEl.textContent = 'בואי נתחיל את השבוע!';
             else msgEl.textContent = `${weekly} מתוך ${target} — ממשיכות!`;
         }
+
+        // 2.8 — פס התקדמות ליניארי + אחוז + תווית יעד (כרטיס "ניאון-גלאס")
+        const pctEl = document.getElementById('home-week-pct');
+        if (pctEl) pctEl.textContent = Math.round(pct * 100) + '%';
+        const barEl = document.getElementById('home-week-bar');
+        if (barEl) barEl.style.width = Math.round(pct * 100) + '%';
+        const goalLbl = document.getElementById('home-weekly-goal-lbl');
+        if (goalLbl) goalLbl.textContent = 'היעד שלך: ' + target + ' אימונים';
 
         // רצף שבועות + chip
         document.getElementById('home-streak-val').textContent = streak;
