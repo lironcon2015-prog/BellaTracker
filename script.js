@@ -16,7 +16,7 @@ const CONFIG = {
     VERSION: '1.8.2'
 };
 
-const CURRENT_VERSION = '2.8.0-2'; // חייב להיות זהה ל-version.json
+const CURRENT_VERSION = '2.8.0-3'; // חייב להיות זהה ל-version.json
 
 const FEEL_MAP_TEXT = { 'easy': 'קל', 'good': 'בינוני', 'hard': 'קשה' };
 
@@ -177,7 +177,15 @@ const app = {
         const apply = () => {
             // visualViewport מדויק יותר מ-innerHeight ב-iOS standalone אחרי cold start
             const vv = window.visualViewport;
-            const h = Math.max(window.innerHeight || 0, vv ? Math.round(vv.height + (vv.offsetTop || 0)) : 0);
+            const measured = Math.max(window.innerHeight || 0, vv ? Math.round(vv.height + (vv.offsetTop || 0)) : 0);
+            // iOS standalone cold-start/reload: innerHeight & visualViewport מדווחים חסר
+            // בגובה ה-safe-area העליון (~47–62px) ומשאירים פס שחור בתחתית. screen.height
+            // הוא ה-API היחיד שמדווח את גובה המסך המלא. מפעילים תיקון רק כשהפער בטווח
+            // safe-area סביר (≤130px) — אדפטיבי לכל מכשיר (Pro Max/15/SE), בלי מתיחה.
+            const portrait = (window.innerHeight || 0) >= (window.innerWidth || 0);
+            const scr = (window.screen && window.screen.height) || 0;
+            const useScr = portrait && scr > measured && (scr - measured) <= 130;
+            const h = useScr ? scr : measured;
             if (h > 0) root.style.setProperty('--app-height', h + 'px');
             this._renderDiag();
         };

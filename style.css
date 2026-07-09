@@ -2213,8 +2213,10 @@ body.theme-green::before {
    ════════════════════════════════════════════════════════════════ */
 .app-container {
     position: fixed;
-    inset: 0;
-    height: auto;   /* הגובה נגזר מ-inset (top+bottom), לא מ-height מדווח */
+    top: 0; left: 0; right: 0;
+    /* 2.8.0-3: הגובה מונע מ---app-height (screen.height ב-iOS כשה-viewport מדווח חסר).
+       חובה בלי bottom/inset — אחרת הקופסה נמתחת בין top ל-bottom ומתעלמת מ-height. */
+    height: var(--app-height, 100dvh);
     width: auto;
     z-index: 1;
 }
