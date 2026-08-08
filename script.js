@@ -16,7 +16,7 @@ const CONFIG = {
     VERSION: '1.8.2'
 };
 
-const CURRENT_VERSION = '2.8.0-4'; // חייב להיות זהה ל-version.json
+const CURRENT_VERSION = '2.8.0-5'; // חייב להיות זהה ל-version.json
 
 const FEEL_MAP_TEXT = { 'easy': 'קל', 'good': 'בינוני', 'hard': 'קשה' };
 
@@ -2563,9 +2563,10 @@ const app = {
         document.getElementById('history-restore-sheet').style.display = 'none';
     },
 
-    exportConfig: function() {
+    exportConfig: async function() {
         const data = { type: 'config', ver: CONFIG.VERSION, profile: this.state.activeProfile, date: new Date().toLocaleDateString(), routines: this.state.routines, exercises: this.state.exercises };
-        this.downloadJSON(data, `gymstart_config_${this.state.activeProfile}_v${CONFIG.VERSION}_${Date.now()}.json`);
+        const ok = await this.downloadJSON(data, `gymstart_config_${this.state.activeProfile}_v${CONFIG.VERSION}_${Date.now()}.json`);
+        if (ok) app.toast('קובץ הקונפיג נוצר.');
     },
 
     importConfig: function(input) {
@@ -2611,7 +2612,7 @@ const app = {
         setTimeout(() => location.reload(), 1300);
     },
 
-    exportFullBackup: function() {
+    exportFullBackup: async function() {
         // צילום מלא של כל מפתחות האפליקציה ב-LocalStorage —
         // כולל gymstart_firebase_config (מפתחות החיבור לענן)
         const keys = {};
@@ -2625,8 +2626,8 @@ const app = {
             date: new Date().toLocaleDateString(),
             keys: keys
         };
-        this.downloadJSON(data, `gymstart_full_backup_${Date.now()}.json`);
-        app.toast('קובץ שחזור מלא נוצר — שמרי אותו במקום בטוח (כולל את חיבור ה-Firebase).');
+        const ok = await this.downloadJSON(data, `gymstart_full_backup_${Date.now()}.json`);
+        if (ok) app.toast('קובץ שחזור מלא נוצר — שמרי אותו במקום בטוח (כולל את חיבור ה-Firebase).');
     },
 
     importFullBackup: function(input) {
@@ -2649,7 +2650,7 @@ const app = {
     },
 
     // ייצוא מפתחות ה-Firebase בלבד — קובץ קטן לחיבור מכשיר חדש לענן
-    exportFirebaseKeys: function() {
+    exportFirebaseKeys: async function() {
         const cfgStr = localStorage.getItem(FirebaseManager.KEY_FIREBASE_CONFIG);
         if (!cfgStr) { app.toast('אין חיבור Firebase מוגדר במכשיר זה.', 'error'); return; }
         const data = {
@@ -2658,8 +2659,8 @@ const app = {
             date: new Date().toLocaleDateString(),
             keys: { [FirebaseManager.KEY_FIREBASE_CONFIG]: cfgStr }
         };
-        this.downloadJSON(data, `gymstart_firebase_keys_${Date.now()}.json`);
-        app.toast('קובץ מפתחות Firebase נוצר — שמור במקום בטוח.');
+        const ok = await this.downloadJSON(data, `gymstart_firebase_keys_${Date.now()}.json`);
+        if (ok) app.toast('קובץ מפתחות Firebase נוצר — שמור במקום בטוח.');
     },
 
     // שחזור מפתחות ה-Firebase בלבד מתוך קובץ שחזור מלא — לא נוגע בשאר הנתונים
@@ -2687,9 +2688,10 @@ const app = {
         input.value = '';
     },
 
-    exportHistory: function() {
+    exportHistory: async function() {
         const data = { type: 'history', ver: CONFIG.VERSION, history: this.state.history };
-        this.downloadJSON(data, `gymstart_history_${Date.now()}.json`);
+        const ok = await this.downloadJSON(data, `gymstart_history_${Date.now()}.json`);
+        if (ok) app.toast('קובץ ההיסטוריה נוצר.');
     },
 
     importHistory: function(input) {
@@ -2716,10 +2718,65 @@ const app = {
         input.value = '';
     },
 
-    downloadJSON: function(data, filename) {
-        const str = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data));
-        const a = document.createElement('a');
-        a.href = str; a.download = filename; a.click();
+    // ייצוא קובץ JSON — עמיד לחסימות של דפדפנים ניידים.
+    // הבעיה שתוקנה: data: URL + <a> מנותק מה-DOM נחסם/מתעלמים ממנו ב-iOS
+    // ובמצב PWA standalone (התכונה download לא נתמכת שם ל-data:), כך שהלחיצה
+    // לא עשתה כלום. כעת: Blob + objectURL, ובמכשירים חסומים — Share Sheet.
+    // מחזירה Promise<boolean> — האם הייצוא הצליח בפועל.
+    downloadJSON: async function(data, filename) {
+        let str;
+        try {
+            str = JSON.stringify(data);
+        } catch (err) {
+            app.toast('שגיאה בהכנת הקובץ לייצוא.', 'error');
+            return false;
+        }
+
+        const blob = new Blob([str], { type: 'application/json' });
+        const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent) ||
+                      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        const isStandalone = window.navigator.standalone === true ||
+                             (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+
+        // 1) iOS / PWA מותקנת — הורדת קובץ לא אמינה שם, עוברים ל-Share Sheet
+        if (isIOS || isStandalone) {
+            try {
+                const file = new File([blob], filename, { type: 'application/json' });
+                if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                    await navigator.share({ files: [file], title: filename });
+                    return true;
+                }
+            } catch (err) {
+                // המשתמש ביטל את חלון השיתוף — לא שגיאה, ולא ממשיכים לנפילה אחורה
+                if (err && err.name === 'AbortError') return false;
+            }
+        }
+
+        // 2) הורדה רגילה — Blob URL עם עוגן מחובר ל-DOM (חלק מהדפדפנים דורשים זאת)
+        const url = URL.createObjectURL(blob);
+        try {
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.rel = 'noopener';
+            a.style.display = 'none';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 60000);
+            return true;
+        } catch (err) {
+            // 3) נפילה אחורה אחרונה — פתיחה בלשונית חדשה לשמירה ידנית
+            try {
+                window.open(url, '_blank');
+                app.toast('הקובץ נפתח בלשונית חדשה — שמרי אותו משם.');
+                return true;
+            } catch (err2) {
+                URL.revokeObjectURL(url);
+                app.toast('הדפדפן חסם את הייצוא. נסי דרך דפדפן ולא מתוך האפליקציה המותקנת.', 'error');
+                return false;
+            }
+        }
     },
 
     factoryReset: function() {
