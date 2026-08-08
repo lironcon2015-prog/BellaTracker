@@ -1,5 +1,5 @@
 /**
- * GYMSTART V1.8.2
+ * GYMSTART — מקור אמת יחיד לגרסה: CURRENT_VERSION (למטה), זהה ל-version.json
  * - unit:'time' replaces plank/static name detection
  * - Monthly history grouping
  * - Copy by range (month/weeks)
@@ -12,11 +12,11 @@ const CONFIG = {
         HISTORY: 'gymstart_beta_02_history',
         EXERCISES: 'gymstart_v1_7_exercises_bank',
         ACTIVE_WORKOUT: 'gymstart_active_workout_state'
-    },
-    VERSION: '1.8.2'
+    }
+    // CONFIG.VERSION הוסר — היה תקוע על '1.8.2'. מקור האמת: CURRENT_VERSION מתחת.
 };
 
-const CURRENT_VERSION = '2.8.0-5'; // חייב להיות זהה ל-version.json
+const CURRENT_VERSION = '2.8.0-6'; // חייב להיות זהה ל-version.json
 
 const FEEL_MAP_TEXT = { 'easy': 'קל', 'good': 'בינוני', 'hard': 'קשה' };
 
@@ -2564,8 +2564,8 @@ const app = {
     },
 
     exportConfig: async function() {
-        const data = { type: 'config', ver: CONFIG.VERSION, profile: this.state.activeProfile, date: new Date().toLocaleDateString(), routines: this.state.routines, exercises: this.state.exercises };
-        const ok = await this.downloadJSON(data, `gymstart_config_${this.state.activeProfile}_v${CONFIG.VERSION}_${Date.now()}.json`);
+        const data = { type: 'config', ver: CURRENT_VERSION, profile: this.state.activeProfile, date: new Date().toLocaleDateString(), routines: this.state.routines, exercises: this.state.exercises };
+        const ok = await this.downloadJSON(data, `gymstart_config_${this.state.activeProfile}_v${CURRENT_VERSION}_${Date.now()}.json`);
         if (ok) app.toast('קובץ הקונפיג נוצר.');
     },
 
@@ -2689,7 +2689,7 @@ const app = {
     },
 
     exportHistory: async function() {
-        const data = { type: 'history', ver: CONFIG.VERSION, history: this.state.history };
+        const data = { type: 'history', ver: CURRENT_VERSION, history: this.state.history };
         const ok = await this.downloadJSON(data, `gymstart_history_${Date.now()}.json`);
         if (ok) app.toast('קובץ ההיסטוריה נוצר.');
     },
