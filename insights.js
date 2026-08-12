@@ -260,7 +260,7 @@
                 host.innerHTML = '<div class="stats-empty">' +
                     '<div class="stats-empty-icon"><svg viewBox="0 0 24 24"><path d="M22 7l-8.5 8.5-5-5L2 17"/><path d="M16 7h6v6"/></svg></div>' +
                     '<h3>ההתקדמות שלך תופיע כאן</h3>' +
-                    '<p>השלימי את האימון הראשון כדי להתחיל לראות גרפים, שיאים ותגים.</p>' +
+                    '<p>' + this.g('השלם את האימון הראשון', 'השלימי את האימון הראשון') + ' כדי להתחיל לראות גרפים, שיאים ותגים.</p>' +
                     '</div>';
                 return;
             }
@@ -369,7 +369,7 @@
             if (lv) lv.textContent = s.level;
             if (xp) xp.style.width = Math.round(s.xpInLevel / s.xpForLevel * 100) + '%';
             if (badges) badges.textContent = s.badgeCount;
-            if (sub) sub.textContent = s.count > 0 ? (s.xpForLevel - s.xpInLevel) + ' XP לרמה הבאה' : 'התחילי כדי לצבור XP';
+            if (sub) sub.textContent = s.count > 0 ? (s.xpForLevel - s.xpInLevel) + ' XP לרמה הבאה' : this.g('התחל כדי לצבור XP', 'התחילי כדי לצבור XP');
         }
     });
 
