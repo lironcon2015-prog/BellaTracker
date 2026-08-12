@@ -16,7 +16,7 @@ const CONFIG = {
     // CONFIG.VERSION הוסר — היה תקוע על '1.8.2'. מקור האמת: CURRENT_VERSION מתחת.
 };
 
-const CURRENT_VERSION = '2.8.0-6'; // חייב להיות זהה ל-version.json
+const CURRENT_VERSION = '2.8.0-7'; // חייב להיות זהה ל-version.json
 
 const FEEL_MAP_TEXT = { 'easy': 'קל', 'good': 'בינוני', 'hard': 'קשה' };
 
@@ -256,6 +256,13 @@ const app = {
         return this.state.gender === 'male';
     },
 
+    // ── Helper: בחירת ניסוח לפי מגדר השפה ──────────────────────────────────────
+    // app.g('התחל אימון', 'התחילי אימון') → מחזיר את הצורה המתאימה.
+    // חובה להשתמש בזה בכל מחרוזת שפונה למתאמן/ת בגוף שני.
+    g: function(male, female) {
+        return this.isMale() ? male : female;
+    },
+
     applyProfileTheme: function() {
         const isMale = this.isMale();
 
@@ -307,6 +314,18 @@ const app = {
         if (backupP) backupP.textContent = isMale ? 'בחר יעד הגיבוי' : 'בחרי יעד הגיבוי';
         const restoreP = document.querySelector('#history-restore-sheet > p');
         if (restoreP) restoreP.textContent = isMale ? 'בחר מקור השחזור' : 'בחרי מקור השחזור';
+
+        // onboarding — כפתור הדילוג (הכותרת והגוף מוזרקים ב-_renderOnboardingStep)
+        const onbSkip = document.getElementById('onboarding-skip');
+        if (onbSkip) onbSkip.textContent = isMale ? 'דלג' : 'דלגי';
+
+        // כותרת בורר התרגילים — ברירת המחדל הסטטית ב-HTML
+        const userSelTitle = document.getElementById('user-sel-title');
+        if (userSelTitle) userSelTitle.textContent = isMale ? 'בחר תרגיל' : 'בחרי תרגיל';
+
+        // חיפוש מזון — ה-sheet מוזרק פעם אחת בלבד, לכן מתקנים גם בדיעבד
+        const nutSearch = document.getElementById('nut-search-input');
+        if (nutSearch) nutSearch.placeholder = isMale ? 'חפש מזון...' : 'חפשי מזון...';
     },
 
     // ── מראה ושפה — בורר מגדר (שפה) + בורר ערכת צבעים ───────────────────────────
@@ -603,12 +622,23 @@ const app = {
     },
 
     // ── Onboarding לפעם ראשונה ──────────────────────────────────────────────
-    _onboardSteps: [
-        { icon: '', title: 'ברוכה הבאה ל-GymStart', body: 'האפליקציה שתלווה אותך בכל אימון — פשוט, ברור, ובלי בלבול. בואי נכיר אותה בקצרה.' },
-        { icon: '', title: 'בחרי תוכנית והתחילי', body: 'במסך הבית לחצי "התחילי אימון", בחרי תוכנית, וקדימה. כל תרגיל מופיע אחד-אחד עם המשקל והחזרות.' },
-        { icon: '', title: 'רשמי כל סט', body: 'עדכני משקל וחזרות עם הכפתורים, סמני איך הרגשת, ולחצי "סיום סט". נעקוב אחרי ההתקדמות שלך אוטומטית.' },
-        { icon: '', title: 'תראי את ההתקדמות', body: 'בסוף כל אימון תקבלי סיכום ושיאים אישיים. ככל שתתאמני, נראה לך כמה השתפרת!' }
-    ],
+    // נבנה דינמית בכל פתיחה — הניסוח תלוי במגדר השפה הנבחר
+    _getOnboardSteps: function() {
+        return [
+            { icon: '', title: this.g('ברוך הבא ל-GymStart', 'ברוכה הבאה ל-GymStart'),
+              body: this.g('האפליקציה שתלווה אותך בכל אימון — פשוט, ברור, ובלי בלבול. בוא נכיר אותה בקצרה.',
+                           'האפליקציה שתלווה אותך בכל אימון — פשוט, ברור, ובלי בלבול. בואי נכיר אותה בקצרה.') },
+            { icon: '', title: this.g('בחר תוכנית והתחל', 'בחרי תוכנית והתחילי'),
+              body: this.g('במסך הבית לחץ "התחל אימון", בחר תוכנית, וקדימה. כל תרגיל מופיע אחד-אחד עם המשקל והחזרות.',
+                           'במסך הבית לחצי "התחילי אימון", בחרי תוכנית, וקדימה. כל תרגיל מופיע אחד-אחד עם המשקל והחזרות.') },
+            { icon: '', title: this.g('רשום כל סט', 'רשמי כל סט'),
+              body: this.g('עדכן משקל וחזרות עם הכפתורים, סמן איך הרגשת, ולחץ "סיום סט". נעקוב אחרי ההתקדמות שלך אוטומטית.',
+                           'עדכני משקל וחזרות עם הכפתורים, סמני איך הרגשת, ולחצי "סיום סט". נעקוב אחרי ההתקדמות שלך אוטומטית.') },
+            { icon: '', title: this.g('עקוב אחרי ההתקדמות', 'תראי את ההתקדמות'),
+              body: this.g('בסוף כל אימון תקבל סיכום ושיאים אישיים. ככל שתתאמן, נראה לך כמה השתפרת!',
+                           'בסוף כל אימון תקבלי סיכום ושיאים אישיים. ככל שתתאמני, נראה לך כמה השתפרת!') }
+        ];
+    },
     _onboardIdx: 0,
     maybeShowOnboarding: function() {
         try {
@@ -623,6 +653,7 @@ const app = {
     },
     openOnboarding: function() {
         this._onboardIdx = 0;
+        this._onboardSteps = this._getOnboardSteps();
         const ov = document.getElementById('onboarding-overlay');
         const sh = document.getElementById('onboarding-sheet');
         if (!ov || !sh) return;
@@ -631,6 +662,7 @@ const app = {
         this._renderOnboardingStep();
     },
     _renderOnboardingStep: function() {
+        if (!this._onboardSteps) this._onboardSteps = this._getOnboardSteps();
         const step = this._onboardSteps[this._onboardIdx];
         if (!step) return;
         document.querySelector('#onboarding-sheet .onboarding-icon').textContent = step.icon;
@@ -640,7 +672,7 @@ const app = {
         dots.innerHTML = this._onboardSteps.map((s, i) =>
             `<span class="dot${i === this._onboardIdx ? ' active' : ''}"></span>`).join('');
         const isLast = this._onboardIdx === this._onboardSteps.length - 1;
-        document.getElementById('onboarding-next').textContent = isLast ? 'בואי נתחיל!' : 'הבא';
+        document.getElementById('onboarding-next').textContent = isLast ? this.g('בוא נתחיל!', 'בואי נתחיל!') : 'הבא';
     },
     onboardingNext: function() {
         this.haptic(6);
@@ -853,7 +885,7 @@ const app = {
             const clickAttr = isFirst ? ' onclick="app.startWorkout()"' : '';
             const startClass = isFirst ? ' start-item' : '';
             const subLine = isFirst
-                ? `<div class="overview-start-hint">לחצי כדי להתחיל מכאן</div>`
+                ? `<div class="overview-start-hint">${this.g('לחץ כדי להתחיל מכאן', 'לחצי כדי להתחיל מכאן')}</div>`
                 : `<div class="overview-ex-sub">${ex.sets} סטים • ${unitLabel}</div>`;
             const rightSide = isFirst
                 ? `<span class="overview-start-cue"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M8 5.5v13a1 1 0 0 0 1.5.87l11-6.5a1 1 0 0 0 0-1.74l-11-6.5A1 1 0 0 0 8 5.5z"></path></svg></span>`
@@ -949,8 +981,8 @@ const app = {
         const msgEl = document.getElementById('home-weekly-msg');
         if (msgEl) {
             if (isFull) msgEl.textContent = 'היעד הושלם — מעולה!';
-            else if (weekly === 0) msgEl.textContent = 'בואי נתחיל את השבוע!';
-            else msgEl.textContent = `${weekly} מתוך ${target} — ממשיכות!`;
+            else if (weekly === 0) msgEl.textContent = this.g('בוא נתחיל את השבוע!', 'בואי נתחיל את השבוע!');
+            else msgEl.textContent = `${weekly} מתוך ${target} — ${this.g('ממשיכים!', 'ממשיכות!')}`;
         }
 
         // 2.8 — פס התקדמות ליניארי + אחוז + תווית יעד (כרטיס "ניאון-גלאס")
@@ -1144,7 +1176,7 @@ const app = {
     startWorkout: function() {
         if (!this.state.routines[this.state.currentProgId] ||
             this.state.routines[this.state.currentProgId].exercises.length === 0) {
-            app.toast("התוכנית ריקה — הוסיפי תרגילים דרך עריכת התוכנית", "error"); return;
+            app.toast(app.g("התוכנית ריקה — הוסף תרגילים דרך עריכת התוכנית", "התוכנית ריקה — הוסיפי תרגילים דרך עריכת התוכנית"), "error"); return;
         }
         const prog = this.state.routines[this.state.currentProgId];
         this.state.active = {
@@ -1202,7 +1234,7 @@ const app = {
         const reorderBtn = document.getElementById('btn-reorder');
         if (this.state.active.setIdx === 1) {
             reorderBtn.style.display = 'block';
-            if (exDef.cat === 'core') reorderBtn.innerText = "החליפי תרגיל";
+            if (exDef.cat === 'core') reorderBtn.innerText = this.g("החלף תרגיל", "החליפי תרגיל");
             else reorderBtn.innerText = "שינוי סדר";
             if (exDef.cat !== 'core' && this.state.active.exIdx >= this.state.active.sessionExercises.length - 1) {
                 reorderBtn.style.display = 'none';
@@ -1484,7 +1516,7 @@ const app = {
         if (this.state.active.isStopwatch) {
             if(this.state.active.timerInterval) this.toggleStopwatch();
             w = 0; r = this.state.active.stopwatchVal;
-            if (r === 0) { app.toast("לא נמדד זמן — הפעילי את השעון", "error"); return; }
+            if (r === 0) { app.toast(app.g("לא נמדד זמן — הפעל את השעון", "לא נמדד זמן — הפעילי את השעון"), "error"); return; }
         } else {
             w = this.state.active.inputW; r = this.state.active.inputR;
         }
@@ -1587,7 +1619,7 @@ const app = {
                 this.haptic([60, 40, 60]);
                 if (disp) disp.classList.add('rest-done');
                 if (ringWrap) ringWrap.classList.add('done');
-                if (eyebrow) eyebrow.textContent = 'מוכנה!';
+                if (eyebrow) eyebrow.textContent = this.g('מוכן!', 'מוכנה!');
                 this.toast('זמן מנוחה הסתיים — קדימה לסט הבא!', 'success');
             }
         }, 250);
@@ -2020,7 +2052,7 @@ const app = {
         if (exDef.cat === 'core') {
             this.state.userSelector.mode = 'swap';
             this.renderUserSelector('core');
-            document.getElementById('user-sel-title').innerText = "החליפי תרגיל";
+            document.getElementById('user-sel-title').innerText = this.g("החלף תרגיל", "החליפי תרגיל");
             document.getElementById('user-selector-modal').style.display = 'flex';
         } else {
             this.renderReorderList();
@@ -2627,7 +2659,8 @@ const app = {
             keys: keys
         };
         const ok = await this.downloadJSON(data, `gymstart_full_backup_${Date.now()}.json`);
-        if (ok) app.toast('קובץ שחזור מלא נוצר — שמרי אותו במקום בטוח (כולל את חיבור ה-Firebase).');
+        if (ok) app.toast(app.g('קובץ שחזור מלא נוצר — שמור אותו במקום בטוח (כולל את חיבור ה-Firebase).',
+                                'קובץ שחזור מלא נוצר — שמרי אותו במקום בטוח (כולל את חיבור ה-Firebase).'));
     },
 
     importFullBackup: function(input) {
@@ -2769,11 +2802,12 @@ const app = {
             // 3) נפילה אחורה אחרונה — פתיחה בלשונית חדשה לשמירה ידנית
             try {
                 window.open(url, '_blank');
-                app.toast('הקובץ נפתח בלשונית חדשה — שמרי אותו משם.');
+                app.toast(app.g('הקובץ נפתח בלשונית חדשה — שמור אותו משם.', 'הקובץ נפתח בלשונית חדשה — שמרי אותו משם.'));
                 return true;
             } catch (err2) {
                 URL.revokeObjectURL(url);
-                app.toast('הדפדפן חסם את הייצוא. נסי דרך דפדפן ולא מתוך האפליקציה המותקנת.', 'error');
+                app.toast(app.g('הדפדפן חסם את הייצוא. נסה דרך דפדפן ולא מתוך האפליקציה המותקנת.',
+                                'הדפדפן חסם את הייצוא. נסי דרך דפדפן ולא מתוך האפליקציה המותקנת.'), 'error');
                 return false;
             }
         }
@@ -3137,7 +3171,7 @@ const app = {
                 app.toast('האפליקציה מעודכנת (v' + CURRENT_VERSION + ')');
             }
         } catch(e) {
-            app.toast('לא ניתן לבדוק עדכונים. בדקי חיבור לאינטרנט.');
+            app.toast(app.g('לא ניתן לבדוק עדכונים. בדוק חיבור לאינטרנט.', 'לא ניתן לבדוק עדכונים. בדקי חיבור לאינטרנט.'));
         }
     },
 

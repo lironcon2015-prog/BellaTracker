@@ -370,7 +370,7 @@ const Nutrition = {
               <button class="seg-btn-gs" data-tab="recent" onclick="Nutrition._searchTab('recent',this)">אחרונים</button>
               <button class="seg-btn-gs" data-tab="fav" onclick="Nutrition._searchTab('fav',this)">מועדפים</button>
             </div>
-            <input id="nut-search-input" class="search-input" placeholder="חפשי מזון..." oninput="Nutrition._onSearchInput(this.value)">
+            <input id="nut-search-input" class="search-input" placeholder="${(app&&app.g)?app.g('חפש מזון...','חפשי מזון...'):'חפשי מזון...'}" oninput="Nutrition._onSearchInput(this.value)">
             <div class="search-cams">
               <div class="cam-btn"><span class="ci"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7V5h2M20 7V5h-2M4 17v2h2M20 17v2h-2M7 8v8M10.5 8v8M13.5 8v8M17 8v8"/></svg></span>ברקוד<span class="cam-soon">בקרוב</span></div>
               <div class="cam-btn"><span class="ci"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41L12 22 2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><circle cx="7" cy="7" r="1.3"/></svg></span>תווית<span class="cam-soon">בקרוב</span></div>
@@ -663,7 +663,7 @@ const Nutrition = {
     saveBuilder(){
         const b=this.state.builder;
         const comps=b.components.filter(c=>(c.grams||0)>0 && c.name.trim());
-        if(!comps.length){ if(app&&app.toast)app.toast('הוסיפי מרכיב אחד לפחות','error'); return; }
+        if(!comps.length){ if(app&&app.toast)app.toast(app.g?app.g('הוסף מרכיב אחד לפחות','הוסיפי מרכיב אחד לפחות'):'הוסיפי מרכיב אחד לפחות','error'); return; }
         // שדה מצרפי = סכום הרכיבים (כולל grams!)
         const comp2=comps.map(c=>{ const m=this._calcFromPer100(c.per100,c.grams); return {name:c.name.trim(),grams:c.grams,per100:c.per100,kcal:m.kcal,p:m.p,c:m.c,f:m.f}; });
         const tot=comp2.reduce((a,c)=>({grams:a.grams+c.grams,kcal:a.kcal+c.kcal,p:a.p+c.p,c:a.c+c.c,f:a.f+c.f}),{grams:0,kcal:0,p:0,c:0,f:0});
